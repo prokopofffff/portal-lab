@@ -140,22 +140,25 @@ function openPortal(lab: Lab, rng: Rng): CommandResult {
   }
 }
 
+// Отказ в стабилизации (spec §5) или null, если она доступна: перезарядка или слишком высокая стабильность
+export function stabilizeRejection(portal: Portal): string | null {
+  const { forbiddenFromStability } = CONFIG.stabilize
+  if (portal.cooldown > 0) return `Кулдаун стабилизации — осталось ${portal.cooldown} мин`
+  if (portal.stability >= forbiddenFromStability) {
+    return `Стабильность ${forbiddenFromStability}% или выше — стабилизация запрещена`
+  }
+  return null
+}
+
 // Стабилизация (spec §5): рывок стабильности и времени за энергию, затем перезарядка
 function stabilize(lab: Lab, name: string): CommandResult {
   const portal = resolveOpenPortal(lab, name)
   if ('rejection' in portal) return portal
 
-  const { stabilityGain, energyCost, timeGain, cooldownTicks, forbiddenFromStability } =
-    CONFIG.stabilize
+  const { stabilityGain, energyCost, timeGain, cooldownTicks } = CONFIG.stabilize
   const { bounds } = CONFIG
-  if (portal.cooldown > 0) {
-    return { rejection: `Кулдаун стабилизации — осталось ${portal.cooldown} мин` }
-  }
-  if (portal.stability >= forbiddenFromStability) {
-    return {
-      rejection: `Стабильность ${forbiddenFromStability}% или выше — стабилизация запрещена`,
-    }
-  }
+  const rejection = stabilizeRejection(portal)
+  if (rejection !== null) return { rejection }
   const stabilized: Portal = {
     ...portal,
     stability: Math.min(bounds.stability.max, portal.stability + stabilityGain),
