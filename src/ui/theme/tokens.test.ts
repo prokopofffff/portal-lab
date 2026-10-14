@@ -22,6 +22,14 @@ describe('cssVariables', () => {
     expect(vars['--c-bar-study-next']).toBe('#7a64b8')
   })
 
+  it('отдаёт цвета HUD и дока как --c-* и --s-*', () => {
+    const vars = cssVariables()
+    expect(vars['--c-control']).toBe('#221e2d')
+    expect(vars['--c-pause-on']).toBe('#8fb4ff')
+    expect(vars['--c-seal-edge']).toBe('#5a2b3a')
+    expect(vars['--s-hourglass-frame']).toBe('#c9a24a')
+  })
+
   it('отдаёт цвета спрайтов как --s-*', () => {
     const vars = cssVariables()
     expect(vars['--s-bar-unlit']).toBe(sprite.barUnlit)

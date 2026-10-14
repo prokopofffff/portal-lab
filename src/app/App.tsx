@@ -1,12 +1,14 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { Dock } from '../ui/hud/Dock'
+import { Hud } from '../ui/hud/Hud'
 import { AtlasScreen } from '../ui/screens/AtlasScreen'
 import { JournalScreen } from '../ui/screens/JournalScreen'
 import { PortalStub } from '../ui/screens/PortalStub'
-import { RouteLink } from '../ui/screens/RouteLink'
 import { WorldScreen } from '../ui/screens/WorldScreen'
 import { Bar, Creatures, Portal, RiskTag } from '../ui/sprites'
 import type { PortalLook } from '../ui/theme/tokens'
-import { NavigationProvider, useRoute, type Route } from './navigation'
+import { useDispatch, useSpeed } from './hooks'
+import { NavigationProvider, useRoute } from './navigation'
 
 // Колонки «Языка риска»: у критического портала стоят двое наблюдателей, как в канвасе.
 const looks: [PortalLook, number][] = [
@@ -65,7 +67,15 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 // Галерея спрайтов вместо зала: lab-9dr.4 заменит её настоящим залом
 function HallGallery() {
   return (
-    <main style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <main
+      style={{
+        flex: '1 1 auto',
+        padding: '32px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 32,
+      }}
+    >
       <h1
         style={{ fontFamily: 'var(--f-pixel)', fontSize: 20, color: 'var(--c-torch)', margin: 0 }}
       >
@@ -134,43 +144,6 @@ function HallGallery() {
   )
 }
 
-// Временная навигация «Зал · Атлас · Книга»: lab-9dr.3 заменит её доком
-const NAV_ITEMS: readonly (readonly [Route['screen'], string, Route])[] = [
-  ['hall', 'Зал', { screen: 'hall' }],
-  ['atlas', 'Атлас', { screen: 'atlas' }],
-  ['journal', 'Книга', { screen: 'journal' }],
-]
-
-function TempNav() {
-  const route = useRoute()
-  return (
-    <nav
-      aria-label="Разделы"
-      style={{
-        display: 'flex',
-        gap: 24,
-        padding: '10px 40px',
-        background: 'var(--c-panel)',
-        boxShadow: 'inset 0 -3px 0 var(--c-edge-soft)',
-      }}
-    >
-      {NAV_ITEMS.map(([screen, label, to]) => (
-        <RouteLink
-          key={screen}
-          to={to}
-          style={{
-            color: route.screen === screen ? 'var(--c-torch)' : 'var(--c-text-soft)',
-            fontWeight: 600,
-          }}
-          current={route.screen === screen}
-        >
-          {label}
-        </RouteLink>
-      ))}
-    </nav>
-  )
-}
-
 // Экран по текущему маршруту
 function Screen() {
   const route = useRoute()
@@ -188,13 +161,33 @@ function Screen() {
   }
 }
 
+const SEAL_QUESTION =
+  'Запечатать лабораторию? Все порталы, журнал и время будут удалены, штат вернётся к трём наблюдателям.'
+
+// HUD сверху, экран посередине, док снизу; на паузе корень замораживает анимации
+function Shell() {
+  const [speed] = useSpeed()
+  const dispatch = useDispatch()
+  // Подтверждение печати (spec §5, §9): window.confirm до диалога-свитка lab-9dr.7
+  const seal = () => {
+    if (window.confirm(SEAL_QUESTION)) dispatch({ type: 'sealLab' })
+  }
+  return (
+    <div
+      className={speed === 0 ? 'is-paused' : undefined}
+      style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
+    >
+      <Hud />
+      <Screen />
+      <Dock onSeal={seal} />
+    </div>
+  )
+}
+
 export function App() {
   return (
     <NavigationProvider>
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <TempNav />
-        <Screen />
-      </div>
+      <Shell />
     </NavigationProvider>
   )
 }

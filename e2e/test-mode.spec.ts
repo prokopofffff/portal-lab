@@ -6,11 +6,6 @@ const SEED = 3
 // В e2e нет DOM-типов, поэтому хук читаем через globalThis
 type LabGlobal = { __lab?: { advance(ticks: number): void } }
 
-// Время лаборатории из сохранения (HUD появится в следующей задаче)
-async function savedTime(page: Page): Promise<number> {
-  return page.evaluate(() => JSON.parse(localStorage.getItem('portal-lab')!).lab.time)
-}
-
 async function advance(page: Page, ticks: number): Promise<void> {
   await page.evaluate((n) => (globalThis as LabGlobal).__lab!.advance(n), ticks)
 }
@@ -19,11 +14,15 @@ test('test=1 открывает хук __lab, время идёт только �
   await page.goto(`/?seed=${SEED}&test=1`)
   expect(await page.evaluate(() => (globalThis as LabGlobal).__lab !== undefined)).toBe(true)
 
-  await advance(page, 50)
-  expect(await savedTime(page)).toBe(50)
+  // Тестовый режим стартует на паузе: время в HUD стоит, пока его не прокрутят
+  await expect(page.getByRole('button', { name: 'Пауза' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByText('мин 0', { exact: true })).toBeVisible()
 
   await advance(page, 50)
-  expect(await savedTime(page)).toBe(100)
+  await expect(page.getByText('мин 50', { exact: true })).toBeVisible()
+
+  await advance(page, 50)
+  await expect(page.getByText('мин 100', { exact: true })).toBeVisible()
 })
 
 test('без test=1 хука __lab нет', async ({ page }) => {

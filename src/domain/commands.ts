@@ -243,17 +243,25 @@ function staffTotal(lab: Lab): number {
   return lab.staff.free + onSite + (lab.staff.hireTicksLeft > 0 ? 1 : 0)
 }
 
-// Наём наблюдателя (spec §5): сотрудник станет свободным через CONFIG.hire.ticks тиков (см. tick)
-function hireObserver(lab: Lab): CommandResult {
-  const { staff, hire } = CONFIG
+// Отказ в найме (spec §5) или null, если он доступен: полный штат или наём уже идёт
+export function hireRejection(lab: Lab): string | null {
+  const { staff } = CONFIG
   const total = staffTotal(lab)
   if (total >= staff.max) {
     const inTransit = lab.staff.hireTicksLeft > 0 ? ', включая наём в пути' : ''
-    return { rejection: `Штат полон: ${total} из ${staff.max}${inTransit}` }
+    return `Штат полон: ${total} из ${staff.max}${inTransit}`
   }
   if (lab.staff.hireTicksLeft > 0) {
-    return { rejection: `Наём уже идёт — осталось ${lab.staff.hireTicksLeft} мин` }
+    return `Наём уже идёт — осталось ${lab.staff.hireTicksLeft} мин`
   }
+  return null
+}
+
+// Наём наблюдателя (spec §5): сотрудник станет свободным через CONFIG.hire.ticks тиков (см. tick)
+function hireObserver(lab: Lab): CommandResult {
+  const { hire } = CONFIG
+  const rejection = hireRejection(lab)
+  if (rejection !== null) return { rejection }
   return {
     lab: { ...lab, staff: { ...lab.staff, hireTicksLeft: hire.ticks } },
     events: [{ type: 'hireStarted', ticks: hire.ticks }],

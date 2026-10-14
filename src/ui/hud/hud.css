@@ -1,0 +1,22 @@
+/* HUD смотрителя (канвас 17-c-hud): песок в часах падает покадрово, на паузе замирает */
+@keyframes hgFall {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+.hg-grain {
+  animation: hgFall 1s steps(4) infinite;
+}
+.hud-paused .hg-grain {
+  animation: none;
+}
+
+/* Пауза (канвас 00-hall): корень приложения замораживает все спрайты */
+.is-paused * {
+  animation-play-state: paused !important;
+}
