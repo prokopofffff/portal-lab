@@ -34,6 +34,12 @@ button {
   outline-offset: 2px;
 }
 
+/* Пауза (канвас 00-hall, .is-paused): замирают спрайты и песок в часах, но не запись книги */
+.is-paused :is(.px-portal, .px-rune, .px-risk-tag, .px-bar, .px-creatures, .hg-grain),
+.is-paused :is(.px-portal, .px-rune, .px-risk-tag, .px-bar, .px-creatures) * {
+  animation-play-state: paused !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

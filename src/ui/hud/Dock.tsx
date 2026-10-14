@@ -52,7 +52,10 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
         borderTop: '4px solid var(--c-edge)',
         boxShadow: 'inset 0 4px 0 var(--c-well)',
         fontFamily: 'var(--f-ui)',
-        position: 'relative',
+        // Док прилипает к низу, как HUD к верху; он же опора для кнопки печати
+        position: 'sticky',
+        bottom: 0,
+        zIndex: 10,
       }}
     >
       <nav aria-label="Разделы" style={{ display: 'flex', gap: 12 }}>

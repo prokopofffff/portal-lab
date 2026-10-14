@@ -397,6 +397,10 @@ export function Hud() {
     <header
       className={paused ? 'hud-paused' : 'hud-live'}
       style={{
+        // Spec §9: HUD всегда виден — прилипает к верху при прокрутке экрана
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
         flex: 'none',
         width: '100%',
         boxSizing: 'border-box',

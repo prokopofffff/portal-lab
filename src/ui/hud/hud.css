@@ -15,8 +15,3 @@
 .hud-paused .hg-grain {
   animation: none;
 }
-
-/* Пауза (канвас 00-hall): корень приложения замораживает все спрайты */
-.is-paused * {
-  animation-play-state: paused !important;
-}

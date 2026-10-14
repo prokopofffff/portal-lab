@@ -129,7 +129,7 @@ describe('App: HUD, док и пауза', () => {
     expect(screen.getByRole('navigation', { name: 'Разделы' })).toBeInTheDocument()
   })
 
-  it('пауза: корень приложения получает is-paused и замораживает анимации', async () => {
+  it('пауза: корень приложения получает is-paused и замораживает спрайты', async () => {
     const { container } = renderApp()
     const root = container.firstElementChild!
     expect(root).not.toHaveClass('is-paused')
@@ -148,7 +148,7 @@ describe('App: HUD, док и пауза', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Запечатать лабораторию' }))
 
     expect(confirm).toHaveBeenCalledWith(
-      'Запечатать лабораторию? Все порталы, журнал и время будут удалены, штат вернётся к трём наблюдателям.',
+      'Запечатать лабораторию? Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.',
     )
     expect(store.getState().lab.time).toBe(0)
     expect(store.getState().lab.portals).toEqual([])
