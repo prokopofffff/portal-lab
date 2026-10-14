@@ -3,6 +3,8 @@ import { execute, type Command, type DomainEvent } from './commands'
 import { CONFIG } from './config'
 import type { Lab, LogEntry, LogKind } from './lab'
 import type { Rng } from './rng'
+import { RISK_LEVEL_LABELS } from './risk'
+import { tick, type TickEvent } from './tick'
 
 // rejection — причина отказа; тогда events пуст, а лаборатория отличается только записью в журнале
 export type DispatchResult = { lab: Lab; events: DomainEvent[]; rejection?: string }
@@ -29,6 +31,13 @@ export function dispatch(lab: Lab, command: Command, rng: Rng, now: number): Dis
   }
 
   const entries = result.events.map((event) => actionEntry(result.lab, event, now))
+  return { lab: { ...result.lab, log: append(result.lab.log, entries) }, events: result.events }
+}
+
+// Тик + записи журнала вида 'system' (spec §4, §8); now — реальное время, мс
+export function advance(lab: Lab, now: number): { lab: Lab; events: TickEvent[] } {
+  const result = tick(lab)
+  const entries = result.events.map((event) => systemEntry(result.lab.time, event, now))
   return { lab: { ...result.lab, log: append(result.lab.log, entries) }, events: result.events }
 }
 
@@ -63,5 +72,53 @@ function actionEntry(lab: Lab, event: DomainEvent, now: number): LogEntry {
     world: event.world,
     kind: 'action',
     text: `Открыт портал ${event.portal} (${event.world}) — ${visit}`,
+  }
+}
+
+// Текст записи по событию тика (spec §8); time — время после тика
+function systemEntry(time: number, event: TickEvent, now: number): LogEntry {
+  const base = { time, realTime: now, kind: 'system' as const }
+  switch (event.type) {
+    case 'hireCompleted':
+      return {
+        ...base,
+        portal: null,
+        world: null,
+        text: 'Наём завершён: свободных наблюдателей +1',
+      }
+    case 'creatureStudied': {
+      const { portal, world, studied, creatures } = event
+      const text = `${portal} (${world}): изучено существо — ${studied} из ${creatures}`
+      return { ...base, portal, world, text }
+    }
+    case 'worldStudied': {
+      const { world, creatures, returned } = event
+      const text = `Мир ${world} изучен: все существа (${creatures}) — наблюдатели вернулись: ${returned}`
+      return { ...base, portal: null, world, text }
+    }
+    case 'portalCollapsed': {
+      const { portal, world, cause } = event
+      const reason = cause === 'time' ? 'время вышло' : 'стабильность упала до 0'
+      return { ...base, portal, world, text: `${portal} (${world}) схлопнулся: ${reason}` }
+    }
+    case 'observersLost': {
+      const { portal, world, count } = event
+      return {
+        ...base,
+        portal,
+        world,
+        text: `${portal} (${world}): потеряно наблюдателей — ${count}`,
+      }
+    }
+    case 'riskLevelChanged': {
+      const { portal, world, from, to } = event
+      const text = `${portal} (${world}): уровень риска: ${RISK_LEVEL_LABELS[from]} → ${RISK_LEVEL_LABELS[to]}`
+      return { ...base, portal, world, text }
+    }
+    case 'acceptanceRevoked': {
+      const { portal, world, acceptedAt, level } = event
+      const text = `${portal} (${world}): принятие снято — уровень риска вырос: ${RISK_LEVEL_LABELS[acceptedAt]} → ${RISK_LEVEL_LABELS[level]}`
+      return { ...base, portal, world, text }
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { dispatch, filterLog } from './journal'
-import { createLab, type Lab, type LogEntry } from './lab'
+import { advance, dispatch, filterLog } from './journal'
+import { createLab, type Lab, type LogEntry, type Portal } from './lab'
 import type { Rng } from './rng'
 
 // ГСЧ на нижних границах: мир всегда Пепельный Шпиль, метрики минимальные
@@ -160,6 +160,233 @@ describe('filterLog: история портала и мира (spec §8)', () =
     expect(texts(filterLog(log, { world: 'Пепельные Топи', kind: 'action' }))).toEqual([
       'открыт ПТ-420-1',
       'открыт ПТ-420-2',
+    ])
+  })
+})
+
+// Открытый портал без наблюдателей; переопределения задают нужную метрику
+function openPortal(overrides: Partial<Portal> = {}): Portal {
+  return {
+    name: 'ПШ-449-1',
+    world: 'Пепельный Шпиль',
+    status: 'open',
+    arch: 0,
+    energy: 80,
+    stability: 50,
+    timeLeft: 100,
+    observers: 0,
+    studyProgress: 0,
+    cooldown: 0,
+    questioned: null,
+    acceptedAt: null,
+    ...overrides,
+  }
+}
+
+// Лаборатория с порталами и миром «Пепельный Шпиль» (4 существа, изучено 1)
+function labWith(portals: Portal[], overrides: Partial<Lab> = {}): Lab {
+  return {
+    ...createLab(),
+    portals,
+    worlds: {
+      'Пепельный Шпиль': {
+        name: 'Пепельный Шпиль',
+        code: 'ПШ-449',
+        creatures: 4,
+        studied: 1,
+        visits: 1,
+      },
+    },
+    ...overrides,
+  }
+}
+
+// Ожидаемая системная запись тика
+function systemEntry(
+  time: number,
+  portal: string | null,
+  world: string | null,
+  text: string,
+): LogEntry {
+  return { time, realTime: NOW, portal, world, kind: 'system', text }
+}
+
+describe('advance: системные записи тика (spec §4, §8)', () => {
+  it('завершение найма: запись без портала и мира, время — после тика', () => {
+    const lab = labWith([], { time: 9, staff: { free: 2, hireTicksLeft: 1, lost: 0 } })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(10, null, null, 'Наём завершён: свободных наблюдателей +1'),
+    ])
+  })
+
+  it('изучено существо: портал, мир и счёт «изучено из всего»', () => {
+    // Два наблюдателя, прогресс 18 + 2 = 20 — порог существа; мир: 1 → 2 из 4
+    const lab = labWith([openPortal({ observers: 2, studyProgress: 18 })], { time: 4 })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(
+        5,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль): изучено существо — 2 из 4',
+      ),
+    ])
+  })
+
+  it('мир изучен: все существа и число вернувшихся наблюдателей, после записи об изучении', () => {
+    // Изучено 3 из 4, два наблюдателя доводят прогресс до порога — последнее существо
+    const lab = labWith([openPortal({ observers: 2, studyProgress: 18 })], {
+      time: 4,
+      worlds: {
+        'Пепельный Шпиль': {
+          name: 'Пепельный Шпиль',
+          code: 'ПШ-449',
+          creatures: 4,
+          studied: 3,
+          visits: 1,
+        },
+      },
+    })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(
+        5,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль): изучено существо — 4 из 4',
+      ),
+      systemEntry(
+        5,
+        null,
+        'Пепельный Шпиль',
+        'Мир Пепельный Шпиль изучен: все существа (4) — наблюдатели вернулись: 2',
+      ),
+    ])
+  })
+
+  it('схлопывание по времени: портал, мир и причина', () => {
+    const lab = labWith([openPortal({ timeLeft: 1 })], { time: 20 })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(
+        21,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль) схлопнулся: время вышло',
+      ),
+    ])
+  })
+
+  it('схлопывание по стабильности: причина — стабильность упала до 0', () => {
+    const lab = labWith([openPortal({ stability: 0.1 })], { time: 20 })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(
+        21,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль) схлопнулся: стабильность упала до 0',
+      ),
+    ])
+  })
+
+  it('потеряны наблюдатели: количество в записи', () => {
+    const lab = labWith([openPortal({ timeLeft: 1, observers: 2 })], { time: 20 })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log.at(-1)).toEqual(
+      systemEntry(
+        21,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль): потеряно наблюдателей — 2',
+      ),
+    )
+  })
+
+  it('смена уровня риска: от какого к какому', () => {
+    // Энергия 90, время 91: балл 54 (средний) → после тика 55 (высокий)
+    const lab = labWith([openPortal({ energy: 90, timeLeft: 91 })], { time: 20 })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(
+        21,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль): уровень риска: средний → высокий',
+      ),
+    ])
+  })
+
+  it('принятие снято: уровень принятия и новый уровень, после записи о смене уровня', () => {
+    // Принят на низком, тик поднимает средний → высокий: смена уровня, затем снятие принятия
+    const lab = labWith([openPortal({ energy: 90, timeLeft: 91, acceptedAt: 'low' })], { time: 20 })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.log).toEqual([
+      systemEntry(
+        21,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль): уровень риска: средний → высокий',
+      ),
+      systemEntry(
+        21,
+        'ПШ-449-1',
+        'Пепельный Шпиль',
+        'ПШ-449-1 (Пепельный Шпиль): принятие снято — уровень риска вырос: низкий → высокий',
+      ),
+    ])
+  })
+
+  it('тик без событий не добавляет записей, но двигает время', () => {
+    const entry = systemEntry(3, null, null, 'Старая запись')
+    const lab = labWith([openPortal()], { time: 7, log: [entry] })
+
+    const result = advance(lab, NOW)
+
+    expect(result.lab.time).toBe(8)
+    expect(result.lab.log).toEqual([entry])
+    expect(result.events).toEqual([])
+  })
+
+  it('журнал обрезается до 500 записей, если тик дописывает сверх лимита', () => {
+    const lab = {
+      ...labWith([openPortal({ timeLeft: 1, observers: 2 })]),
+      log: labWithLog(500).log,
+    }
+
+    const { log } = advance(lab, NOW).lab
+
+    // Тик добавил две записи (схлопнулся, потеряно) — вытеснены «запись 0» и «запись 1»
+    expect(log).toHaveLength(500)
+    expect(log[0]!.text).toBe('запись 2')
+    expect(log.at(-1)!.text).toBe('ПШ-449-1 (Пепельный Шпиль): потеряно наблюдателей — 2')
+  })
+
+  it('несколько событий тика идут в журнале в порядке событий', () => {
+    const lab = labWith([openPortal({ timeLeft: 1, observers: 2 })], { time: 20 })
+
+    const { log } = advance(lab, NOW).lab
+
+    expect(log.map((e) => e.text)).toEqual([
+      'ПШ-449-1 (Пепельный Шпиль) схлопнулся: время вышло',
+      'ПШ-449-1 (Пепельный Шпиль): потеряно наблюдателей — 2',
     ])
   })
 })
