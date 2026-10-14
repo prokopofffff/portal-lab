@@ -41,7 +41,13 @@ describe('execute openPortal: первое открытие (spec §2, §5)', ()
       creatures: 0,
       studied: 0,
       visits: 1,
+      lastVisit: 0,
     })
+  })
+
+  it('время последнего посещения — время лаборатории на момент открытия', () => {
+    const lab = { ...createLab(), time: 77 }
+    expect(opened(lab, edgeRng('min')).worlds['Пепельный Шпиль']?.lastVisit).toBe(77)
   })
 
   it('метрики и существа доходят до верхних границ диапазонов', () => {
@@ -92,13 +98,14 @@ describe('execute openPortal: повторное посещение (spec §2.1,
   const sameWorldMaxRng: Rng = { ...edgeRng('max'), pick: (list) => list[0]! }
 
   it('сохраняет существ и изученных мира, посещений +1', () => {
-    const lab = opened(labWithKnownWorld(), sameWorldMaxRng)
+    const lab = opened({ ...labWithKnownWorld(), time: 25 }, sameWorldMaxRng)
     expect(lab.worlds['Пепельный Шпиль']).toEqual({
       name: 'Пепельный Шпиль',
       code: 'ПШ-449',
       creatures: 9,
       studied: 4,
       visits: 2,
+      lastVisit: 25,
     })
   })
 
@@ -435,6 +442,7 @@ function labWithWorld(portals: Portal[], overrides: Partial<Lab> = {}): Lab {
         creatures: 4,
         studied: 1,
         visits: 1,
+        lastVisit: 0,
       },
     },
     ...overrides,
@@ -486,7 +494,14 @@ describe('execute sendObserver: отказы (spec §5)', () => {
 describe('execute sendObserver: отказы мира, места и штата (spec §5)', () => {
   const send = { type: 'sendObserver', portal: 'ПШ-449-1' } as const
   const world = (creatures: number, studied: number) => ({
-    'Пепельный Шпиль': { name: 'Пепельный Шпиль', code: 'ПШ-449', creatures, studied, visits: 1 },
+    'Пепельный Шпиль': {
+      name: 'Пепельный Шпиль',
+      code: 'ПШ-449',
+      creatures,
+      studied,
+      visits: 1,
+      lastVisit: 0,
+    },
   })
 
   it('в мире нет существ: нечего изучать', () => {

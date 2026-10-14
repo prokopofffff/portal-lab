@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createLab } from '../domain'
-import { loadGame } from './persistence'
-import { createLabStore, shallowEqual } from './store'
+import { loadGame, STORAGE_KEY } from './persistence'
+import { createLabStore, shallowEqual, SPEEDS } from './store'
 
 const NOW = Date.UTC(2026, 9, 14, 12, 0, 0)
 
@@ -17,7 +17,7 @@ describe('store лаборатории (spec §1, §5, §8)', () => {
   it('без сохранения начинает с пустой лаборатории и без отказа', () => {
     const store = newStore()
 
-    expect(store.getState()).toEqual({ lab: createLab(), rejection: null })
+    expect(store.getState()).toEqual({ lab: createLab(), rejection: null, speed: 1 })
   })
 
   it('успешная команда меняет лабораторию, уведомляет один раз и сохраняет игру', () => {
@@ -68,6 +68,38 @@ describe('store лаборатории (spec §1, §5, §8)', () => {
 
     expect(reloaded.getState().lab.portals).toHaveLength(2)
     expect(reloaded.getState().lab.portals).toEqual(uninterrupted.getState().lab.portals)
+  })
+
+  it('SPEEDS — пауза, ×1, ×5, ×20 (spec §2.3)', () => {
+    expect(SPEEDS).toEqual([0, 1, 5, 20])
+  })
+
+  it('setSpeed меняет скорость и уведомляет; та же скорость — без уведомления', () => {
+    const store = newStore()
+    let notified = 0
+    store.subscribe(() => notified++)
+
+    store.setSpeed(5)
+    expect(store.getState().speed).toBe(5)
+    expect(notified).toBe(1)
+
+    const state = store.getState()
+    store.setSpeed(5)
+    expect(store.getState()).toBe(state)
+    expect(notified).toBe(1)
+
+    store.setSpeed(0)
+    expect(store.getState().speed).toBe(0)
+    expect(notified).toBe(2)
+  })
+
+  it('скорость не сохраняется: новая игра над тем же хранилищем идёт на ×1', () => {
+    const before = newStore()
+    before.setSpeed(20)
+    before.advance(1)
+
+    expect(newStore().getState().speed).toBe(1)
+    expect(localStorage.getItem(STORAGE_KEY)).not.toContain('speed')
   })
 
   it('advance(3) — три тика, одно уведомление, игра сохранена', () => {

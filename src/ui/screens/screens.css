@@ -1,0 +1,35 @@
+/* Срезанные «пиксельные» углы карточек и страниц (канвас, класс nc) */
+.px-notch {
+  clip-path: polygon(
+    0 6px,
+    6px 6px,
+    6px 0,
+    calc(100% - 6px) 0,
+    calc(100% - 6px) 6px,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    6px calc(100% - 6px),
+    0 calc(100% - 6px)
+  );
+}
+
+/* Книга журнала (канвас 14): запись «пишется» чернилами слева направо */
+@keyframes inkIn {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.journal-entry.writing {
+  animation: inkIn 2.4s steps(36) 1;
+}
+
+/* Закладка-ленточка с ласточкиным хвостом (канвас 14, класс tab) */
+.journal-tab {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 10px), 0 100%);
+}

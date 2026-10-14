@@ -2,6 +2,7 @@
 import {
   advance as advanceLab,
   createLab,
+  CONFIG,
   createRng,
   dispatch as dispatchCommand,
   type Command,
@@ -17,9 +18,15 @@ export interface Rejection {
   text: string
 }
 
+// Скорость симуляции: 0 — пауза, иначе тиков в секунду (spec §2.3)
+export type Speed = (typeof CONFIG.speeds)[number]
+export const SPEEDS: readonly Speed[] = CONFIG.speeds
+
 export interface LabState {
   lab: Lab
   rejection: Rejection | null
+  // Не сохраняется: после загрузки игра идёт на ×1
+  speed: Speed
 }
 
 export interface LabStore {
@@ -28,6 +35,7 @@ export interface LabStore {
   dispatch(command: Command): DispatchResult
   advance(ticks?: number): void
   dismissRejection(): void
+  setSpeed(speed: Speed): void
 }
 
 // Поднимает игру из сохранения или начинает новую с seed (spec §1)
@@ -39,15 +47,19 @@ export function createLabStore(options: {
   const { storage, now } = options
   const save = loadGame(storage)
   const rng = createRng(save ? save.rngState : options.seed)
-  let state: LabState = { lab: save ? save.lab : createLab(), rejection: null }
+  let state: LabState = { lab: save ? save.lab : createLab(), rejection: null, speed: 1 }
   const listeners = new Set<() => void>()
   let lastRejectionId = 0
+
+  function notify(): void {
+    for (const listener of listeners) listener()
+  }
 
   // Новое состояние: автосохранение и уведомление подписчиков
   function commit(next: LabState): void {
     state = next
     saveGame(storage, { lab: state.lab, rngState: rng.state() })
-    for (const listener of listeners) listener()
+    notify()
   }
 
   return {
@@ -64,7 +76,7 @@ export function createLabStore(options: {
         result.rejection === undefined
           ? null
           : { id: ++lastRejectionId, command, text: result.rejection }
-      commit({ lab: result.lab, rejection })
+      commit({ ...state, lab: result.lab, rejection })
       return result
     },
     advance(ticks = 1) {
@@ -76,6 +88,12 @@ export function createLabStore(options: {
     dismissRejection() {
       if (state.rejection === null) return
       commit({ ...state, rejection: null })
+    },
+    // Скорость вне сохранения: только уведомление, без записи в хранилище
+    setSpeed(speed) {
+      if (state.speed === speed) return
+      state = { ...state, speed }
+      notify()
     },
   }
 }

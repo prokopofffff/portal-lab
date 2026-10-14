@@ -107,13 +107,14 @@ function openPortal(lab: Lab, rng: Rng): CommandResult {
   // Известный мир — новое посещение: существа и изученные не меняются (spec §2.1)
   const known = lab.worlds[worldName]
   const world: World = known
-    ? { ...known, visits: known.visits + 1 }
+    ? { ...known, visits: known.visits + 1, lastVisit: lab.time }
     : {
         name: worldName,
         code: worldCode(worldName),
         creatures: rng.int(spawn.worldCreatures.min, spawn.worldCreatures.max),
         studied: 0,
         visits: 1,
+        lastVisit: lab.time,
       }
 
   const portal: Portal = {
