@@ -63,6 +63,23 @@ export const colors = {
   rowStage: '#0f0c16',
   rowText: '#cbc2de',
   rowTitle: '#f4ecd8',
+  // книга журнала: дубовый стол, переплёт, закладки, подписи под книгой
+  desk: '#24160f',
+  deskSeamV: '#1c110b',
+  deskSeamH: '#1f130d',
+  bookCover: '#4a2f1c',
+  bookCoverShadow: '#170d08',
+  bookSpineLight: '#8d7040',
+  bookSpineDark: '#4a3418',
+  inkFaint: '#6b5c43', // в канвасе #8f7e60 (2.8:1), затемнено до 4.6:1
+  emptyIcon: '#b8a578', // значок пустой книги, только украшение
+  ribbonRejection: '#9b1c2c',
+  ribbonPortal: '#2f5fa8',
+  ribbonWorld: '#2c7449', // в канвасе #2f7a4f (подпись 4.4:1), затемнено до 4.8:1
+  ribbonLabel: '#f6e9d8',
+  onRibbon: '#ffffff',
+  legendRejection: '#ff8099',
+  legendSystem: '#b4a88a',
   // наблюдатели
   observerFree: '#7a9be0',
   observerOnSite: '#5fcf9a',
@@ -164,6 +181,17 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'статус портала в строке', fg: colors.rowText, bg: sprite.sill, min: 4.5 },
   { name: 'имя портала в строке', fg: colors.rowTitle, bg: sprite.sill, min: 4.5 },
   { name: 'процент изучения на клетке', fg: sprite.studyBadge, bg: colors.well, min: 4.5 },
+  { name: 'метка книги на столе', fg: colors.cellarLabel, bg: colors.desk, min: 4.5 },
+  { name: 'заголовок книги на столе', fg: colors.cellarTitle, bg: colors.desk, min: 4.5 },
+  { name: 'время записи на пергаменте', fg: colors.inkFaint, bg: colors.parchment, min: 4.5 },
+  { name: 'легенда: отказ на столе', fg: colors.legendRejection, bg: colors.desk, min: 4.5 },
+  { name: 'легенда: система на столе', fg: colors.legendSystem, bg: colors.desk, min: 4.5 },
+  { name: 'закладка «вид»: название', fg: colors.onRibbon, bg: colors.ribbonRejection, min: 4.5 },
+  { name: 'закладка «вид»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonRejection, min: 4.5 },
+  { name: 'закладка «портал»: название', fg: colors.onRibbon, bg: colors.ribbonPortal, min: 4.5 },
+  { name: 'закладка «портал»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonPortal, min: 4.5 },
+  { name: 'закладка «мир»: название', fg: colors.onRibbon, bg: colors.ribbonWorld, min: 4.5 },
+  { name: 'закладка «мир»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonWorld, min: 4.5 },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,

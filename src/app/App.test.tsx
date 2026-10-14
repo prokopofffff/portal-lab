@@ -81,7 +81,9 @@ describe('App: переходы между экранами', () => {
     expect(screen.getByRole('link', { name: 'Атлас' })).toHaveAttribute('aria-current', 'page')
 
     await userEvent.click(screen.getByRole('link', { name: 'Книга' }))
-    expect(screen.getByText('Книга журнала появится здесь.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'КНИГА ЖУРНАЛА' })).toBeInTheDocument()
+    expect(screen.getByText('разворот 1 · записей: 1')).toBeInTheDocument()
+    expect(screen.getByText('Открыт портал ПТ-420-1 — первое посещение')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('link', { name: 'Зал' }))
     expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()

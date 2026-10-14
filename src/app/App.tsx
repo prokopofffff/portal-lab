@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { AtlasScreen } from '../ui/screens/AtlasScreen'
+import { JournalScreen } from '../ui/screens/JournalScreen'
 import { PortalStub } from '../ui/screens/PortalStub'
 import { RouteLink } from '../ui/screens/RouteLink'
 import { WorldScreen } from '../ui/screens/WorldScreen'
@@ -170,7 +171,7 @@ function TempNav() {
   )
 }
 
-// Экран по текущему маршруту; книга журнала — заглушка до lab-9dr.9
+// Экран по текущему маршруту
 function Screen() {
   const route = useRoute()
   switch (route.screen) {
@@ -183,11 +184,7 @@ function Screen() {
     case 'portal':
       return <PortalStub portal={route.portal} />
     case 'journal':
-      return (
-        <main style={{ padding: '32px 40px' }}>
-          <p>Книга журнала появится здесь.</p>
-        </main>
-      )
+      return <JournalScreen />
   }
 }
 
