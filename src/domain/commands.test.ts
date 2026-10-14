@@ -341,10 +341,10 @@ describe('execute stabilize: отказы (spec §5)', () => {
     expect(result).toEqual({ rejection: 'Кулдаун стабилизации — осталось 12 мин' })
   })
 
-  it('стабильность ровно 95: стабилизировать не нужно', () => {
+  it('стабильность ровно 95: стабилизация запрещена', () => {
     const result = execute(labWithPortal({ stability: 95 }), stabilizeCommand, edgeRng('min'))
     expect(result).toEqual({
-      rejection: 'Стабильность 95% или выше — стабилизировать не нужно',
+      rejection: 'Стабильность 95% или выше — стабилизация запрещена',
     })
   })
 
@@ -403,7 +403,7 @@ describe('execute stabilize: перезарядка и время (spec §4, §5
 
   it('непрерывная стабилизация не делает портал вечным: каждый цикл времени остаётся меньше, портал схлопывается', () => {
     // Цикл: +20 за стабилизацию, −30 и больше за ожидание. Энергия 50 хватает на 5 стабилизаций.
-    // Стабильность после каждой возвращается к 100 и остывает на 0,2 / 0,15 / 0,1 / 0,05 за тик,
+    // Стабильность после первой — 85, после остальных — 100, и остывает на 0,2 / 0,15 / 0,1 / 0,05 за тик,
     // поэтому следующая возможна через 30, 34, 51 и 101 тик: 220, 220−30+20, 210−34+20, 196−51+20, 165−101+20
     let lab = labWithPortal({ energy: 50, stability: 60, timeLeft: 200 })
     const timeLeftAfterEach: number[] = []
@@ -635,7 +635,7 @@ describe('execute hireObserver (spec §2.3, §5)', () => {
   it('штат полон из свободных: пять из пяти', () => {
     const lab = { ...createLab(), staff: staffOf(5) }
     expect(execute(lab, hire, edgeRng('min'))).toEqual({
-      rejection: 'Штат полон: 5 из 5, включая наём в пути',
+      rejection: 'Штат полон: 5 из 5',
     })
   })
 
@@ -644,7 +644,7 @@ describe('execute hireObserver (spec §2.3, §5)', () => {
     const second = openPortalWith({ name: 'ПШ-449-2', arch: 1, observers: 1 })
     const lab = labWithWorld([openPortalWith({ observers: 2 }), second], { staff: staffOf(2) })
     expect(execute(lab, hire, edgeRng('min'))).toEqual({
-      rejection: 'Штат полон: 5 из 5, включая наём в пути',
+      rejection: 'Штат полон: 5 из 5',
     })
   })
 

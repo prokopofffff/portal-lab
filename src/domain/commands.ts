@@ -153,7 +153,7 @@ function stabilize(lab: Lab, name: string): CommandResult {
   }
   if (portal.stability >= forbiddenFromStability) {
     return {
-      rejection: `Стабильность ${forbiddenFromStability}% или выше — стабилизировать не нужно`,
+      rejection: `Стабильность ${forbiddenFromStability}% или выше — стабилизация запрещена`,
     }
   }
   const stabilized: Portal = {
@@ -241,7 +241,8 @@ function hireObserver(lab: Lab): CommandResult {
   const { staff, hire } = CONFIG
   const total = staffTotal(lab)
   if (total >= staff.max) {
-    return { rejection: `Штат полон: ${total} из ${staff.max}, включая наём в пути` }
+    const inTransit = lab.staff.hireTicksLeft > 0 ? ', включая наём в пути' : ''
+    return { rejection: `Штат полон: ${total} из ${staff.max}${inTransit}` }
   }
   if (lab.staff.hireTicksLeft > 0) {
     return { rejection: `Наём уже идёт — осталось ${lab.staff.hireTicksLeft} мин` }
@@ -266,10 +267,10 @@ function closePortal(lab: Lab, name: string): CommandResult {
     acceptedAt: null,
     studyProgress: 0,
   }
-  const leftUnstudied = confirmation && {
-    unstudied: confirmation.unstudied,
-    creatures: confirmation.creatures,
-  }
+  // Без диалога подтверждения (всё изучено) ничего не осталось; `world` из подтверждения не нужен
+  const leftUnstudied = confirmation
+    ? { unstudied: confirmation.unstudied, creatures: confirmation.creatures }
+    : null
   return {
     lab: withPortal(lab, closed),
     events: [{ type: 'portalClosed', portal: portal.name, world: portal.world, leftUnstudied }],

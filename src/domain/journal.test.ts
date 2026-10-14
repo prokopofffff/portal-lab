@@ -478,6 +478,16 @@ describe('dispatch stabilize: журнал (spec §5, §8)', () => {
     expect(result.lab.portals).toEqual(lab.portals)
   })
 
+  it('отказ при стабильности 95%: запись о запрете стабилизации', () => {
+    const lab = labWith([openPortal({ stability: 95 })], { time: 12 })
+
+    const { log } = dispatch(lab, stabilize, minRng, NOW).lab
+
+    expect(log.map((e) => e.text)).toEqual([
+      'Отказ «Стабилизировать» ПШ-449-1 (Пепельный Шпиль): стабильность 95% или выше — стабилизация запрещена',
+    ])
+  })
+
   it('отказ для закрытого портала: мир берётся из портала', () => {
     const lab = labWith([openPortal({ status: 'closed' })], { time: 12 })
 
@@ -638,9 +648,7 @@ describe('dispatch hireObserver: журнал (spec §5, §8)', () => {
 
     const { log } = dispatch(lab, hire, minRng, NOW).lab
 
-    expect(log.map((e) => e.text)).toEqual([
-      'Отказ «Нанять наблюдателя»: штат полон: 5 из 5, включая наём в пути',
-    ])
+    expect(log.map((e) => e.text)).toEqual(['Отказ «Нанять наблюдателя»: штат полон: 5 из 5'])
   })
 })
 
