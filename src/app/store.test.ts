@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { createLab } from '../domain'
+import { assessRisk, createLab } from '../domain'
 import { loadGame, STORAGE_KEY } from './persistence'
 import { createLabStore, shallowEqual, SPEEDS } from './store'
 
@@ -178,6 +178,35 @@ describe('store лаборатории (spec §1, §5, §8)', () => {
     store.advance(1)
 
     expect(notified).toBe(0)
+  })
+})
+
+describe('воспроизводимость по seed (spec §1, §10)', () => {
+  // Пара seed/N для e2e: на 50-м тике первый портал уже критический, но ещё открыт
+  const CRITICAL_SEED = 3
+  const CRITICAL_TICKS = 50
+
+  function freshStore(seed: number) {
+    localStorage.clear()
+    return createLabStore({ storage: localStorage, seed, now: () => NOW })
+  }
+
+  function playFrom(seed: number, ticks: number) {
+    const store = freshStore(seed)
+    store.dispatch({ type: 'openPortal' })
+    store.advance(ticks)
+    return store.getState().lab
+  }
+
+  it('тот же seed и те же команды дают одинаковую лабораторию', () => {
+    expect(playFrom(CRITICAL_SEED, CRITICAL_TICKS)).toEqual(playFrom(CRITICAL_SEED, CRITICAL_TICKS))
+  })
+
+  it('фиксированный seed и N тиков дают открытый критический портал', () => {
+    const portal = playFrom(CRITICAL_SEED, CRITICAL_TICKS).portals[0]
+
+    expect(portal?.status).toBe('open')
+    expect(portal && assessRisk(portal).level).toBe('critical')
   })
 })
 

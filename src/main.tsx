@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './app/App'
 import { LabStoreProvider } from './app/hooks'
+import { installTestMode, parseLaunch } from './app/launch'
 import { startSimulation } from './app/simulation'
 import { createLabStore } from './app/store'
 import { applyTheme } from './ui/theme/applyTheme'
@@ -9,7 +10,13 @@ import './ui/theme/global.css'
 
 applyTheme(document.documentElement)
 
-const store = createLabStore({ storage: localStorage, seed: Date.now() >>> 0, now: Date.now })
+const launch = parseLaunch(location.search)
+const store = createLabStore({
+  storage: localStorage,
+  seed: launch.seed ?? Date.now() >>> 0,
+  now: Date.now,
+})
+if (launch.test) installTestMode(store, window)
 startSimulation(store, {
   requestAnimationFrame: window.requestAnimationFrame.bind(window),
   cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
