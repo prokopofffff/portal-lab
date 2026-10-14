@@ -1,0 +1,8 @@
+dist
+coverage
+playwright-report
+test-results
+.beads
+docs
+*.md
+package-lock.json
