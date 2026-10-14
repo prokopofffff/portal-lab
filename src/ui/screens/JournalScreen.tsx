@@ -51,6 +51,12 @@ const ruledPage: CSSProperties = {
   flexDirection: 'column',
 }
 
+// Пишущаяся запись и номер письма: у каждой новой записи он свой
+interface Writing {
+  entry: LogEntry
+  id: number
+}
+
 const pageNumber: CSSProperties = {
   alignSelf: 'center',
   fontFamily: 'var(--f-ink)',
@@ -67,6 +73,7 @@ const flipButton: CSSProperties = {
   color: 'var(--c-parchment)',
   background: 'var(--c-tab)',
   border: '3px solid var(--c-parchment-edge)',
+  cursor: 'pointer',
 }
 
 // Реальное время записи как ЧЧ:ММ по местному времени
@@ -163,7 +170,7 @@ function Page({
   number: number
   side: 'left' | 'right'
   entries: LogEntry[]
-  writing: LogEntry | null
+  writing: Writing | null
   onWritten: () => void
   children?: ReactNode
 }) {
@@ -190,7 +197,14 @@ function Page({
           }}
         >
           {entries.map((entry, i) => (
-            <Entry key={i} entry={entry} writing={entry === writing} onWritten={onWritten} />
+            <Entry
+              // Строка пишущейся записи получает ключ на каждую запись: на пределе журнала новая запись
+              // занимает прежнюю позицию, и без свежего узла анимация бы не началась заново
+              key={entry === writing?.entry ? `w${writing.id}` : i}
+              entry={entry}
+              writing={entry === writing?.entry}
+              onWritten={onWritten}
+            />
           ))}
         </ol>
         {children}
@@ -435,10 +449,12 @@ export function JournalScreen() {
   // «Пишется» только запись, появившаяся при открытой книге (сравнение по ссылке на запись)
   const newest = log.at(-1) ?? null
   const [seen, setSeen] = useState(newest)
-  const [writing, setWriting] = useState<LogEntry | null>(null)
+  const [writing, setWriting] = useState<Writing | null>(null)
+  const [writes, setWrites] = useState(0)
   if (newest !== seen) {
     setSeen(newest)
-    setWriting(newest)
+    setWriting(newest === null ? null : { entry: newest, id: writes + 1 })
+    setWrites(writes + 1)
   }
 
   const entries = filterLog(log, { kind, portal, world })
@@ -590,7 +606,11 @@ export function JournalScreen() {
             aria-label="Предыдущий разворот"
             disabled={spread === 0}
             onClick={() => flip(spread - 1)}
-            style={{ ...flipButton, opacity: spread === 0 ? 0.45 : 1 }}
+            style={{
+              ...flipButton,
+              opacity: spread === 0 ? 0.45 : 1,
+              cursor: spread === 0 ? 'default' : 'pointer',
+            }}
           >
             ‹ листать назад
           </button>
@@ -600,7 +620,11 @@ export function JournalScreen() {
             aria-label="Следующий разворот"
             disabled={spread === spreads - 1}
             onClick={() => flip(spread + 1)}
-            style={{ ...flipButton, opacity: spread === spreads - 1 ? 0.45 : 1 }}
+            style={{
+              ...flipButton,
+              opacity: spread === spreads - 1 ? 0.45 : 1,
+              cursor: spread === spreads - 1 ? 'default' : 'pointer',
+            }}
           >
             листать вперёд ›
           </button>

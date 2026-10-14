@@ -305,6 +305,25 @@ describe('Книга журнала (spec §8, §9)', () => {
       expect(rejection()).not.toHaveClass(WRITING)
     })
 
+    it('на пределе журнала (500) каждая новая запись получает свежую анимацию', () => {
+      const { store } = renderJournal(log(500))
+      const newestRow = () => screen.getAllByRole('listitem').at(-1)!
+
+      reject(store)
+      const first = newestRow()
+      expect(first).toHaveClass(WRITING)
+      reject(store, 'другого нет')
+      const second = newestRow()
+
+      // Старая запись вытеснила самую раннюю, но строка новой — другой узел с нуля
+      expect(second).not.toBe(first)
+      expect(second).toHaveClass(WRITING)
+      // Конец анимации прежней записи не гасит письмо новой
+      fireEvent(first, new Event('webkitAnimationEnd', { bubbles: true }))
+      expect(newestRow()).toHaveClass(WRITING)
+      expect(document.querySelectorAll(`.${WRITING}`)).toHaveLength(1)
+    })
+
     it('новая запись, не прошедшая фильтр, не пишется потом при его снятии', async () => {
       const { store } = renderJournal(log(3))
       await pickFilter(/Вид записи/, 'действие')
