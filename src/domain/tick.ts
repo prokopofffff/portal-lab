@@ -3,6 +3,15 @@ import { CONFIG } from './config'
 import type { Lab, Portal, Staff, World } from './lab'
 import { assessRisk, type RiskLevel } from './risk'
 
+// Смена уровня риска открытого портала: бывает и в тике, и от команды (стабилизация)
+export type RiskLevelChanged = {
+  type: 'riskLevelChanged'
+  portal: string
+  world: string
+  from: RiskLevel
+  to: RiskLevel
+}
+
 // События тика: журнал по ним пишет advance (journal.ts), сам тик журнал не трогает
 export type TickEvent =
   | { type: 'hireCompleted' }
@@ -10,7 +19,7 @@ export type TickEvent =
   | { type: 'worldStudied'; world: string; creatures: number; returned: number }
   | { type: 'portalCollapsed'; portal: string; world: string; cause: 'time' | 'stability' }
   | { type: 'observersLost'; portal: string; world: string; count: number }
-  | { type: 'riskLevelChanged'; portal: string; world: string; from: RiskLevel; to: RiskLevel }
+  | RiskLevelChanged
   | {
       type: 'acceptanceRevoked'
       portal: string
@@ -159,13 +168,22 @@ function collapseEvents(portal: Portal): TickEvent[] {
 // Порядок уровней риска: чем больше число, тем выше уровень
 const LEVEL_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 }
 
+// Событие смены уровня риска у портала, открытого до и после изменения; null — уровень тот же
+export function riskLevelChange(before: Portal, after: Portal): RiskLevelChanged | null {
+  if (before.status !== 'open' || after.status !== 'open') return null
+  const from = assessRisk(before).level
+  const to = assessRisk(after).level
+  if (from === to) return null
+  return { type: 'riskLevelChanged', portal: after.name, world: after.world, from, to }
+}
+
 // Шаг 5: открытый до и после тика портал — событие при смене уровня; принятие снимается при росте выше него
 function reassess(before: Portal, after: Portal, events: TickEvent[]): Portal {
   if (before.status !== 'open' || after.status !== 'open') return after
-  const from = assessRisk(before).level
-  const to = assessRisk(after).level
+  const change = riskLevelChange(before, after)
+  if (change) events.push(change)
   const { name: portal, world } = after
-  if (from !== to) events.push({ type: 'riskLevelChanged', portal, world, from, to })
+  const to = assessRisk(after).level
   const { acceptedAt } = after
   if (acceptedAt === null || LEVEL_RANK[to] <= LEVEL_RANK[acceptedAt]) return after
   events.push({ type: 'acceptanceRevoked', portal, world, acceptedAt, level: to })
