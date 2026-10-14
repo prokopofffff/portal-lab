@@ -26,6 +26,14 @@
           { "name": "window", "message": "Домен не знает о браузере." },
           { "name": "document", "message": "Домен не знает о браузере." },
           { "name": "localStorage", "message": "Сохранение — через адаптер вне домена." }
+        ],
+        "no-restricted-properties": [
+          "error",
+          {
+            "object": "Math",
+            "property": "random",
+            "message": "Случайность — только через Rng из домена."
+          }
         ]
       }
     }
