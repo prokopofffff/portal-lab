@@ -7,7 +7,12 @@ import { riskLevelChange, type RiskLevelChanged } from './tick'
 import { WORLD_NAMES, portalName, worldCode } from './worlds'
 
 export type Command =
-  { type: 'openPortal' } | { type: 'sealLab' } | { type: 'stabilize'; portal: string }
+  | { type: 'openPortal' }
+  | { type: 'sealLab' }
+  | { type: 'stabilize'; portal: string }
+  | { type: 'sendObserver'; portal: string }
+  | { type: 'recallObservers'; portal: string }
+  | { type: 'hireObserver' }
 
 export type DomainEvent =
   | { type: 'portalOpened'; portal: string; world: string; firstVisit: boolean }
@@ -18,6 +23,9 @@ export type DomainEvent =
       scoreFrom: number
       scoreTo: number
     }
+  | { type: 'observerSent'; portal: string; world: string; onSite: number }
+  | { type: 'observersRecalled'; portal: string; world: string; count: number }
+  | { type: 'hireStarted'; ticks: number }
   | RiskLevelChanged
 
 export type CommandResult = { lab: Lab; events: DomainEvent[] } | { rejection: string }
@@ -30,6 +38,12 @@ export function execute(lab: Lab, command: Command, rng: Rng): CommandResult {
       return { lab: createLab(), events: [] }
     case 'stabilize':
       return stabilize(lab, command.portal)
+    case 'sendObserver':
+      return sendObserver(lab, command.portal)
+    case 'recallObservers':
+      return recallObservers(lab, command.portal)
+    case 'hireObserver':
+      return hireObserver(lab)
   }
 }
 
@@ -138,5 +152,80 @@ function stabilize(lab: Lab, name: string): CommandResult {
   return {
     lab: withPortal(lab, stabilized),
     events: levelChange ? [stabilizedEvent, levelChange] : [stabilizedEvent],
+  }
+}
+
+// Отправка наблюдателя на портал (spec §5): свободный сотрудник становится наблюдателем на месте
+function sendObserver(lab: Lab, name: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  if (assessRisk(portal).level === 'critical') {
+    return { rejection: 'Риск критический — наблюдателей не отправляют' }
+  }
+  // Открытый портал всегда ведёт в известный лаборатории мир
+  const world = lab.worlds[portal.world]!
+  if (world.creatures === 0) return { rejection: 'Нечего изучать: в мире нет существ' }
+  if (world.studied >= world.creatures) {
+    return { rejection: 'Нечего изучать: все существа мира изучены' }
+  }
+  const { maxObserversPerPortal } = CONFIG
+  if (portal.observers >= maxObserversPerPortal) {
+    return { rejection: `На месте уже ${maxObserversPerPortal} наблюдателя` }
+  }
+  if (lab.staff.free === 0) return { rejection: 'Нет свободных наблюдателей' }
+  const sent: Portal = { ...portal, observers: portal.observers + 1 }
+  return {
+    lab: { ...withPortal(lab, sent), staff: { ...lab.staff, free: lab.staff.free - 1 } },
+    events: [
+      { type: 'observerSent', portal: portal.name, world: portal.world, onSite: sent.observers },
+    ],
+  }
+}
+
+// Отзыв наблюдателей с портала (spec §5): они свободны, прогресс текущего существа теряется
+function recallObservers(lab: Lab, name: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  if (portal.observers === 0) return { rejection: 'На месте никого нет' }
+  const recalled: Portal = { ...portal, observers: 0, studyProgress: 0 }
+  return {
+    lab: {
+      ...withPortal(lab, recalled),
+      staff: { ...lab.staff, free: lab.staff.free + portal.observers },
+    },
+    events: [
+      {
+        type: 'observersRecalled',
+        portal: portal.name,
+        world: portal.world,
+        count: portal.observers,
+      },
+    ],
+  }
+}
+
+// Штат (spec §2.3): свободные, наблюдатели на открытых порталах и сотрудник, которого нанимают
+function staffTotal(lab: Lab): number {
+  const onSite = lab.portals
+    .filter((p) => p.status === 'open')
+    .reduce((sum, p) => sum + p.observers, 0)
+  return lab.staff.free + onSite + (lab.staff.hireTicksLeft > 0 ? 1 : 0)
+}
+
+// Наём наблюдателя (spec §5): сотрудник станет свободным через CONFIG.hire.ticks тиков (см. tick)
+function hireObserver(lab: Lab): CommandResult {
+  const { staff, hire } = CONFIG
+  const total = staffTotal(lab)
+  if (total >= staff.max) {
+    return { rejection: `Штат полон: ${total} из ${staff.max}, включая наём в пути` }
+  }
+  if (lab.staff.hireTicksLeft > 0) {
+    return { rejection: `Наём уже идёт — осталось ${lab.staff.hireTicksLeft} мин` }
+  }
+  return {
+    lab: { ...lab, staff: { ...lab.staff, hireTicksLeft: hire.ticks } },
+    events: [{ type: 'hireStarted', ticks: hire.ticks }],
   }
 }

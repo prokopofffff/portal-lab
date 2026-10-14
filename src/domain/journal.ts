@@ -14,6 +14,9 @@ const COMMAND_LABELS: Record<Command['type'], string> = {
   openPortal: 'Открыть портал',
   sealLab: 'Запечатать лабораторию',
   stabilize: 'Стабилизировать',
+  sendObserver: 'Отправить наблюдателя',
+  recallObservers: 'Отозвать наблюдателей',
+  hireObserver: 'Нанять наблюдателя',
 }
 
 // Портал с миром в именительном падеже: так он назван в журнале, сводке и уведомлениях (spec §2.4)
@@ -84,17 +87,32 @@ function rejectionEntry(lab: Lab, command: Command, reason: string, now: number)
 
 // Запись по событию команды (spec §8): действие смотрителя, а смена уровня риска — системная запись
 function actionEntry(lab: Lab, event: DomainEvent, now: number): LogEntry {
-  const base = { time: lab.time, realTime: now, portal: event.portal, world: event.world }
+  const base = { time: lab.time, realTime: now, kind: 'action' as const }
   switch (event.type) {
     case 'portalOpened': {
-      const visit = event.firstVisit ? 'новый мир' : 'повторное посещение'
-      const text = `Открыт портал ${portalLabel(event.portal, event.world)} — ${visit}`
-      return { ...base, kind: 'action', text }
+      const { portal, world, firstVisit } = event
+      const visit = firstVisit ? 'новый мир' : 'повторное посещение'
+      const text = `Открыт портал ${portalLabel(portal, world)} — ${visit}`
+      return { ...base, portal, world, text }
     }
     case 'portalStabilized': {
       const { portal, world, scoreFrom, scoreTo } = event
       const text = `Стабилизирован ${portalLabel(portal, world)}: балл риска ${scoreFrom} → ${scoreTo}`
-      return { ...base, kind: 'action', text }
+      return { ...base, portal, world, text }
+    }
+    case 'observerSent': {
+      const { portal, world, onSite } = event
+      const text = `${portalLabel(portal, world)}: отправлен наблюдатель — на месте ${onSite}`
+      return { ...base, portal, world, text }
+    }
+    case 'observersRecalled': {
+      const { portal, world, count } = event
+      const text = `${portalLabel(portal, world)}: отозвано наблюдателей — ${count}, прогресс изучения сброшен`
+      return { ...base, portal, world, text }
+    }
+    case 'hireStarted': {
+      const text = `Начат наём наблюдателя — будет через ${event.ticks} мин`
+      return { ...base, portal: null, world: null, text }
     }
     case 'riskLevelChanged':
       return riskLevelEntry(lab.time, event, now)

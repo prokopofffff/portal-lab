@@ -512,3 +512,134 @@ describe('dispatch stabilize: журнал (spec §5, §8)', () => {
     ])
   })
 })
+
+describe('dispatch sendObserver: журнал (spec §5, §8)', () => {
+  const send = { type: 'sendObserver', portal: 'ПШ-449-1' } as const
+
+  it('запись-действие с числом наблюдателей на месте', () => {
+    const lab = labWith([openPortal({ observers: 1 })], { time: 12 })
+
+    const result = dispatch(lab, send, minRng, NOW)
+
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'action',
+        text: 'ПШ-449-1 (Пепельный Шпиль): отправлен наблюдатель — на месте 2',
+      },
+    ])
+    expect(result.rejection).toBeUndefined()
+  })
+
+  it('отказ: запись с порталом, миром и причиной', () => {
+    const lab = labWith([openPortal({ observers: 3 })], { time: 12 })
+
+    const result = dispatch(lab, send, minRng, NOW)
+
+    expect(result.rejection).toBe('На месте уже 3 наблюдателя')
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'rejection',
+        text: 'Отказ «Отправить наблюдателя» ПШ-449-1 (Пепельный Шпиль): на месте уже 3 наблюдателя',
+      },
+    ])
+  })
+})
+
+describe('dispatch recallObservers: журнал (spec §5, §8)', () => {
+  const recall = { type: 'recallObservers', portal: 'ПШ-449-1' } as const
+
+  it('запись-действие с числом отозванных', () => {
+    const lab = labWith([openPortal({ observers: 2, studyProgress: 5 })], { time: 12 })
+
+    const result = dispatch(lab, recall, minRng, NOW)
+
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'action',
+        text: 'ПШ-449-1 (Пепельный Шпиль): отозвано наблюдателей — 2, прогресс изучения сброшен',
+      },
+    ])
+    expect(result.rejection).toBeUndefined()
+  })
+
+  it('отказ: запись с порталом, миром и причиной', () => {
+    const lab = labWith([openPortal()], { time: 12 })
+
+    const result = dispatch(lab, recall, minRng, NOW)
+
+    expect(result.rejection).toBe('На месте никого нет')
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'rejection',
+        text: 'Отказ «Отозвать наблюдателей» ПШ-449-1 (Пепельный Шпиль): на месте никого нет',
+      },
+    ])
+  })
+})
+
+describe('dispatch hireObserver: журнал (spec §5, §8)', () => {
+  const hire = { type: 'hireObserver' } as const
+
+  it('запись-действие без портала и мира', () => {
+    const lab = { ...createLab(), time: 12 }
+
+    const result = dispatch(lab, hire, minRng, NOW)
+
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: null,
+        world: null,
+        kind: 'action',
+        text: 'Начат наём наблюдателя — будет через 20 мин',
+      },
+    ])
+    expect(result.lab.staff.hireTicksLeft).toBe(20)
+    expect(result.events).toEqual([{ type: 'hireStarted', ticks: 20 }])
+  })
+
+  it('отказ: запись без портала и мира', () => {
+    const lab = { ...createLab(), time: 12, staff: { free: 2, hireTicksLeft: 12, lost: 0 } }
+
+    const result = dispatch(lab, hire, minRng, NOW)
+
+    expect(result.rejection).toBe('Наём уже идёт — осталось 12 мин')
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: null,
+        world: null,
+        kind: 'rejection',
+        text: 'Отказ «Нанять наблюдателя»: наём уже идёт — осталось 12 мин',
+      },
+    ])
+  })
+
+  it('отказ «штат полон» пишется в журнал', () => {
+    const lab = { ...createLab(), staff: { free: 5, hireTicksLeft: 0, lost: 0 } }
+
+    const { log } = dispatch(lab, hire, minRng, NOW).lab
+
+    expect(log.map((e) => e.text)).toEqual([
+      'Отказ «Нанять наблюдателя»: штат полон: 5 из 5, включая наём в пути',
+    ])
+  })
+})

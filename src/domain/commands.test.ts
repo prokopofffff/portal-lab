@@ -422,3 +422,297 @@ describe('execute stabilize: перезарядка и время (spec §4, §5
     expect(collapsedAt).toBeGreaterThan(-1)
   })
 })
+
+// Лаборатория с порталами и миром «Пепельный Шпиль» (4 существа, изучено 1)
+function labWithWorld(portals: Portal[], overrides: Partial<Lab> = {}): Lab {
+  return {
+    ...createLab(),
+    portals,
+    worlds: {
+      'Пепельный Шпиль': {
+        name: 'Пепельный Шпиль',
+        code: 'ПШ-449',
+        creatures: 4,
+        studied: 1,
+        visits: 1,
+      },
+    },
+    ...overrides,
+  }
+}
+
+describe('execute sendObserver: эффект (spec §2.3, §5)', () => {
+  const send = { type: 'sendObserver', portal: 'ПШ-449-1' } as const
+
+  it('на портале на одного наблюдателя больше, свободных на одного меньше, событие с числом на месте', () => {
+    const lab = labWithWorld([openPortalWith({ observers: 1 })])
+
+    const result = execute(lab, send, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]?.observers).toBe(2)
+    expect(result.lab.staff.free).toBe(2)
+    expect(result.events).toEqual([
+      { type: 'observerSent', portal: 'ПШ-449-1', world: 'Пепельный Шпиль', onSite: 2 },
+    ])
+    expect(lab.portals[0]?.observers).toBe(1)
+    expect(lab.staff.free).toBe(3)
+  })
+})
+
+describe('execute sendObserver: отказы (spec §5)', () => {
+  const send = { type: 'sendObserver', portal: 'ПШ-449-1' } as const
+
+  it('портала с таким именем нет: «Портал не открыт»', () => {
+    const lab = labWithWorld([openPortalWith()])
+    const result = execute(lab, { type: 'sendObserver', portal: 'ББ-310-1' }, edgeRng('min'))
+    expect(result).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('закрытый портал: «Портал не открыт»', () => {
+    const lab = labWithWorld([openPortalWith({ status: 'closed' })])
+    expect(execute(lab, send, edgeRng('min'))).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('критический риск: наблюдателей не отправляют', () => {
+    // Стабильность 10 ≤ 15 — жёсткое правило даёт критический уровень
+    const lab = labWithWorld([openPortalWith({ stability: 10 })])
+    expect(execute(lab, send, edgeRng('min'))).toEqual({
+      rejection: 'Риск критический — наблюдателей не отправляют',
+    })
+  })
+})
+
+describe('execute sendObserver: отказы мира, места и штата (spec §5)', () => {
+  const send = { type: 'sendObserver', portal: 'ПШ-449-1' } as const
+  const world = (creatures: number, studied: number) => ({
+    'Пепельный Шпиль': { name: 'Пепельный Шпиль', code: 'ПШ-449', creatures, studied, visits: 1 },
+  })
+
+  it('в мире нет существ: нечего изучать', () => {
+    const lab = labWithWorld([openPortalWith()], { worlds: world(0, 0) })
+    expect(execute(lab, send, edgeRng('min'))).toEqual({
+      rejection: 'Нечего изучать: в мире нет существ',
+    })
+  })
+
+  it('все существа изучены: нечего изучать', () => {
+    const lab = labWithWorld([openPortalWith()], { worlds: world(4, 4) })
+    expect(execute(lab, send, edgeRng('min'))).toEqual({
+      rejection: 'Нечего изучать: все существа мира изучены',
+    })
+  })
+
+  it('осталось одно неизученное существо: отправить можно', () => {
+    const lab = labWithWorld([openPortalWith()], { worlds: world(4, 3) })
+    const result = execute(lab, send, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+    expect(result.lab.portals[0]?.observers).toBe(1)
+  })
+
+  it('на месте уже три наблюдателя: отказ', () => {
+    const lab = labWithWorld([openPortalWith({ observers: 3 })])
+    expect(execute(lab, send, edgeRng('min'))).toEqual({
+      rejection: 'На месте уже 3 наблюдателя',
+    })
+  })
+
+  it('свободных наблюдателей нет: отказ', () => {
+    const lab = labWithWorld([openPortalWith()], { staff: { free: 0, hireTicksLeft: 0, lost: 0 } })
+    expect(execute(lab, send, edgeRng('min'))).toEqual({
+      rejection: 'Нет свободных наблюдателей',
+    })
+  })
+
+  it('порядок проверок: критический риск важнее пустого мира, пустой мир — важнее лимита и штата', () => {
+    const noStaff = { free: 0, hireTicksLeft: 0, lost: 0 }
+    const critical = labWithWorld([openPortalWith({ stability: 10, observers: 3 })], {
+      worlds: world(0, 0),
+      staff: noStaff,
+    })
+    expect(execute(critical, send, edgeRng('min'))).toEqual({
+      rejection: 'Риск критический — наблюдателей не отправляют',
+    })
+    const empty = labWithWorld([openPortalWith({ observers: 3 })], {
+      worlds: world(0, 0),
+      staff: noStaff,
+    })
+    expect(execute(empty, send, edgeRng('min'))).toEqual({
+      rejection: 'Нечего изучать: в мире нет существ',
+    })
+    const studied = labWithWorld([openPortalWith({ observers: 3 })], {
+      worlds: world(4, 4),
+      staff: noStaff,
+    })
+    expect(execute(studied, send, edgeRng('min'))).toEqual({
+      rejection: 'Нечего изучать: все существа мира изучены',
+    })
+    const full = labWithWorld([openPortalWith({ observers: 3 })], { staff: noStaff })
+    expect(execute(full, send, edgeRng('min'))).toEqual({
+      rejection: 'На месте уже 3 наблюдателя',
+    })
+  })
+
+  it('отказ не меняет лабораторию', () => {
+    const lab = labWithWorld([openPortalWith({ observers: 3 })])
+    execute(lab, send, edgeRng('min'))
+    expect(lab).toEqual(labWithWorld([openPortalWith({ observers: 3 })]))
+  })
+})
+
+describe('execute recallObservers (spec §5)', () => {
+  const recall = { type: 'recallObservers', portal: 'ПШ-449-1' } as const
+
+  it('наблюдатели возвращаются в свободные, прогресс текущего существа сбрасывается', () => {
+    const lab = labWithWorld([openPortalWith({ observers: 2, studyProgress: 7 })], {
+      staff: { free: 1, hireTicksLeft: 0, lost: 0 },
+    })
+
+    const result = execute(lab, recall, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]).toMatchObject({ observers: 0, studyProgress: 0 })
+    expect(result.lab.staff.free).toBe(3)
+    expect(result.lab.worlds['Пепельный Шпиль']?.studied).toBe(1)
+    expect(result.events).toEqual([
+      { type: 'observersRecalled', portal: 'ПШ-449-1', world: 'Пепельный Шпиль', count: 2 },
+    ])
+    expect(lab.portals[0]?.observers).toBe(2)
+  })
+
+  it('отзыв после изучения: изученные существа мира остаются, сбрасывается только прогресс', () => {
+    // 3 наблюдателя: 7 тиков по 3 = 21 ≥ 20 — одно существо изучено, остаток прогресса 1
+    let lab = labWithWorld([openPortalWith({ observers: 3, stability: 100, energy: 0 })])
+    lab = ticks(lab, 7)
+    expect(lab.worlds['Пепельный Шпиль']?.studied).toBe(2)
+    expect(lab.portals[0]?.studyProgress).toBe(1)
+
+    const result = execute(lab, recall, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]?.studyProgress).toBe(0)
+    expect(result.lab.worlds['Пепельный Шпиль']?.studied).toBe(2)
+  })
+
+  it('портала с таким именем нет: «Портал не открыт»', () => {
+    const lab = labWithWorld([openPortalWith({ observers: 1 })])
+    const result = execute(lab, { type: 'recallObservers', portal: 'ББ-310-1' }, edgeRng('min'))
+    expect(result).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('закрытый портал: «Портал не открыт»', () => {
+    const lab = labWithWorld([openPortalWith({ status: 'closed', observers: 1 })])
+    expect(execute(lab, recall, edgeRng('min'))).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('на портале никого нет: отказ', () => {
+    const lab = labWithWorld([openPortalWith()])
+    expect(execute(lab, recall, edgeRng('min'))).toEqual({ rejection: 'На месте никого нет' })
+  })
+
+  it('отказ не меняет лабораторию', () => {
+    const lab = labWithWorld([openPortalWith()])
+    execute(lab, recall, edgeRng('min'))
+    expect(lab).toEqual(labWithWorld([openPortalWith()]))
+  })
+})
+
+describe('execute hireObserver (spec §2.3, §5)', () => {
+  const hire = { type: 'hireObserver' } as const
+  const staffOf = (free: number, hireTicksLeft = 0) => ({ free, hireTicksLeft, lost: 0 })
+
+  it('запускает наём на 20 тиков и сообщает об этом событием; свободные не меняются', () => {
+    const lab = { ...createLab(), staff: staffOf(2) }
+
+    const result = execute(lab, hire, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.staff).toEqual({ free: 2, hireTicksLeft: 20, lost: 0 })
+    expect(result.events).toEqual([{ type: 'hireStarted', ticks: 20 }])
+    expect(lab.staff.hireTicksLeft).toBe(0)
+  })
+
+  it('штат полон из свободных: пять из пяти', () => {
+    const lab = { ...createLab(), staff: staffOf(5) }
+    expect(execute(lab, hire, edgeRng('min'))).toEqual({
+      rejection: 'Штат полон: 5 из 5, включая наём в пути',
+    })
+  })
+
+  it('наблюдатели на открытых порталах входят в штат', () => {
+    // 2 свободных + 2 + 1 на двух открытых порталах = 5
+    const second = openPortalWith({ name: 'ПШ-449-2', arch: 1, observers: 1 })
+    const lab = labWithWorld([openPortalWith({ observers: 2 }), second], { staff: staffOf(2) })
+    expect(execute(lab, hire, edgeRng('min'))).toEqual({
+      rejection: 'Штат полон: 5 из 5, включая наём в пути',
+    })
+  })
+
+  it('наблюдатели на закрытом портале в штат не входят', () => {
+    // Закрытый портал даёт 0 на месте: 4 свободных + 0 = 4 < 5
+    const lab = labWithWorld([openPortalWith({ status: 'closed', observers: 2 })], {
+      staff: staffOf(4),
+    })
+    const result = execute(lab, hire, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+    expect(result.lab.staff.hireTicksLeft).toBe(20)
+  })
+
+  it('наём в пути считается за одного: четверо в штате и наём — пять из пяти', () => {
+    const lab = { ...createLab(), staff: staffOf(4, 7) }
+    expect(execute(lab, hire, edgeRng('min'))).toEqual({
+      rejection: 'Штат полон: 5 из 5, включая наём в пути',
+    })
+  })
+
+  it('наём уже идёт: отказ с оставшимися минутами', () => {
+    const lab = { ...createLab(), staff: staffOf(2, 12) }
+    expect(execute(lab, hire, edgeRng('min'))).toEqual({
+      rejection: 'Наём уже идёт — осталось 12 мин',
+    })
+  })
+
+  it('порядок проверок: полный штат важнее идущего найма', () => {
+    const lab = { ...createLab(), staff: staffOf(4, 12) }
+    expect(execute(lab, hire, edgeRng('min'))).toEqual({
+      rejection: 'Штат полон: 5 из 5, включая наём в пути',
+    })
+  })
+
+  it('отказ не меняет лабораторию', () => {
+    const lab = { ...createLab(), staff: staffOf(2, 12) }
+    execute(lab, hire, edgeRng('min'))
+    expect(lab).toEqual({ ...createLab(), staff: staffOf(2, 12) })
+  })
+
+  it('наём завершается ровно через 20 тиков: после 19-го свободных ещё три, на 20-м — четыре', () => {
+    const started = execute(createLab(), hire, edgeRng('min'))
+    if ('rejection' in started) throw new Error(started.rejection)
+
+    const waiting = ticks(started.lab, 19)
+    expect(waiting.staff).toEqual({ free: 3, hireTicksLeft: 1, lost: 0 })
+
+    const hired = ticks(waiting, 1)
+    expect(hired.staff).toEqual({ free: 4, hireTicksLeft: 0, lost: 0 })
+  })
+})
+
+describe('наблюдатели двух порталов в один мир (spec §2.1, §4)', () => {
+  it('счётчик изученных общий: каждый портал добавляет в него своё существо', () => {
+    // Мир: 4 существа, изучено 1. На каждом портале прогресс 19 из 20 и после отправки по 1 наблюдателю
+    const lab = labWithWorld([
+      openPortalWith({ stability: 100, energy: 0, studyProgress: 19 }),
+      openPortalWith({ name: 'ПШ-449-2', arch: 1, stability: 100, energy: 0, studyProgress: 19 }),
+    ])
+    const first = execute(lab, { type: 'sendObserver', portal: 'ПШ-449-1' }, edgeRng('min'))
+    if ('rejection' in first) throw new Error(first.rejection)
+    const second = execute(first.lab, { type: 'sendObserver', portal: 'ПШ-449-2' }, edgeRng('min'))
+    if ('rejection' in second) throw new Error(second.rejection)
+
+    const after = tick(second.lab).lab
+
+    expect(after.worlds['Пепельный Шпиль']?.studied).toBe(3)
+    expect(after.portals.map((p) => p.studyProgress)).toEqual([0, 0])
+    expect(after.staff.free).toBe(1)
+  })
+})
