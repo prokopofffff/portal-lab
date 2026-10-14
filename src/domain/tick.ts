@@ -1,6 +1,6 @@
 // Тик симуляции (docs/spec.md §4): чистая функция Lab → Lab + события.
 import { CONFIG } from './config'
-import type { Lab, Portal, Staff } from './lab'
+import type { Lab, Portal, Staff, World } from './lab'
 import type { RiskLevel } from './risk'
 
 // События тика: журнал по ним пишет advance (journal.ts), сам тик журнал не трогает
@@ -27,10 +27,12 @@ export interface TickResult {
 // Один тик симуляции (spec §4). Журнал не трогает — это делает advance в journal.ts
 export function tick(lab: Lab): TickResult {
   const events: TickEvent[] = []
-  const staff = hire(lab.staff, events)
+  const hired = hire(lab.staff, events)
+  const studying = study(lab.portals, lab.worlds, events)
+  const staff = { ...hired, free: hired.free + studying.returned }
   const portals: Portal[] = []
   let lost = staff.lost
-  for (const portal of lab.portals) {
+  for (const portal of studying.portals) {
     const degraded = degrade(portal)
     if (!isCollapsing(degraded)) {
       portals.push(degraded)
@@ -41,7 +43,13 @@ export function tick(lab: Lab): TickResult {
     lost += degraded.observers
   }
   return {
-    lab: { ...lab, time: lab.time + 1, portals, staff: { ...staff, lost } },
+    lab: {
+      ...lab,
+      time: lab.time + 1,
+      portals,
+      worlds: studying.worlds,
+      staff: { ...staff, lost },
+    },
     events,
   }
 }
@@ -53,6 +61,55 @@ function hire(staff: Staff, events: TickEvent[]): Staff {
   if (hireTicksLeft > 0) return { ...staff, hireTicksLeft }
   events.push({ type: 'hireCompleted' })
   return { ...staff, free: staff.free + 1, hireTicksLeft }
+}
+
+// Шаг 2: наблюдатели изучают мир; прогресс идёт по порталам в порядке массива
+function study(
+  portals: Portal[],
+  worlds: Record<string, World>,
+  events: TickEvent[],
+): { portals: Portal[]; worlds: Record<string, World>; returned: number } {
+  const { observerTicksPerCreature } = CONFIG.study
+  const nextPortals = [...portals]
+  const nextWorlds = { ...worlds }
+  let returned = 0
+  nextPortals.forEach((portal, index) => {
+    const world = nextWorlds[portal.world]
+    if (portal.status !== 'open' || portal.observers <= 0) return
+    if (!world || world.studied >= world.creatures) return
+    let studyProgress = portal.studyProgress + portal.observers
+    if (studyProgress < observerTicksPerCreature) {
+      nextPortals[index] = { ...portal, studyProgress }
+      return
+    }
+    studyProgress -= observerTicksPerCreature
+    const studied = world.studied + 1
+    nextPortals[index] = { ...portal, studyProgress }
+    nextWorlds[portal.world] = { ...world, studied }
+    events.push({
+      type: 'creatureStudied',
+      portal: portal.name,
+      world: portal.world,
+      studied,
+      creatures: world.creatures,
+    })
+    if (studied < world.creatures) return
+    // Мир изучен: наблюдатели всех открытых порталов к нему возвращаются
+    let worldReturned = 0
+    nextPortals.forEach((other, otherIndex) => {
+      if (other.status !== 'open' || other.world !== portal.world) return
+      worldReturned += other.observers
+      nextPortals[otherIndex] = { ...other, observers: 0, studyProgress: 0 }
+    })
+    returned += worldReturned
+    events.push({
+      type: 'worldStudied',
+      world: portal.world,
+      creatures: world.creatures,
+      returned: worldReturned,
+    })
+  })
+  return { portals: nextPortals, worlds: nextWorlds, returned }
 }
 
 // Шаг 3: открытый портал теряет стабильность (вдвое медленнее при наблюдателях), время и перезарядку
