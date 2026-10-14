@@ -409,3 +409,106 @@ describe('dispatch sealLab: запечатать лабораторию (spec §
     expect(result.events).toEqual([])
   })
 })
+
+describe('dispatch stabilize: журнал (spec §5, §8)', () => {
+  const stabilize = { type: 'stabilize', portal: 'ПШ-449-1' } as const
+
+  it('запись-действие с баллами риска до и после', () => {
+    // Балл 49 → 31, уровень остаётся средним
+    const lab = labWith([openPortal()], { time: 12 })
+
+    const result = dispatch(lab, stabilize, minRng, NOW)
+
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'action',
+        text: 'Стабилизирован ПШ-449-1 (Пепельный Шпиль): балл риска 49 → 31',
+      },
+    ])
+    expect(result.rejection).toBeUndefined()
+  })
+
+  it('смена уровня: после записи-действия идёт системная запись с тем же текстом, что у тика', () => {
+    // Балл 55 (высокий) → 37 (средний)
+    const lab = labWith([openPortal({ stability: 35 })], { time: 12 })
+
+    const result = dispatch(lab, stabilize, minRng, NOW)
+
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'action',
+        text: 'Стабилизирован ПШ-449-1 (Пепельный Шпиль): балл риска 55 → 37',
+      },
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'system',
+        text: 'ПШ-449-1 (Пепельный Шпиль): уровень риска: высокий → средний',
+      },
+    ])
+  })
+
+  it('отказ: запись с порталом, миром и причиной, перезарядка не меняется', () => {
+    const lab = labWith([openPortal({ cooldown: 12 })], { time: 12 })
+
+    const result = dispatch(lab, stabilize, minRng, NOW)
+
+    expect(result.rejection).toBe('Кулдаун стабилизации — осталось 12 мин')
+    expect(result.events).toEqual([])
+    expect(result.lab.log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'rejection',
+        text: 'Отказ «Стабилизировать» ПШ-449-1 (Пепельный Шпиль): кулдаун стабилизации — осталось 12 мин',
+      },
+    ])
+    expect(result.lab.portals).toEqual(lab.portals)
+  })
+
+  it('отказ для закрытого портала: мир берётся из портала', () => {
+    const lab = labWith([openPortal({ status: 'closed' })], { time: 12 })
+
+    const { log } = dispatch(lab, stabilize, minRng, NOW).lab
+
+    expect(log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        kind: 'rejection',
+        text: 'Отказ «Стабилизировать» ПШ-449-1 (Пепельный Шпиль): портал не открыт',
+      },
+    ])
+  })
+
+  it('отказ для неизвестного портала: имя без мира, world — null', () => {
+    const lab = labWith([openPortal()], { time: 12 })
+
+    const { log } = dispatch(lab, { type: 'stabilize', portal: 'ББ-310-1' }, minRng, NOW).lab
+
+    expect(log).toEqual([
+      {
+        time: 12,
+        realTime: NOW,
+        portal: 'ББ-310-1',
+        world: null,
+        kind: 'rejection',
+        text: 'Отказ «Стабилизировать» ББ-310-1: портал не открыт',
+      },
+    ])
+  })
+})

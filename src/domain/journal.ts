@@ -4,7 +4,7 @@ import { CONFIG } from './config'
 import type { Lab, LogEntry, LogKind } from './lab'
 import type { Rng } from './rng'
 import { RISK_LEVEL_LABELS } from './risk'
-import { tick, type TickEvent } from './tick'
+import { tick, type RiskLevelChanged, type TickEvent } from './tick'
 
 // rejection — причина отказа; тогда events пуст, а лаборатория отличается только записью в журнале
 export type DispatchResult = { lab: Lab; events: DomainEvent[]; rejection?: string }
@@ -13,6 +13,7 @@ export type DispatchResult = { lab: Lab; events: DomainEvent[]; rejection?: stri
 const COMMAND_LABELS: Record<Command['type'], string> = {
   openPortal: 'Открыть портал',
   sealLab: 'Запечатать лабораторию',
+  stabilize: 'Стабилизировать',
 }
 
 // Портал с миром в именительном падеже: так он назван в журнале, сводке и уведомлениях (spec §2.4)
@@ -24,16 +25,12 @@ export function portalLabel(portal: string, world: string): string {
 export function dispatch(lab: Lab, command: Command, rng: Rng, now: number): DispatchResult {
   const result = execute(lab, command, rng)
   if ('rejection' in result) {
-    const reason = result.rejection
-    const entry: LogEntry = {
-      time: lab.time,
-      realTime: now,
-      portal: null,
-      world: null,
-      kind: 'rejection',
-      text: `Отказ «${COMMAND_LABELS[command.type]}»: ${reason[0]!.toLowerCase()}${reason.slice(1)}`,
+    const entry = rejectionEntry(lab, command, result.rejection, now)
+    return {
+      lab: { ...lab, log: append(lab.log, [entry]) },
+      events: [],
+      rejection: result.rejection,
     }
-    return { lab: { ...lab, log: append(lab.log, [entry]) }, events: [], rejection: reason }
   }
 
   const entries = result.events.map((event) => actionEntry(result.lab, event, now))
@@ -71,16 +68,44 @@ function append(log: LogEntry[], entries: LogEntry[]): LogEntry[] {
   return [...log, ...entries].slice(-CONFIG.journalLimit)
 }
 
-function actionEntry(lab: Lab, event: DomainEvent, now: number): LogEntry {
-  const visit = event.firstVisit ? 'новый мир' : 'повторное посещение'
-  return {
-    time: lab.time,
-    realTime: now,
-    portal: event.portal,
-    world: event.world,
-    kind: 'action',
-    text: `Открыт портал ${portalLabel(event.portal, event.world)} — ${visit}`,
+// Запись об отказе; у команды с порталом в ней имя портала и его мир (мира нет, если портала с таким именем нет)
+function rejectionEntry(lab: Lab, command: Command, reason: string, now: number): LogEntry {
+  const label = COMMAND_LABELS[command.type]
+  const lowered = `${reason[0]!.toLowerCase()}${reason.slice(1)}`
+  const base = { time: lab.time, realTime: now, kind: 'rejection' as const }
+  if (!('portal' in command)) {
+    return { ...base, portal: null, world: null, text: `Отказ «${label}»: ${lowered}` }
   }
+  const { portal } = command
+  const world = lab.portals.find((p) => p.name === portal)?.world ?? null
+  const target = world === null ? portal : portalLabel(portal, world)
+  return { ...base, portal, world, text: `Отказ «${label}» ${target}: ${lowered}` }
+}
+
+// Запись по событию команды (spec §8): действие смотрителя, а смена уровня риска — системная запись
+function actionEntry(lab: Lab, event: DomainEvent, now: number): LogEntry {
+  const base = { time: lab.time, realTime: now, portal: event.portal, world: event.world }
+  switch (event.type) {
+    case 'portalOpened': {
+      const visit = event.firstVisit ? 'новый мир' : 'повторное посещение'
+      const text = `Открыт портал ${portalLabel(event.portal, event.world)} — ${visit}`
+      return { ...base, kind: 'action', text }
+    }
+    case 'portalStabilized': {
+      const { portal, world, scoreFrom, scoreTo } = event
+      const text = `Стабилизирован ${portalLabel(portal, world)}: балл риска ${scoreFrom} → ${scoreTo}`
+      return { ...base, kind: 'action', text }
+    }
+    case 'riskLevelChanged':
+      return riskLevelEntry(lab.time, event, now)
+  }
+}
+
+// Смена уровня риска пишется одинаково, пришла она от тика или от команды
+function riskLevelEntry(time: number, event: RiskLevelChanged, now: number): LogEntry {
+  const { portal, world, from, to } = event
+  const text = `${portalLabel(portal, world)}: уровень риска: ${RISK_LEVEL_LABELS[from]} → ${RISK_LEVEL_LABELS[to]}`
+  return { time, realTime: now, portal, world, kind: 'system', text }
 }
 
 // Текст записи по событию тика (spec §8); time — время после тика
@@ -118,11 +143,8 @@ function systemEntry(time: number, event: TickEvent, now: number): LogEntry {
         text: `${portalLabel(portal, world)}: потеряно наблюдателей — ${count}`,
       }
     }
-    case 'riskLevelChanged': {
-      const { portal, world, from, to } = event
-      const text = `${portalLabel(portal, world)}: уровень риска: ${RISK_LEVEL_LABELS[from]} → ${RISK_LEVEL_LABELS[to]}`
-      return { ...base, portal, world, text }
-    }
+    case 'riskLevelChanged':
+      return riskLevelEntry(time, event, now)
     case 'acceptanceRevoked': {
       const { portal, world, acceptedAt, level } = event
       const text = `${portalLabel(portal, world)}: принятие снято — уровень риска вырос: ${RISK_LEVEL_LABELS[acceptedAt]} → ${RISK_LEVEL_LABELS[level]}`

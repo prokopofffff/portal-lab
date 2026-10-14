@@ -2,16 +2,23 @@
 import { CONFIG } from './config'
 import { createLab, type Lab, type Portal, type World } from './lab'
 import type { Rng } from './rng'
+import { assessRisk } from './risk'
+import { riskLevelChange, type RiskLevelChanged } from './tick'
 import { WORLD_NAMES, portalName, worldCode } from './worlds'
 
-export type Command = { type: 'openPortal' } | { type: 'sealLab' }
+export type Command =
+  { type: 'openPortal' } | { type: 'sealLab' } | { type: 'stabilize'; portal: string }
 
-export type DomainEvent = {
-  type: 'portalOpened'
-  portal: string
-  world: string
-  firstVisit: boolean
-}
+export type DomainEvent =
+  | { type: 'portalOpened'; portal: string; world: string; firstVisit: boolean }
+  | {
+      type: 'portalStabilized'
+      portal: string
+      world: string
+      scoreFrom: number
+      scoreTo: number
+    }
+  | RiskLevelChanged
 
 export type CommandResult = { lab: Lab; events: DomainEvent[] } | { rejection: string }
 
@@ -21,7 +28,20 @@ export function execute(lab: Lab, command: Command, rng: Rng): CommandResult {
       return openPortal(lab, rng)
     case 'sealLab':
       return { lab: createLab(), events: [] }
+    case 'stabilize':
+      return stabilize(lab, command.portal)
   }
+}
+
+// Открытый портал по имени или общий отказ «Портал не открыт» — такого нет или он уже не открыт
+function resolveOpenPortal(lab: Lab, name: string): Portal | { rejection: string } {
+  const portal = lab.portals.find((p) => p.name === name)
+  return portal?.status === 'open' ? portal : { rejection: 'Портал не открыт' }
+}
+
+// Лаборатория, в которой портал с тем же именем заменён на новый
+function withPortal(lab: Lab, portal: Portal): Lab {
+  return { ...lab, portals: lab.portals.map((p) => (p.name === portal.name ? portal : p)) }
 }
 
 // Первая арка 0–11, не занятая открытым порталом; -1 — все заняты
@@ -81,5 +101,42 @@ function openPortal(lab: Lab, rng: Rng): CommandResult {
       worlds: { ...lab.worlds, [worldName]: world },
     },
     events: [{ type: 'portalOpened', portal: portal.name, world: worldName, firstVisit: !known }],
+  }
+}
+
+// Стабилизация (spec §5): рывок стабильности и времени за энергию, затем перезарядка
+function stabilize(lab: Lab, name: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  const { stabilityGain, energyCost, timeGain, cooldownTicks, forbiddenFromStability } =
+    CONFIG.stabilize
+  const { bounds } = CONFIG
+  if (portal.cooldown > 0) {
+    return { rejection: `Кулдаун стабилизации — осталось ${portal.cooldown} мин` }
+  }
+  if (portal.stability >= forbiddenFromStability) {
+    return {
+      rejection: `Стабильность ${forbiddenFromStability}% или выше — стабилизировать не нужно`,
+    }
+  }
+  const stabilized: Portal = {
+    ...portal,
+    stability: Math.min(bounds.stability.max, portal.stability + stabilityGain),
+    energy: Math.max(bounds.energy.min, portal.energy - energyCost),
+    timeLeft: portal.timeLeft + timeGain,
+    cooldown: cooldownTicks,
+  }
+  const stabilizedEvent: DomainEvent = {
+    type: 'portalStabilized',
+    portal: portal.name,
+    world: portal.world,
+    scoreFrom: assessRisk(portal).score,
+    scoreTo: assessRisk(stabilized).score,
+  }
+  const levelChange = riskLevelChange(portal, stabilized)
+  return {
+    lab: withPortal(lab, stabilized),
+    events: levelChange ? [stabilizedEvent, levelChange] : [stabilizedEvent],
   }
 }

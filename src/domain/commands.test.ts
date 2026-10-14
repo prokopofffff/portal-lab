@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { execute } from './commands'
-import { createLab, type Lab } from './lab'
+import { createLab, type Lab, type Portal } from './lab'
+import { tick } from './tick'
 import type { Rng } from './rng'
 
 // ГСЧ, который всегда выдаёт нижнюю или верхнюю границу: так видно, из каких диапазонов берутся метрики
@@ -205,5 +206,219 @@ describe('execute sealLab: запечатать лабораторию (spec §5
     execute(lab, { type: 'sealLab' }, edgeRng('min'))
     expect(lab.time).toBe(143)
     expect(lab.portals).toHaveLength(2)
+  })
+})
+
+// Открытый портал без наблюдателей; переопределения задают нужную метрику
+function openPortalWith(overrides: Partial<Portal> = {}): Portal {
+  return {
+    name: 'ПШ-449-1',
+    world: 'Пепельный Шпиль',
+    status: 'open',
+    arch: 0,
+    energy: 80,
+    stability: 50,
+    timeLeft: 100,
+    observers: 0,
+    studyProgress: 0,
+    cooldown: 0,
+    questioned: null,
+    acceptedAt: null,
+    ...overrides,
+  }
+}
+
+// Лаборатория с одним порталом
+function labWithPortal(overrides: Partial<Portal> = {}): Lab {
+  return { ...createLab(), portals: [openPortalWith(overrides)] }
+}
+
+describe('execute stabilize: эффект (spec §5)', () => {
+  it('стабильность +25, энергия −10, время +20, перезарядка 30; остальное не меняется', () => {
+    const lab = labWithPortal({ observers: 2, studyProgress: 5, acceptedAt: 'high' })
+
+    const result = execute(lab, { type: 'stabilize', portal: 'ПШ-449-1' }, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals).toEqual([
+      openPortalWith({
+        stability: 75,
+        energy: 70,
+        timeLeft: 120,
+        cooldown: 30,
+        observers: 2,
+        studyProgress: 5,
+        acceptedAt: 'high',
+      }),
+    ])
+    expect(result.lab.time).toBe(lab.time)
+    expect(result.lab.worlds).toBe(lab.worlds)
+  })
+})
+
+describe('execute stabilize: границы метрик (spec §3, Приложение B)', () => {
+  it('стабильность не поднимается выше 100, энергия не опускается ниже 0, время без потолка', () => {
+    const lab = labWithPortal({ stability: 90, energy: 5, timeLeft: 395 })
+
+    const result = execute(lab, { type: 'stabilize', portal: 'ПШ-449-1' }, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]).toMatchObject({ stability: 100, energy: 0, timeLeft: 415 })
+  })
+})
+
+describe('execute stabilize: события и уровень риска (spec §3, §5)', () => {
+  it('балл и уровень падают: событие «стабилизирован» и затем «уровень риска изменился»', () => {
+    // До: 0,4·65 + 0,3·80 + 0,3·16,67 = 26 + 24 + 5 = 55 (высокий). После (стаб. 60, энергия 70, время 120): 16 + 21 + 0 = 37 (средний)
+    const lab = labWithPortal({ stability: 35 })
+
+    const result = execute(lab, { type: 'stabilize', portal: 'ПШ-449-1' }, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.events).toEqual([
+      {
+        type: 'portalStabilized',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        scoreFrom: 55,
+        scoreTo: 37,
+      },
+      {
+        type: 'riskLevelChanged',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        from: 'high',
+        to: 'medium',
+      },
+    ])
+  })
+
+  it('уровень не изменился: только событие «стабилизирован»', () => {
+    // До: 20 + 24 + 5 = 49 (средний). После (стаб. 75, энергия 70, время 120): 10 + 21 + 0 = 31 (всё ещё средний)
+    const result = execute(
+      labWithPortal(),
+      { type: 'stabilize', portal: 'ПШ-449-1' },
+      edgeRng('min'),
+    )
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.events).toEqual([
+      {
+        type: 'portalStabilized',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        scoreFrom: 49,
+        scoreTo: 31,
+      },
+    ])
+  })
+})
+
+describe('execute stabilize: отказы (spec §5)', () => {
+  const stabilizeCommand = { type: 'stabilize', portal: 'ПШ-449-1' } as const
+
+  it('портала с таким именем нет: «Портал не открыт»', () => {
+    const result = execute(
+      labWithPortal(),
+      { type: 'stabilize', portal: 'ББ-310-1' },
+      edgeRng('min'),
+    )
+    expect(result).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('закрытый портал: «Портал не открыт»', () => {
+    const result = execute(labWithPortal({ status: 'closed' }), stabilizeCommand, edgeRng('min'))
+    expect(result).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('схлопнувшийся портал: «Портал не открыт»', () => {
+    const result = execute(labWithPortal({ status: 'collapsed' }), stabilizeCommand, edgeRng('min'))
+    expect(result).toEqual({ rejection: 'Портал не открыт' })
+  })
+
+  it('перезарядка идёт: отказ с оставшимися минутами', () => {
+    const result = execute(labWithPortal({ cooldown: 12 }), stabilizeCommand, edgeRng('min'))
+    expect(result).toEqual({ rejection: 'Кулдаун стабилизации — осталось 12 мин' })
+  })
+
+  it('стабильность ровно 95: стабилизировать не нужно', () => {
+    const result = execute(labWithPortal({ stability: 95 }), stabilizeCommand, edgeRng('min'))
+    expect(result).toEqual({
+      rejection: 'Стабильность 95% или выше — стабилизировать не нужно',
+    })
+  })
+
+  it('стабильность 94: стабилизация разрешена', () => {
+    const result = execute(labWithPortal({ stability: 94 }), stabilizeCommand, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+    expect(result.lab.portals[0]?.stability).toBe(100)
+  })
+
+  it('порядок проверок: закрытый портал важнее перезарядки, перезарядка важнее высокой стабильности', () => {
+    const closed = labWithPortal({ status: 'closed', cooldown: 5, stability: 99 })
+    expect(execute(closed, stabilizeCommand, edgeRng('min'))).toEqual({
+      rejection: 'Портал не открыт',
+    })
+    const cooling = labWithPortal({ cooldown: 5, stability: 99 })
+    expect(execute(cooling, stabilizeCommand, edgeRng('min'))).toEqual({
+      rejection: 'Кулдаун стабилизации — осталось 5 мин',
+    })
+  })
+
+  it('отказ не меняет лабораторию', () => {
+    const lab = labWithPortal({ cooldown: 12 })
+    execute(lab, stabilizeCommand, edgeRng('min'))
+    expect(lab).toEqual(labWithPortal({ cooldown: 12 }))
+  })
+})
+
+// n тиков подряд
+function ticks(lab: Lab, n: number): Lab {
+  for (let i = 0; i < n; i++) lab = tick(lab).lab
+  return lab
+}
+
+describe('execute stabilize: перезарядка и время (spec §4, §5)', () => {
+  const stabilizeCommand = { type: 'stabilize', portal: 'ПШ-449-1' } as const
+
+  it('после стабилизации 29 тиков отказ «осталось 1 мин», на 30-м тике — снова можно', () => {
+    // Энергия 10 → 0 после стабилизации: портал не деградирует и переживает ожидание
+    const first = execute(
+      labWithPortal({ energy: 10, stability: 40, timeLeft: 200 }),
+      stabilizeCommand,
+      edgeRng('min'),
+    )
+    if ('rejection' in first) throw new Error(first.rejection)
+
+    const waiting = ticks(first.lab, 29)
+    expect(execute(waiting, stabilizeCommand, edgeRng('min'))).toEqual({
+      rejection: 'Кулдаун стабилизации — осталось 1 мин',
+    })
+
+    const ready = ticks(waiting, 1)
+    const second = execute(ready, stabilizeCommand, edgeRng('min'))
+    if ('rejection' in second) throw new Error(second.rejection)
+    expect(second.lab.portals[0]?.cooldown).toBe(30)
+  })
+
+  it('непрерывная стабилизация не делает портал вечным: каждый цикл времени остаётся меньше, портал схлопывается', () => {
+    // Цикл: +20 за стабилизацию, −30 и больше за ожидание. Энергия 50 хватает на 5 стабилизаций.
+    // Стабильность после каждой возвращается к 100 и остывает на 0,2 / 0,15 / 0,1 / 0,05 за тик,
+    // поэтому следующая возможна через 30, 34, 51 и 101 тик: 220, 220−30+20, 210−34+20, 196−51+20, 165−101+20
+    let lab = labWithPortal({ energy: 50, stability: 60, timeLeft: 200 })
+    const timeLeftAfterEach: number[] = []
+    let collapsedAt = -1
+    for (let minute = 0; minute < 2000 && collapsedAt === -1; minute++) {
+      const result = execute(lab, stabilizeCommand, edgeRng('min'))
+      if (!('rejection' in result)) {
+        lab = result.lab
+        timeLeftAfterEach.push(lab.portals[0]!.timeLeft)
+      }
+      lab = tick(lab).lab
+      if (lab.portals[0]!.status === 'collapsed') collapsedAt = minute
+    }
+
+    expect(timeLeftAfterEach).toEqual([220, 210, 196, 165, 84])
+    expect(collapsedAt).toBeGreaterThan(-1)
   })
 })
