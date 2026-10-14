@@ -1,5 +1,4 @@
-// Визуальные токены по канвасу «Лаборатория порталов»:
-// https://claude.ai/artifact/LTfC5K5ryUv252BkNsAzTb
+// Визуальные токены по канвасу «Лаборатория порталов» — docs/design/ (экспорт канваса, источник истины).
 // Единственный источник цветов и шрифтов; в CSS попадают через applyTheme().
 
 export const fonts = {
@@ -69,6 +68,50 @@ export const portalShades: Record<PortalLook, readonly [string, string, string, 
   empty: ['#0a0810', '#0a0810', '#0a0810', '#0a0810'],
 }
 
+const stoneDeep = '#241f30'
+
+/** Цвета спрайтов из канваса (арка, руны, полоска, существа), которых нет среди общих цветов. */
+export const sprite = {
+  // камень арки: основа, светлая грань свода, тень, освещённый и тёмный бок, замковый камень
+  archStone: '#3a3348',
+  stoneLight: '#6a5f80',
+  stoneShadow: '#2a2536',
+  stoneLit: '#5b5068',
+  stoneDeep,
+  keystone: '#7d7096',
+  sill: '#17141f', // нижняя линия арки
+  emberRune: '#b8742a', // тлеющие руны пустой арки
+  // фигурка наблюдателя
+  observerCloak: '#9bbcff',
+  observerFace: '#ffe3bd',
+  observerBelt: '#5b75d0',
+  observerLegs: '#3a4a8a',
+  observerOutline: colors.well,
+  // руна закрытого портала
+  deadRune: '#8a85a0',
+  // полоска: колодец, рамка, погасший сегмент, блик и тень сегментов
+  barTrack: colors.well,
+  barBorder: colors.edge,
+  barUnlit: stoneDeep,
+  barGloss: 'rgba(255, 255, 255, 0.35)',
+  barShade: 'rgba(0, 0, 0, 0.25)',
+  barHollow: 'rgba(0, 0, 0, 0.35)',
+  // клетки существ: изученное, всё изучено, изучается, неизвестное
+  cellBg: '#1e1a2b',
+  cellEdge: '#8a7fa6',
+  studiedGold: '#e8b948',
+  studyBg: '#14101f',
+  study: '#b78cff',
+  studyGhost: '#2f2945',
+  studyBadge: '#e3d6ff',
+  unknownBg: '#0c0a12',
+  unknownEdge: colors.edgeSoft,
+  unknownGlyph: '#5e5478',
+} as const
+
+/** Пять цветов существ, по кругу. */
+export const creatureColors = ['#7ee0a8', '#ff9a5c', '#9bb7ff', '#f0c8ff', '#ffd96a'] as const
+
 /** Пары текст/фон, которые реально встречаются в интерфейсе; min — порог WCAG. */
 export const textPairs: { name: string; fg: string; bg: string; min: number }[] = [
   { name: 'текст на панели', fg: colors.text, bg: colors.panel, min: 4.5 },
@@ -80,6 +123,7 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'чернила отказа на пергаменте', fg: colors.inkRejection, bg: colors.parchment, min: 4.5 },
   { name: 'системные чернила на пергаменте', fg: colors.inkSystem, bg: colors.parchment, min: 4.5 },
   { name: 'заголовок на пергаменте', fg: colors.inkTitle, bg: colors.parchment, min: 4.5 },
+  { name: 'процент изучения на клетке', fg: sprite.studyBadge, bg: colors.well, min: 4.5 },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,
@@ -88,7 +132,7 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   })),
 ]
 
-/** CSS-переменные: --c-<имя>, --risk-<уровень>-{c,plate,on}, --f-<шрифт>. */
+/** CSS-переменные: --c-<имя>, --risk-<уровень>-{c,plate,on}, --s-<цвет спрайта>, --f-<шрифт>. */
 export function cssVariables(): Record<string, string> {
   const vars: Record<string, string> = {}
   const kebab = (s: string) => s.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())
@@ -98,6 +142,7 @@ export function cssVariables(): Record<string, string> {
     vars[`--risk-${k}-plate`] = r.plate
     vars[`--risk-${k}-on`] = r.onPlate
   }
+  for (const [k, v] of Object.entries(sprite)) vars[`--s-${kebab(k)}`] = v
   for (const [k, v] of Object.entries(fonts)) vars[`--f-${k}`] = v
   return vars
 }

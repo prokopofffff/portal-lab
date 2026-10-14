@@ -1,0 +1,142 @@
+<!-- Кадр канваса «Книга журнала · три вида записей». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Книга журнала</title>
+<script src="75752486-0cb5-45c9-b218-223d6f153b28"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+@keyframes inkIn{0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0 0 0)}}
+.writing{animation:inkIn 2.4s steps(36) 1}
+.tab{clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 10px),0 100%)}
+</style>
+</helmet>
+<div style="width:1440px;height:1000px;display:flex;flex-direction:column;background:#0e0c16;color:#efe6d0;font-family:'Tektur','Trebuchet MS',sans-serif;overflow:hidden">
+
+<dc-import name="Hud" min="{{hud.min}}" speed="1" slots="{{hud.slots}}" lost="{{hud.lost}}" open="{{hud.open}}" crit="{{hud.crit}}" closed="{{hud.closed}}" collapsed="{{hud.collapsed}}" worlds="{{hud.worlds}}" studied="{{hud.studied}}" total="{{hud.total}}" hint-size="100%,112px"></dc-import>
+
+<div style="flex:1 1 0;min-height:0;box-sizing:border-box;padding:24px 56px 20px;display:flex;gap:0;background-color:#24160f;background-image:repeating-linear-gradient(90deg,transparent 0 79px,#1c110b 79px 80px),repeating-linear-gradient(0deg,transparent 0 23px,#1f130d 23px 24px);box-shadow:inset 0 0 160px rgba(0,0,0,.75)">
+
+<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:14px;align-items:center">
+<div style="display:flex;width:100%;max-width:1180px;align-items:center;justify-content:space-between">
+<span style="font-family:'Press Start 2P',monospace;font-size:20px;color:#f1deae;letter-spacing:1px">КНИГА ЖУРНАЛА</span>
+<span style="font-size:15px;color:#cdb98a">разворот {{spread}} · записей: {{count}}</span>
+</div>
+
+<div style="position:relative;display:flex;width:100%;max-width:1180px;flex:1 1 0;min-height:0;box-shadow:0 0 0 5px #4a2f1c, 0 10px 0 5px #170d08">
+<div style="flex:1 1 0;min-width:0;position:relative;box-sizing:border-box;padding:22px 26px 18px 22px;background-color:#e9d9b0;background-image:repeating-linear-gradient(0deg,transparent 0 35px,#d9c898 35px 36px);box-shadow:inset -22px 0 26px -16px rgba(60,40,10,.55);display:flex;flex-direction:column">
+<div style="display:flex;flex-direction:column;flex:1 1 0">
+<sc-for list="{{left}}" as="e" hint-placeholder-count="7">
+<div class="{{e.cls}}" style="display:flex;gap:16px;min-height:74px;align-items:flex-start;padding-bottom:6px">
+<div style="flex:none;width:76px;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-top:2px">
+<span style="font-family:'Marck Script',cursive;font-size:21px;line-height:24px;color:#7d6c52">мин {{e.min}}</span>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-size:11px;color:#8f7e60">{{e.real}}</span>
+</div>
+<span style="flex:none;width:14px;height:14px;margin-top:7px;display:flex"><svg sc-camel-view-box="0 0 5 5" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="{{e.icon}}" fill="{{e.ink}}"></path></svg></span>
+<span style="font-family:{{e.font}};font-size:{{e.size}}px;line-height:26px;color:{{e.ink}};text-wrap:pretty">{{e.text}}</span>
+</div>
+</sc-for>
+</div>
+<span style="align-self:center;font-family:'Marck Script',cursive;font-size:18px;color:#8f7e60">{{pageL}}</span>
+</div>
+
+<div style="flex:none;width:10px;background:linear-gradient(90deg,#8d7040,#4a3418 50%,#8d7040)"></div>
+
+<div style="flex:1 1 0;min-width:0;position:relative;box-sizing:border-box;padding:22px 22px 18px 26px;background-color:#e9d9b0;background-image:repeating-linear-gradient(0deg,transparent 0 35px,#d9c898 35px 36px);box-shadow:inset 22px 0 26px -16px rgba(60,40,10,.55);display:flex;flex-direction:column">
+<div style="display:flex;flex-direction:column;flex:1 1 0">
+<sc-for list="{{right}}" as="e" hint-placeholder-count="7">
+<div class="{{e.cls}}" style="display:flex;gap:16px;min-height:74px;align-items:flex-start;padding-bottom:6px">
+<div style="flex:none;width:76px;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-top:2px">
+<span style="font-family:'Marck Script',cursive;font-size:21px;line-height:24px;color:#7d6c52">мин {{e.min}}</span>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-size:11px;color:#8f7e60">{{e.real}}</span>
+</div>
+<span style="flex:none;width:14px;height:14px;margin-top:7px;display:flex"><svg sc-camel-view-box="0 0 5 5" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="{{e.icon}}" fill="{{e.ink}}"></path></svg></span>
+<span style="font-family:{{e.font}};font-size:{{e.size}}px;line-height:26px;color:{{e.ink}};text-wrap:pretty">{{e.text}}</span>
+</div>
+</sc-for>
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center">
+<svg sc-camel-view-box="0 0 9 9" width="54" height="54" shape-rendering="crispEdges" aria-hidden="true"><path d="M0,1h9v1h-9z M0,7h9v1h-9z M0,2h1v5h-1z M8,2h1v5h-1z M4,2h1v5h-1z" fill="#b8a578"></path></svg>
+<span style="font-family:'Marck Script',cursive;font-size:28px;line-height:34px;color:#8f7e60;text-wrap:pretty">Страницы чисты. Первая запись появится, когда откроется первый портал.</span>
+</div>
+</sc-if>
+</div>
+<span style="align-self:center;font-family:'Marck Script',cursive;font-size:18px;color:#8f7e60">{{pageR}}</span>
+<span style="position:absolute;right:0;bottom:0;width:56px;height:56px;background:linear-gradient(135deg,transparent 50%,#bda877 50%,#d6c392)"></span>
+</div>
+</div>
+
+<div style="display:flex;width:100%;max-width:1180px;align-items:center;justify-content:space-between;gap:20px">
+<button type="button" aria-label="Предыдущий разворот" style="height:44px;padding:0 18px;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:16px;font-weight:600;color:#e9d9b0;background:#2a1d14;border:3px solid #6a5238;cursor:pointer">‹ листать назад</button>
+<div style="display:flex;align-items:center;gap:22px;font-size:15px;color:#e9d9b0">
+<span style="display:flex;align-items:center;gap:8px"><svg sc-camel-view-box="0 0 5 5" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h1v1h-1z M1,1h3v1h-3z M0,2h5v2h-5z M1,4h3v1h-3z" fill="#3b2a18"></path></svg><span style="font-family:'Marck Script',cursive;font-size:20px;color:#e9d9b0">действие</span></span>
+<span style="display:flex;align-items:center;gap:8px"><svg sc-camel-view-box="0 0 5 5" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="M0,0h1v1h-1z M4,0h1v1h-1z M1,1h1v1h-1z M3,1h1v1h-1z M2,2h1v1h-1z M1,3h1v1h-1z M3,3h1v1h-1z M0,4h1v1h-1z M4,4h1v1h-1z" fill="#ff8099"></path></svg><span style="font-family:'Marck Script',cursive;font-size:20px;color:#ff8099">отказ</span></span>
+<span style="display:flex;align-items:center;gap:8px"><svg sc-camel-view-box="0 0 5 5" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="M1,1h3v3h-3z" fill="#b4a88a"></path></svg><span style="font-family:'Caveat',cursive;font-size:21px;color:#b4a88a">система</span></span>
+</div>
+<button type="button" aria-label="Следующий разворот" style="height:44px;padding:0 18px;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:16px;font-weight:600;color:#e9d9b0;background:#2a1d14;border:3px solid #6a5238;cursor:pointer">листать вперёд ›</button>
+</div>
+</div>
+
+<div style="flex:none;width:176px;margin-left:4px;padding-top:70px;display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ribbons}}" as="r" hint-placeholder-count="3">
+<button type="button" class="tab" style="height:78px;box-sizing:border-box;padding:6px 14px 18px;text-align:left;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:15px;font-weight:600;line-height:17px;color:#fff;background:{{r.bg}};border:0;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-start;gap:2px"><span style="font-size:12px;font-weight:400;letter-spacing:.5px;color:#f6e9d8">закладка</span><span>{{r.label}}</span><span style="font-size:12px;font-weight:400;color:#f6e9d8">{{r.value}}</span></button>
+</sc-for>
+</div>
+</div>
+
+<dc-import name="Dock" active="book" hint-size="100%,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;empty&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000}}">
+class Component extends DCLogic {
+  renderVals() {
+    const empty = this.props.empty === true || this.props.empty === 'true';
+    const KIND = {
+      a: { ink: '#3b2a18', font: "'Marck Script',cursive", size: 23, icon: 'M2,0h1v1h-1z M1,1h3v1h-3z M0,2h5v2h-5z M1,4h3v1h-3z', cls: '' },
+      r: { ink: '#9b1c2c', font: "'Marck Script',cursive", size: 23, icon: 'M0,0h1v1h-1z M4,0h1v1h-1z M1,1h1v1h-1z M3,1h1v1h-1z M2,2h1v1h-1z M1,3h1v1h-1z M3,3h1v1h-1z M0,4h1v1h-1z M4,4h1v1h-1z', cls: '' },
+      s: { ink: '#9a8a70', font: "'Caveat',cursive", size: 25, icon: 'M1,1h3v3h-3z', cls: '' }
+    };
+    const E = [
+      [24, '13:02', 's', 'Схлопнулся портал ЗМ-517-1 (Забытый Маяк), потеряно 2 наблюдателя'],
+      [60, '13:11', 'a', 'Открыт портал ЛЧ-244-1 (Ледяные Чертоги)'],
+      [88, '13:27', 'a', 'Закрыт портал ЯС-179-2 (Янтарный Сад)'],
+      [88, '13:27', 's', 'Мир Янтарный Сад изучен полностью'],
+      [97, '13:36', 'a', 'Открыт портал ББ-310-1 (Багровая Бездна)'],
+      [112, '13:44', 'a', 'Портал ББ-310-1 помечен «под вопросом»'],
+      [120, '13:50', 'a', 'Открыт портал ПТ-420-1 (Пепельные Топи)'],
+      [126, '13:55', 'a', 'Отправлены 2 наблюдателя в ПТ-420-1 (Пепельные Топи)'],
+      [128, '13:57', 's', 'ББ-310-1 (Багровая Бездна): риск средний → высокий'],
+      [131, '14:01', 'a', 'Открыт портал ПТ-420-2 (Пепельные Топи)'],
+      [137, '14:06', 's', 'ПТ-420-1 (Пепельные Топи): риск высокий → критический'],
+      [143, '14:12', 'a', 'Стабилизирован портал ББ-310-1 (Багровая Бездна)'],
+      [143, '14:12', 's', 'ББ-310-1 (Багровая Бездна): риск высокий → средний'],
+      [143, '14:13', 'r', 'Отказ: нельзя отправить наблюдателя в ПТ-420-1 (Пепельные Топи) — риск критический']
+    ];
+    const rows = empty ? [] : E.map((e, i) => {
+      const k = KIND[e[2]];
+      return { min: e[0], real: e[1], text: e[3], ink: k.ink, font: k.font, size: k.size, icon: k.icon, cls: i === E.length - 1 ? 'writing' : '' };
+    });
+    const hud = empty
+      ? { min: 0, slots: 'empty,empty,empty,empty,empty', lost: 0, open: 0, crit: 0, closed: 0, collapsed: 0, worlds: 0, studied: 0, total: 0 }
+      : { min: 143, slots: 'free,onsite,onsite,onsite,transit', lost: 2, open: 5, crit: 1, closed: 2, collapsed: 1, worlds: 6, studied: 17, total: 41 };
+    return {
+      hud: hud, left: rows.slice(0, 7), right: rows.slice(7), isEmpty: empty,
+      spread: empty ? '1' : '2', count: rows.length, pageL: empty ? 'стр. 1' : 'стр. 3', pageR: empty ? 'стр. 2' : 'стр. 4',
+      ribbons: [
+        { label: 'Вид записи', value: 'все виды', bg: '#9b1c2c' },
+        { label: 'Портал', value: 'любой', bg: '#2f5fa8' },
+        { label: 'Мир', value: 'любой', bg: '#2f7a4f' }
+      ]
+    };
+  }
+}
+</script>
+
+
+</body></html>

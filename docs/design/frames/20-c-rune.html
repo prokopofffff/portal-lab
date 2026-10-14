@@ -1,0 +1,36 @@
+<!-- Кадр канваса «Руна риска». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Руна риска</title>
+<script src="99e712f9-3e31-44a0-8674-e6acdffcfcbd"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#17141f}
+</style>
+</helmet>
+<div style="display:inline-flex;line-height:0">
+<svg sc-camel-view-box="0 0 7 7" width="{{size}}" height="{{size}}" shape-rendering="crispEdges" role="img" aria-label="{{label}}" style="display:block"><path d="{{d}}" fill="{{color}}"></path></svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;level&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;low&quot;,&quot;mid&quot;,&quot;high&quot;,&quot;crit&quot;,&quot;dead&quot;],&quot;default&quot;:&quot;crit&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:48,&quot;min&quot;:7,&quot;max&quot;:128},&quot;$preview&quot;:{&quot;width&quot;:64,&quot;height&quot;:64}}">
+class Component extends DCLogic {
+  renderVals() {
+    const defs = {
+      low:  { c: '#5be0c0', l: 'Низкий риск', d: 'M2,0h3v1h-3z M1,1h1v1h-1z M5,1h1v1h-1z M0,2h1v3h-1z M6,2h1v3h-1z M3,3h1v1h-1z M1,5h1v1h-1z M5,5h1v1h-1z M2,6h3v1h-3z' },
+      mid:  { c: '#ffd34d', l: 'Средний риск', d: 'M3,0h1v1h-1z M2,1h1v1h-1z M4,1h1v1h-1z M1,2h1v1h-1z M5,2h1v1h-1z M0,3h1v1h-1z M3,3h1v1h-1z M6,3h1v1h-1z M1,4h1v1h-1z M5,4h1v1h-1z M2,5h1v1h-1z M4,5h1v1h-1z M3,6h1v1h-1z' },
+      high: { c: '#ff8a2b', l: 'Высокий риск', d: 'M3,0h1v1h-1z M2,1h1v2h-1z M4,1h1v2h-1z M1,3h1v2h-1z M3,3h1v2h-1z M5,3h1v2h-1z M0,5h1v1h-1z M6,5h1v1h-1z M0,6h7v1h-7z' },
+      crit: { c: '#ff4466', l: 'Критический риск', d: 'M1,0h5v1h-5z M0,1h7v1h-7z M0,2h2v1h-2z M3,2h1v1h-1z M5,2h2v1h-2z M0,3h7v1h-7z M1,4h5v1h-5z M1,5h1v1h-1z M3,5h1v1h-1z M5,5h1v1h-1z M2,6h3v1h-3z' },
+      dead: { c: '#8a85a0', l: 'Портал закрыт', d: 'M0,0h1v1h-1z M6,0h1v1h-1z M1,1h1v1h-1z M5,1h1v1h-1z M2,2h1v1h-1z M4,2h1v1h-1z M3,3h1v1h-1z M2,4h1v1h-1z M4,4h1v1h-1z M1,5h1v1h-1z M5,5h1v1h-1z M0,6h1v1h-1z M6,6h1v1h-1z' }
+    };
+    const k = defs[this.props.level] || defs.crit;
+    return { d: k.d, color: k.c, label: k.l, size: Number(this.props.size) || 48 };
+  }
+}
+</script>
+
+
+</body></html>

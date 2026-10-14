@@ -1,0 +1,57 @@
+<!-- Кадр канваса «Баннер уведомления». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Баннер уведомления</title>
+<script src="c1a7a865-df93-4ad5-9b1e-1dc146947861"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+.nc{clip-path:polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px))}
+@keyframes bnIn{0%{transform:translateX(40px);opacity:0}100%{transform:translateX(0);opacity:1}}
+.bn{animation:bnIn .5s steps(5) 1}
+</style>
+</helmet>
+<div class="bn" style="width:480px;font-family:'Tektur','Trebuchet MS',sans-serif">
+<div class="nc" style="background:{{k.c}};padding:4px">
+<div class="nc" style="display:flex;align-items:stretch;gap:14px;background:#14111c;padding:10px 16px 10px 10px">
+<div style="flex:none;width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:{{k.dark}};box-shadow:inset 0 0 0 2px {{k.c}}">
+<svg sc-camel-view-box="0 0 8 8" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><path d="{{k.icon}}" fill="{{k.ic}}"></path></svg>
+</div>
+<div style="display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0">
+<span style="font-family:'Press Start 2P',monospace;font-size:11px;line-height:14px;letter-spacing:1px;color:{{k.ic}}">{{k.title}}</span>
+<span style="font-size:17px;line-height:20px;color:#efe6d0;text-wrap:pretty">{{k.text}}</span>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;refuse&quot;,&quot;collapse&quot;,&quot;lost&quot;,&quot;studied&quot;,&quot;hired&quot;],&quot;default&quot;:&quot;refuse&quot;},&quot;text&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;},&quot;$preview&quot;:{&quot;width&quot;:480,&quot;height&quot;:96}}">
+class Component extends DCLogic {
+  renderVals() {
+    const K = {
+      refuse:   { c: '#ff4466', dark: '#4a0f20', ic: '#ff8099', title: 'ОТКАЗ', text: 'Нельзя отправить наблюдателя в ПТ-420-1 — риск критический',
+                  icon: 'M0,0h2v2h-2z M6,0h2v2h-2z M2,2h2v2h-2z M4,2h2v2h-2z M2,4h2v2h-2z M4,4h2v2h-2z M0,6h2v2h-2z M6,6h2v2h-2z' },
+      collapse: { c: '#ff8a2b', dark: '#4a2208', ic: '#ffb36b', title: 'ПОРТАЛ СХЛОПНУЛСЯ', text: 'ЗМ-517-1 (Забытый Маяк) сжался и погас',
+                  icon: 'M2,0h4v1h-4z M1,1h1v1h-1z M6,1h1v1h-1z M0,2h1v4h-1z M7,2h1v4h-1z M1,6h1v1h-1z M6,6h1v1h-1z M2,7h4v1h-4z M3,3h2v2h-2z' },
+      lost:     { c: '#a79bb8', dark: '#26222f', ic: '#d8cfea', title: 'НАБЛЮДАТЕЛИ ПОТЕРЯНЫ', text: 'Потеряно 2 наблюдателя при схлопывании ЗМ-517-1',
+                  icon: 'M2,0h4v1h-4z M1,1h6v7h-6z M3,2h2v1h-2z M2,3h4v1h-4z M3,4h2v3h-2z' },
+      studied:  { c: '#e8b948', dark: '#3d2f0a', ic: '#ffd98a', title: 'МИР ИЗУЧЕН', text: 'Янтарный Сад изучен полностью — 7 из 7 существ',
+                  icon: 'M3,0h2v1h-2z M3,1h2v2h-2z M0,3h8v1h-8z M1,4h6v1h-6z M2,5h4v1h-4z M1,6h2v2h-2z M5,6h2v2h-2z' },
+      hired:    { c: '#5fcf9a', dark: '#0f3a2c', ic: '#a8f5c8', title: 'НАЁМ ЗАВЕРШЁН', text: 'Новый наблюдатель прибыл в лабораторию и свободен',
+                  icon: 'M2,0h4v1h-4z M1,1h6v1h-6z M1,2h1v3h-1z M6,2h1v3h-1z M1,5h6v1h-6z M0,6h8v2h-8z' }
+    };
+    const k = Object.assign({}, K[this.props.kind] || K.refuse);
+    if (this.props.text) k.text = this.props.text;
+    return { k: k };
+  }
+}
+</script>
+
+
+</body></html>

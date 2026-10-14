@@ -1,0 +1,249 @@
+<!-- Кадр канваса «Зал · обычная работа, критический портал». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Зал лаборатории</title>
+<script src="bb85a05a-2994-4981-9e33-4022c23308b9"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+.nc{clip-path:polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px))}
+@keyframes torchF{0%,100%{opacity:1;transform:translateY(0)}33%{opacity:.75;transform:translateY(.5px)}66%{opacity:.9;transform:translateY(-.5px)}}
+.flame{animation:torchF .8s steps(1) infinite}
+.is-paused *{animation-play-state:paused !important}
+.pt{position:relative;display:block}
+.pt svg{display:block;overflow:visible}
+.sp{display:none}
+.emp{display:none}
+.pt-empty .emp{display:inline}
+.pt-empty .live{display:none}
+@keyframes ptA{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes ptB{0%{opacity:1}12%{opacity:.4}30%{opacity:.9}41%{opacity:.3}67%{opacity:1}80%{opacity:.5}100%{opacity:1}}
+@keyframes ptRise{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-9px);opacity:0}}
+@keyframes ptGlowC{0%,100%{filter:drop-shadow(0 0 6px #ff4466)}50%{filter:drop-shadow(0 0 28px #ff4466)}}
+@keyframes ptShake{0%,100%{transform:translate(0,0)}25%{transform:translate(.5px,0)}50%{transform:translate(-.5px,.5px)}75%{transform:translate(0,-.5px)}}
+@keyframes ptBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+.ob{animation:ptBob 1.6s steps(1) infinite}
+.pt-low{filter:drop-shadow(0 0 10px #5be0c0aa)}
+.pt-low .l2{animation:ptA 4s steps(4) infinite}
+.pt-low .l3{animation:ptA 4s steps(4) infinite reverse}
+.pt-mid{filter:drop-shadow(0 0 12px #ffd34dbb)}
+.pt-mid .l2{animation:ptB 3s steps(1) infinite}
+.pt-mid .l3{animation:ptB 2.3s steps(1) infinite}
+.pt-mid .s1,.pt-mid .s2{display:inline;animation:ptRise 1.8s steps(5) infinite}
+.pt-high{filter:drop-shadow(0 0 16px #ff8a2bdd)}
+.pt-high .l2,.pt-high .l3{animation:ptB 1.1s steps(1) infinite}
+.pt-high .s1,.pt-high .s2,.pt-high .s3,.pt-high .s4{display:inline;animation:ptRise 1.2s steps(5) infinite}
+.pt-crit{animation:ptGlowC .9s steps(6) infinite}
+.pt-crit .shk{animation:ptShake .25s steps(1) infinite}
+.pt-crit .l2,.pt-crit .l3,.pt-crit .core{animation:ptB .5s steps(1) infinite}
+.pt-crit .sp{display:inline;animation:ptRise .7s steps(5) infinite}
+.pt-dead{filter:grayscale(1) brightness(.75)}
+.pt-empty .rn{animation:ptA 3s steps(3) infinite}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="width:1440px;height:1000px;display:flex;flex-direction:column;background:#0e0c16;color:#efe6d0;font-family:'Tektur','Trebuchet MS',sans-serif;overflow:hidden">
+
+<dc-import name="Hud" min="{{hud.min}}" speed="{{hud.speed}}" slots="{{hud.slots}}" lost="{{hud.lost}}" open="{{hud.open}}" crit="{{hud.crit}}" closed="{{hud.closed}}" collapsed="{{hud.collapsed}}" worlds="{{hud.worlds}}" studied="{{hud.studied}}" total="{{hud.total}}" hint-size="100%,112px"></dc-import>
+
+<div style="flex:1 1 0;min-height:0;position:relative;display:flex;flex-direction:column;padding:10px 28px 12px;box-sizing:border-box;background-color:#1b1724;background-image:repeating-linear-gradient(0deg,transparent 0 31px,#14111c 31px 32px),repeating-linear-gradient(90deg,transparent 0 63px,#14111c 63px 64px);box-shadow:inset 0 0 140px rgba(0,0,0,.65);filter:{{hallFilter}}">
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;height:22px;margin-bottom:6px">
+<span style="font-family:'Press Start 2P',monospace;font-size:11px;color:#ffb347;letter-spacing:1px">ТРЕВОЖНЫЕ ЗНАКИ</span>
+<sc-if value="{{showFull}}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;color:#ffc2cd;background:#4a0f20;border:2px solid #ff4466;padding:2px 10px">Все 12 арок заняты — открыть новый портал некуда</span>
+</sc-if>
+<sc-if value="{{showPaused}}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:600;color:#dbe8ff;background:#1d2a47;border:2px solid #8fb4ff;padding:2px 10px"><svg sc-camel-view-box="0 0 7 8" width="10" height="12" shape-rendering="crispEdges" aria-hidden="true"><path d="M0,0h3v8h-3z M4,0h3v8h-3z" fill="#dbe8ff"></path></svg>Пауза: время стоит, песок замер</span>
+</sc-if>
+<label style="display:flex;align-items:center;gap:10px;font-size:15px;color:#d8cfea;cursor:pointer">
+<span>Под вопросом</span>
+<span style="display:flex;align-items:center;width:44px;height:20px;box-sizing:border-box;padding:2px;background:{{tgBg}};border:2px solid #6a5f80;justify-content:{{tgJust}}"><span style="width:12px;height:12px;background:{{tgKnob}}"></span></span>
+<input type="checkbox" checked="{{filterQ}}" aria-label="Показать только порталы «под вопросом»" style="position:absolute;opacity:0;width:1px;height:1px">
+</label>
+</div>
+
+<sc-if value="{{hasAlarms}}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;height:90px;margin-bottom:8px">
+<sc-for list="{{alarms}}" as="a" hint-placeholder-count="3">
+<button type="button" class="nc" style="position:relative;display:flex;flex-direction:column;gap:5px;text-align:left;padding:12px 14px 8px;background:#e9d9b0;border:0;color:#2a1d12;cursor:pointer;font-family:inherit;box-shadow:inset 0 -4px 0 #bda877">
+<span style="position:absolute;top:3px;left:50%;width:8px;height:8px;background:#b3243c;box-shadow:0 2px 0 #6e1424"></span>
+<span style="display:flex;align-items:center;gap:8px">
+<span style="display:flex;align-items:center;gap:6px;background:{{a.dark}};color:{{a.tx}};padding:1px 8px 1px 6px;font-size:14px;font-weight:600;letter-spacing:.5px"><dc-import name="Rune" level="{{a.level}}" size="12" hint-size="12px,12px"></dc-import>{{a.word}}</span>
+<span style="font-size:16px;font-weight:600;color:#2a1d12">{{a.title}}</span>
+</span>
+<span style="font-family:'Alegreya',Georgia,serif;font-size:15px;line-height:18px;color:#3a2a1a;text-wrap:pretty">{{a.reason}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{noAlarms}}" hint-placeholder-val="{{ false }}">
+<div class="nc" style="height:90px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:16px;background:#221e2d;box-shadow:inset 0 0 0 3px #3d3649">
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:26px;color:#ffd98a">Порталов нет — активируйте первую арку</span>
+</div>
+</sc-if>
+
+<div style="position:relative;flex:1 1 0;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:4px 0">
+
+<sc-for list="{{torches}}" as="t" hint-placeholder-count="6">
+<svg class="flame" sc-camel-view-box="0 0 7 16" width="21" height="48" shape-rendering="crispEdges" aria-hidden="true" style="position:absolute;left:{{t.x}};top:{{t.y}};filter:drop-shadow(0 0 10px #e8821eaa)">
+<path d="M3,8h1v8h-1z M2,7h3v1h-3z" fill="#5b4a3a"></path>
+<path d="M3,0h1v1h-1z M2,1h3v2h-3z M1,3h5v3h-5z M2,6h3v1h-3z" fill="#e8821e"></path>
+<path d="M3,2h1v1h-1z M2,3h3v3h-3z" fill="#ffd98a"></path>
+<path d="M3,4h1v2h-1z" fill="#fff4c2"></path>
+</svg>
+</sc-for>
+
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="12">
+<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:2px;opacity:{{c.op}};outline:{{c.ring}};outline-offset:-4px">
+
+<sc-if value="{{c.occupied}}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;top:-10px;left:50%;width:230px;height:230px;margin-left:-115px;background:{{c.glowBg}};pointer-events:none"></div>
+<div style="position:relative;width:100px;height:117px">
+<button type="button" aria-label="{{c.ariaOpen}}" style="position:absolute;left:0;top:0;padding:0;margin:0;border:0;background:transparent;cursor:pointer;line-height:0">
+<dc-import name="Portal" risk="{{c.risk}}" w="100" obs="{{c.obs}}" hint-size="100px,117px"></dc-import>
+</button>
+<div style="position:absolute;right:calc(100% + 6px);top:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+<sc-if value="{{c.hasObs}}" hint-placeholder-val="{{ false }}">
+<span role="img" aria-label="{{c.obsAria}}" title="{{c.obsAria}}" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 7px 4px;background:#173a2c;border:2px solid #5fcf9a;color:#a8f5c8;font-size:18px;font-weight:700;line-height:18px"><svg sc-camel-view-box="0 0 9 5" width="27" height="15" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h5v1h-5z M1,1h1v1h-1z M4,1h1v1h-1z M7,1h1v1h-1z M0,2h1v1h-1z M3,2h3v1h-3z M8,2h1v1h-1z M1,3h1v1h-1z M4,3h1v1h-1z M7,3h1v1h-1z M2,4h5v1h-5z" fill="#a8f5c8"></path></svg>×{{c.obs}}</span>
+</sc-if>
+</div>
+<div style="position:absolute;left:calc(100% + 12px);top:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+<sc-if value="{{c.flagQ}}" hint-placeholder-val="{{ false }}">
+<span title="Под вопросом" role="img" aria-label="Под вопросом" style="width:30px;height:30px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#3a2a05;border:2px solid #ffd34d"><svg sc-camel-view-box="0 0 8 8" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h4v1h-4z M1,1h2v1h-2z M5,1h2v1h-2z M4,2h2v1h-2z M3,3h2v2h-2z M3,6h2v2h-2z" fill="#ffd34d"></path></svg></span>
+</sc-if>
+<sc-if value="{{c.flagOk}}" hint-placeholder-val="{{ false }}">
+<span title="Принят как есть" role="img" aria-label="Принят как есть" style="width:30px;height:30px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;background:#0f3a2c;border:2px solid #5fcf9a"><svg sc-camel-view-box="0 0 8 8" width="16" height="16" shape-rendering="crispEdges" aria-hidden="true"><path d="M0,4h1v1h-1z M1,5h1v1h-1z M2,6h1v1h-1z M3,5h1v1h-1z M4,4h1v1h-1z M5,3h1v1h-1z M6,2h1v1h-1z M7,1h1v1h-1z" fill="#5fcf9a"></path></svg></span>
+</sc-if>
+</div>
+</div>
+<div class="nc" style="position:relative;width:208px;box-sizing:border-box;background:#17141f;border-top:5px solid {{c.rc}};box-shadow:inset 0 0 0 3px #2e2840;padding:8px 12px 0;display:flex;flex-direction:column;gap:5px;margin-top:10px">
+<div style="display:flex;justify-content:space-between;align-items:center;height:20px;white-space:nowrap">
+<span style="font-family:'Press Start 2P',monospace;font-size:11px;color:#f4ecd8">{{c.name}}</span>
+<sc-if value="{{c.shared}}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:#c8b8ff;border:1px solid #6d5ac8;padding:0 5px;background:#241d3d">общий мир</span>
+</sc-if>
+</div>
+<span style="font-size:16px;color:#cbc2de;line-height:17px;height:17px;white-space:nowrap">{{c.world}}</span>
+<div style="display:flex;align-items:center;gap:6px;height:18px;white-space:nowrap"><span style="width:32px;font-size:13px;color:#b4abc6">ЭНР</span><span style="flex:1 1 0;height:8px;background:#241f30"><span style="display:block;height:8px;width:{{c.enPct}}%;background:repeating-linear-gradient(90deg,#b78cff 0 8px,transparent 8px 10px)"></span></span><span style="width:66px;white-space:nowrap;text-align:right;font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:14px;color:#efe6d0">{{c.enVal}}</span></div>
+<div style="display:flex;align-items:center;gap:6px;height:18px;white-space:nowrap"><span style="width:32px;font-size:13px;color:#b4abc6">СТБ</span><span style="flex:1 1 0;height:8px;background:#241f30"><span style="display:block;height:8px;width:{{c.stPct}}%;background:repeating-linear-gradient(90deg,#5be0c0 0 8px,transparent 8px 10px)"></span></span><span style="width:66px;white-space:nowrap;text-align:right;font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:14px;color:#efe6d0">{{c.stVal}}</span></div>
+<div style="display:flex;align-items:center;gap:6px;height:18px;white-space:nowrap"><span style="width:32px;font-size:13px;color:#b4abc6">ВРМ</span><span style="flex:1 1 0;height:8px;background:#241f30"><span style="display:block;height:8px;width:{{c.tmPct}}%;background:repeating-linear-gradient(90deg,#ffd98a 0 8px,transparent 8px 10px)"></span></span><span style="width:66px;white-space:nowrap;text-align:right;font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:14px;color:#efe6d0">{{c.tmVal}}</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:14px;font-weight:500;color:#cbc2de;white-space:nowrap;margin-top:2px"><span>изучено существ</span><b style="font-size:16px;font-weight:700;color:#efe6d0">{{c.creat}}</b></div>
+<div style="display:flex;height:8px;background:#241f30" role="img" aria-label="{{c.studyAria}}"><span style="display:block;height:8px;width:{{c.doneW}}%;background:repeating-linear-gradient(90deg,#b78cff 0 8px,transparent 8px 10px)"></span><span style="display:block;height:8px;width:{{c.nextW}}%;background:repeating-linear-gradient(90deg,#6a55a0 0 8px,transparent 8px 10px)"></span></div>
+<div style="display:flex;align-items:center;gap:8px;margin:3px -12px 0;padding:5px 12px 6px;background:{{c.dark}};color:{{c.tx}};font-size:15px;font-weight:600;letter-spacing:.5px;white-space:nowrap"><dc-import name="Rune" level="{{c.risk}}" size="14" hint-size="14px,14px"></dc-import>{{c.word}} · {{c.score}}</div>
+</div>
+</sc-if>
+
+<sc-if value="{{c.empty}}" hint-placeholder-val="{{ false }}">
+<button type="button" aria-label="{{c.ariaOpen}}" style="position:relative;padding:0;margin:0;border:0;background:transparent;cursor:pointer;line-height:0">
+<dc-import name="Portal" risk="empty" w="100" hint-size="100px,117px"></dc-import>
+</button>
+<div style="margin-top:10px;width:208px;box-sizing:border-box;padding:10px 12px;border:2px dashed {{c.dash}};display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center">
+<span style="font-family:'Press Start 2P',monospace;font-size:11px;color:{{c.lab}}">{{c.label}}</span>
+<span style="font-size:14px;color:{{c.sub}}">{{c.hint}}</span>
+</div>
+</sc-if>
+
+</div>
+</sc-for>
+</div>
+</div>
+
+<dc-import name="Dock" active="hall" hint-size="100%,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;scene&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;work&quot;,&quot;empty&quot;,&quot;full&quot;,&quot;paused&quot;],&quot;default&quot;:&quot;work&quot;},&quot;focus&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;},&quot;filterQ&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000}}">
+class Component extends DCLogic {
+  renderVals() {
+    const scene = this.props.scene || 'work';
+    const focus = this.props.focus || '';
+    const fq = this.props.filterQ === true || this.props.filterQ === 'true';
+    const R = {
+      low:  { word: 'НИЗКИЙ',      low: 'низкий',      c: '#5be0c0', dark: '#0f4a40', tx: '#b4f7e6', glow: 'rgba(91,224,192,.16)' },
+      mid:  { word: 'СРЕДНИЙ',     low: 'средний',     c: '#ffd34d', dark: '#5a4a10', tx: '#ffeaa3', glow: 'rgba(255,211,77,.18)' },
+      high: { word: 'ВЫСОКИЙ',     low: 'высокий',     c: '#ff8a2b', dark: '#6a3010', tx: '#ffcfa3', glow: 'rgba(255,138,43,.26)' },
+      crit: { word: 'КРИТИЧЕСКИЙ', low: 'критический', c: '#ff4466', dark: '#6a1428', tx: '#ffbac6', glow: 'rgba(255,68,102,.4)' }
+    };
+    const P = [
+      { id: 'ПТ-420-1', code: 'ПТ-420', world: 'Пепельные Топи', en: 82, st: 14, tm: 8, got: 3, tot: 9, cur: 62, level: 'crit', score: 87, obs: 2, flag: '' },
+      { id: 'ШЗ-793-1', code: 'ШЗ-793', world: 'Шепчущее Зеркало', en: 22, st: 90, tm: 310, got: 2, tot: 2, cur: 0, level: 'low', score: 11, obs: 0, flag: 'ok' },
+      { id: 'ПТ-420-2', code: 'ПТ-420', world: 'Пепельные Топи', en: 40, st: 70, tm: 200, got: 3, tot: 9, cur: 62, level: 'low', score: 24, obs: 1, flag: '' },
+      { id: 'ЛЧ-244-1', code: 'ЛЧ-244', world: 'Ледяные Чертоги', en: 55, st: 58, tm: 140, got: 4, tot: 6, cur: 40, level: 'mid', score: 33, obs: 0, flag: '' },
+      { id: 'ББ-310-1', code: 'ББ-310', world: 'Багровая Бездна', en: 91, st: 35, tm: 46, got: 0, tot: 12, cur: 0, level: 'high', score: 72, obs: 0, flag: 'q' },
+      { id: 'ЗМ-517-2', code: 'ЗМ-517', world: 'Забытый Маяк', en: 48, st: 52, tm: 120, got: 1, tot: 5, cur: 0, level: 'mid', score: 34, obs: 0, flag: '' },
+      { id: 'ЯС-179-3', code: 'ЯС-179', world: 'Янтарный Сад', en: 30, st: 84, tm: 260, got: 7, tot: 7, cur: 0, level: 'low', score: 15, obs: 0, flag: 'ok' },
+      { id: 'ЛЧ-244-2', code: 'ЛЧ-244', world: 'Ледяные Чертоги', en: 70, st: 41, tm: 75, got: 4, tot: 6, cur: 40, level: 'high', score: 56, obs: 0, flag: '' },
+      { id: 'ББ-310-2', code: 'ББ-310', world: 'Багровая Бездна', en: 58, st: 60, tm: 110, got: 0, tot: 12, cur: 0, level: 'mid', score: 36, obs: 0, flag: 'q' },
+      { id: 'ПТ-420-3', code: 'ПТ-420', world: 'Пепельные Топи', en: 77, st: 38, tm: 52, got: 3, tot: 9, cur: 62, level: 'high', score: 65, obs: 0, flag: '' },
+      { id: 'ЗМ-517-3', code: 'ЗМ-517', world: 'Забытый Маяк', en: 35, st: 76, tm: 210, got: 1, tot: 5, cur: 0, level: 'low', score: 20, obs: 0, flag: '' },
+      { id: 'ШЗ-793-2', code: 'ШЗ-793', world: 'Шепчущее Зеркало', en: 15, st: 95, tm: 300, got: 2, tot: 2, cur: 0, level: 'low', score: 6, obs: 0, flag: 'ok' }
+    ];
+    const list = scene === 'empty' ? [] : (scene === 'full' ? P : P.slice(0, 5));
+    const pl = (n, a, b, c) => { const m = n % 100; if (m > 10 && m < 20) return c; const d = n % 10; return d === 1 ? a : (d >= 2 && d <= 4 ? b : c); };
+    const cnt = {};
+    list.forEach((p) => { cnt[p.code] = (cnt[p.code] || 0) + 1; });
+    const cells = [];
+    for (let i = 0; i < 12; i++) {
+      const p = list[i];
+      if (p) {
+        const r = R[p.level];
+        const doneW = Math.round(p.got / p.tot * 100);
+        const nextW = p.got < p.tot ? Math.round(p.cur / 100 / p.tot * 100) : 0;
+        cells.push({
+          occupied: true, empty: false, risk: p.level, obs: p.obs, hasObs: p.obs > 0, rc: r.c, dark: r.dark, tx: r.tx, word: r.word, score: p.score,
+          name: p.id, world: p.world, shared: cnt[p.code] > 1, flagQ: p.flag === 'q', flagOk: p.flag === 'ok',
+          obsAria: 'Наблюдателей на месте: ' + p.obs,
+          enPct: p.en, enVal: String(p.en), stPct: p.st, stVal: p.st + ' %', tmPct: Math.min(100, Math.round(p.tm / 320 * 100)), tmVal: p.tm + ' мин',
+          creat: p.got + ' / ' + p.tot,
+          doneW: doneW, nextW: nextW, studyAria: 'Изучено ' + p.got + ' из ' + p.tot + (nextW > 0 ? ', следующее на ' + p.cur + ' %' : ''),
+          glowBg: 'radial-gradient(closest-side, ' + r.glow + ', rgba(0,0,0,0))',
+          op: fq ? (p.flag === 'q' ? 1 : 0.28) : 1,
+          ring: focus === p.id ? '3px dashed #ffd98a' : '3px solid transparent',
+          ariaOpen: 'Открыть карточку портала ' + p.id
+        });
+      } else {
+        const first = scene === 'empty' && i === 0;
+        cells.push({
+          occupied: false, empty: true, ariaOpen: 'Открыть портал в арке ' + (i + 1), op: fq ? 0.28 : 1,
+          ring: '3px solid transparent',
+          label: 'АРКА ' + (i + 1), hint: first ? 'нажмите — откроется портал' : 'пуста',
+          dash: first ? '#ffb347' : '#2e2840', lab: first ? '#ffd98a' : '#8f86a3', sub: first ? '#ffd98a' : '#8f86a3'
+        });
+      }
+    }
+    const rank = { crit: 3, high: 2, mid: 1, low: 0 };
+    const alarms = list.filter((p) => p.flag !== 'ok').sort((a, b) => rank[b.level] - rank[a.level] || a.tm - b.tm || (b.tot - b.got) - (a.tot - a.got)).slice(0, 3).map((p) => {
+      const r = R[p.level];
+      const obs = p.obs > 0 ? ' · на месте ' + p.obs + ' ' + pl(p.obs, 'наблюдатель', 'наблюдателя', 'наблюдателей') : ' · наблюдателей нет';
+      return { level: p.level, word: r.word, dark: r.dark, tx: r.tx, title: p.id + ' · ' + p.world,
+        reason: r.low + ' · схлопнется через ' + p.tm + ' мин · не изучено ' + (p.tot - p.got) + obs };
+    });
+    const hudBy = {
+      work:   { min: 143, speed: '1', slots: 'free,onsite,onsite,onsite,transit', lost: 2, open: 5, crit: 1, closed: 2, collapsed: 1, worlds: 6, studied: 17, total: 41 },
+      paused: { min: 143, speed: 'pause', slots: 'free,onsite,onsite,onsite,transit', lost: 2, open: 5, crit: 1, closed: 2, collapsed: 1, worlds: 6, studied: 17, total: 41 },
+      full:   { min: 318, speed: '1', slots: 'free,onsite,onsite,onsite,transit', lost: 2, open: 12, crit: 1, closed: 2, collapsed: 1, worlds: 6, studied: 17, total: 41 },
+      empty:  { min: 0, speed: '1', slots: 'empty,empty,empty,empty,empty', lost: 0, open: 0, crit: 0, closed: 0, collapsed: 0, worlds: 0, studied: 0, total: 0 }
+    };
+    const torches = [
+      { x: '1%', y: '2%' }, { x: '49.2%', y: '2%' }, { x: '97%', y: '2%' },
+      { x: '1%', y: '53%' }, { x: '49.2%', y: '53%' }, { x: '97%', y: '53%' }
+    ];
+    return {
+      rootClass: scene === 'paused' ? 'is-paused' : 'is-live',
+      hallFilter: scene === 'paused' ? 'brightness(.55) saturate(.6)' : 'none',
+      hud: hudBy[scene] || hudBy.work, cells: cells, alarms: alarms, torches: torches,
+      hasAlarms: alarms.length > 0, noAlarms: alarms.length === 0,
+      showFull: scene === 'full', showPaused: scene === 'paused',
+      filterQ: fq, tgBg: fq ? '#5a4a10' : '#0b0911', tgJust: fq ? 'flex-end' : 'flex-start', tgKnob: fq ? '#ffd34d' : '#6a5f80'
+    };
+  }
+}
+</script>
+
+
+</body></html>

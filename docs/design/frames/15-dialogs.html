@@ -1,0 +1,71 @@
+<!-- Кадр канваса «Диалоги-свитки». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Диалоги-свитки</title>
+<script src="cba4373f-be29-4db5-bf4d-9d5c8d26cdd3"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+.nc{clip-path:polygon(0 4px,4px 4px,4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px))}
+</style>
+</helmet>
+<div style="width:1440px;height:760px;box-sizing:border-box;padding:48px 60px;display:flex;justify-content:space-between;align-items:flex-start;background-color:#1b1724;background-image:repeating-linear-gradient(0deg,transparent 0 31px,#14111c 31px 32px),repeating-linear-gradient(90deg,transparent 0 63px,#14111c 63px 64px);box-shadow:inset 0 0 200px rgba(0,0,0,.85);font-family:'Tektur','Trebuchet MS',sans-serif;color:#2a1d12">
+<sc-for list="{{dialogs}}" as="d" hint-placeholder-count="3">
+<div style="width:420px;display:flex;flex-direction:column">
+<div style="height:22px;margin:0 -10px;background:linear-gradient(180deg,#f3e6c4 0,#cdb98a 55%,#8d7a52 100%);box-shadow:0 3px 0 #4a3a22"></div>
+<div style="box-sizing:border-box;padding:24px 28px 26px;background:#e9d9b0;display:flex;flex-direction:column;gap:16px;box-shadow:inset 0 -5px 0 #bda877">
+<div style="display:flex;align-items:center;gap:12px">
+<dc-import name="Rune" level="{{d.rune}}" size="22" hint-size="22px,22px"></dc-import>
+<span style="font-family:'Press Start 2P',monospace;font-size:13px;line-height:20px;color:{{d.titleColor}}">{{d.title}}</span>
+</div>
+<sc-if value="{{d.sub}}" hint-placeholder-val="{{ false }}">
+<span style="font-size:16px;font-weight:600;color:#4a2f8a">{{d.sub}}</span>
+</sc-if>
+<span style="font-family:'Alegreya',Georgia,serif;font-size:19px;line-height:25px;color:#2a1d12;text-wrap:pretty">{{d.text}}</span>
+<sc-if value="{{d.creatures}}" hint-placeholder-val="{{ false }}">
+<dc-import name="Creatures" got="3" total="9" size="28" hint-size="100%,72px"></dc-import>
+</sc-if>
+<sc-if value="{{d.field}}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px">
+<label for="note-field" style="font-size:15px;font-weight:600;color:#3a2a1a">Заметка <span style="font-weight:400;color:#6e5a3a">(необязательно)</span></label>
+<textarea id="note-field" rows="3" placeholder="Что нужно проверить?" style="box-sizing:border-box;width:100%;resize:none;padding:10px 12px;font-family:'Alegreya',Georgia,serif;font-size:18px;line-height:23px;color:#2a1d12;background:#f6ecd0;border:3px solid #8d7a52;outline:none"></textarea>
+</div>
+</sc-if>
+<div style="display:flex;gap:10px;margin-top:6px">
+<button type="button" style="flex:3 1 0;min-height:52px;padding:6px 10px;box-sizing:border-box;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:17px;font-weight:600;line-height:19px;color:{{d.okFg}};background:{{d.okBg}};border:3px solid {{d.okBd}};box-shadow:inset 0 -4px 0 rgba(0,0,0,.3);cursor:pointer">{{d.ok}}</button>
+<button type="button" style="flex:2 1 0;min-height:52px;padding:6px 10px;box-sizing:border-box;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:17px;font-weight:600;line-height:19px;color:#3a2a1a;background:#d6c392;border:3px solid #8d7a52;box-shadow:inset 0 -4px 0 rgba(0,0,0,.18);cursor:pointer">Отмена</button>
+</div>
+</div>
+<div style="height:22px;margin:0 -10px;background:linear-gradient(0deg,#f3e6c4 0,#cdb98a 55%,#8d7a52 100%);box-shadow:0 3px 0 #4a3a22"></div>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:760}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      dialogs: [
+        { rune: 'high', title: 'ЗАКРЫТЬ ПОСЛЕДНИЙ ПОРТАЛ?', titleColor: '#8a2a0a', sub: '', creatures: true, field: false,
+          text: 'Это последний открытый портал в Пепельные Топи. Не изучено 6 из 9 существ — продолжить изучение можно будет, только если портал в этот мир откроется снова.',
+          ok: 'Закрыть всё равно', okFg: '#fff1f3', okBg: '#a8243c', okBd: '#ff6a85' },
+        { rune: 'mid', title: 'ПОМЕТИТЬ «ПОД ВОПРОСОМ»', titleColor: '#5a4208', sub: 'ББ-310-1 · Багровая Бездна', creatures: false, field: true,
+          text: 'Портал получит значок и попадёт под фильтр «Под вопросом». Заметка приколется к его карте.',
+          ok: 'Пометить', okFg: '#1b1424', okBg: '#ffb347', okBd: '#ffd98a' },
+        { rune: 'crit', title: 'ЗАПЕЧАТАТЬ ЛАБОРАТОРИЮ?', titleColor: '#8a1020', sub: '', creatures: false, field: false,
+          text: 'Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.',
+          ok: 'Запечатать', okFg: '#fff1f3', okBg: '#a8243c', okBd: '#ff6a85' }
+      ]
+    };
+  }
+}
+</script>
+
+
+</body></html>

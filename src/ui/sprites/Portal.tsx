@@ -1,163 +1,64 @@
 import { CONFIG } from '../../domain'
-import { colors, portalShades, risk, type PortalLook, type RiskLevel } from '../theme/tokens'
-import { cellsFromArt, cellsToPath, type Cell } from './pixels'
-import { Rune } from './Rune'
+import { portalShades, risk, sprite, type PortalLook, type RiskLevel } from '../theme/tokens'
 import './sprites.css'
 
-// Сетка арки 32×40: полукруглый свод с центром (16, 16), проём шириной 22,
-// столбы до строки 36, ниже — порог из трёх строк.
-const W = 32
-const H = 40
-const ARCH_CY = 16
-const FLOOR_Y = 37
-const OUTER = 15
-const INNER = 11
-const FRAMES = 4
+// Арка 24×28 из канваса «Арка и портал». Камень одинаков у всех видов; проём — четыре слоя
+// оттенков портала от края к ядру; искры поднимаются над порталом, у пустой арки тлеют руны.
 
-function inArch(x: number, y: number, radius: number): boolean {
-  const px = x + 0.5 - W / 2
-  const py = y + 0.5
-  if (py >= ARCH_CY) return Math.abs(px) < radius
-  return Math.hypot(px, py - ARCH_CY) < radius
-}
+const ARCH_OUTLINE = 'M6,0H18V1H20V2H21V3H22V4H23V5H24V28H0V5H1V4H2V3H3V2H4V1H6Z'
+const OPENING = 'M8,5H16V6H18V7H19V8H20V27H4V8H5V7H6V6H8Z'
+const LAYER_2 = 'M9,7H15V8H17V9H18V25H6V9H7V8H9Z'
+const LAYER_3 = 'M10,10H14V11H15V12H16V22H8V12H9V11H10Z'
+const CORE = 'M11,14H13V15H14V20H10V15H11Z'
 
-function frac(n: number): number {
-  return n - Math.floor(n)
-}
+type Rect = readonly [x: number, y: number, w: number, h: number, fill: string]
 
-const stone: Cell[] = []
-const mortar: Cell[] = []
-const glow: Cell[] = []
-const opening: Cell[] = []
-for (let y = 0; y < FLOOR_Y; y++) {
-  for (let x = 0; x < W; x++) {
-    if (inArch(x, y, INNER)) {
-      opening.push([x, y])
-      continue
-    }
-    if (!inArch(x, y, OUTER)) continue
-    if (inArch(x, y, INNER + 1)) glow.push([x, y])
-    // швы кладки: на столбах — ряды по 5 строк со смещённой вертикалью, на своде — клинья
-    const isSeam =
-      y >= ARCH_CY
-        ? y % 5 === 0 || x === (x < W / 2 ? 2 : 29) + (Math.floor(y / 5) % 2)
-        : frac(Math.atan2(ARCH_CY - y - 0.5, x + 0.5 - W / 2) / (Math.PI / 9)) < 0.14
-    ;(isSeam ? mortar : stone).push([x, y])
-  }
-}
-const floor: Cell[] = []
-for (let y = FLOOR_Y; y < H; y++) for (let x = 0; x < W; x++) floor.push([x, y])
-const floorSeams: Cell[] = floor.filter(([x, y]) => y === FLOOR_Y || (x + (y % 2) * 4) % 8 === 0)
-for (let x = W / 2 - INNER; x < W / 2 + INNER; x++) glow.push([x, FLOOR_Y])
-
-// Кадры вихря: рукава спирали поверх концентрических колец; каждый кадр сдвигает рукава
-// на четверть периода — анимация steps() перелистывает кадры. Чем выше риск, тем больше
-// рукавов, туже закрутка и рванее края: виды различаются формой, а не только цветом.
-type Swirl = { arms: number; twist: number; jitter: number }
-const swirls: Record<PortalLook, Swirl> = {
-  empty: { arms: 0, twist: 1, jitter: 0 },
-  low: { arms: 1, twist: 8, jitter: 0 },
-  medium: { arms: 2, twist: 6, jitter: 0.12 },
-  high: { arms: 3, twist: 5, jitter: 0.1 },
-  critical: { arms: 4, twist: 3.5, jitter: 0.22 },
-  archived: { arms: 2, twist: 6, jitter: 0 },
-}
-
-function swirlFrames({ arms, twist, jitter }: Swirl): string[][] {
-  return Array.from({ length: FRAMES }, (_, f) => {
-    const byShade: Cell[][] = [[], [], [], []]
-    for (const [x, y] of opening) {
-      const dx = x + 0.5 - W / 2
-      const dy = (y + 0.5 - 22) * 0.75
-      const r = Math.hypot(dx, dy)
-      let shade = r < 2.2 ? 3 : r < 5 ? 2 : r < 9 ? 1 : 0
-      const noise = (((x * 7 + y * 13 + f * 5) % 9) / 9 - 0.5) * jitter
-      const arm = frac((Math.atan2(dy, dx) / (2 * Math.PI)) * arms + r / twist - f / FRAMES + noise)
-      if (arms > 0 && arm < 0.28 && shade < 3) shade++
-      byShade[shade]!.push([x, y])
-    }
-    return byShade.map(cellsToPath)
-  })
-}
-
-const frames = Object.fromEntries(
-  Object.entries(swirls).map(([look, swirl]) => [look, swirlFrames(swirl)]),
-) as Record<PortalLook, string[][]>
-
-// Пустая арка: три вырезанные руны — на замковом камне и на столбах.
-const carvedRunes = cellsToPath([
-  ...cellsFromArt(['#.#', '.#.', '#.#'], 15, 2),
-  ...cellsFromArt(['.#.', '###', '.#.'], 2, 22),
-  ...cellsFromArt(['##.', '#.#', '.##'], 27, 22),
-])
-
-// Искры-крестики над кладкой (высокий и критический риск): яркое ядро и лучи цвета риска.
-const sparks: Cell[] = [
-  [9, 3],
-  [28, 9],
-  [2, 12],
-  [23, 2],
-  [2, 21],
-  [29, 28],
+// Грани и швы кладки поверх основного камня.
+const stoneDetails: Rect[] = [
+  [6, 0, 12, 1, sprite.stoneLight],
+  [4, 1, 2, 1, sprite.stoneLight],
+  [18, 1, 2, 1, sprite.stoneShadow],
+  [0, 5, 1, 22, sprite.stoneLit],
+  [23, 5, 1, 22, sprite.stoneDeep],
+  [11, 0, 2, 2, sprite.keystone],
+  [0, 9, 4, 1, sprite.stoneDeep],
+  [0, 15, 4, 1, sprite.stoneDeep],
+  [0, 21, 4, 1, sprite.stoneDeep],
+  [20, 9, 4, 1, sprite.stoneDeep],
+  [20, 15, 4, 1, sprite.stoneDeep],
+  [20, 21, 4, 1, sprite.stoneDeep],
+  [2, 10, 1, 5, sprite.stoneDeep],
+  [1, 16, 1, 5, sprite.stoneDeep],
+  [2, 22, 1, 5, sprite.stoneDeep],
+  [21, 10, 1, 5, sprite.stoneDeep],
+  [22, 16, 1, 5, sprite.stoneDeep],
+  [21, 22, 1, 5, sprite.stoneDeep],
 ]
-const sparkRays = cellsToPath([
-  [-1, 0],
-  [1, 0],
-  [0, -1],
-  [0, 1],
-])
 
-// Трещины по камню (критический риск).
-const cracks = cellsToPath([
-  [4, 12],
-  [3, 12],
-  [3, 11],
-  [2, 10],
-  [2, 9],
-  [27, 20],
-  [28, 21],
-  [28, 22],
-  [29, 23],
-  [30, 24],
-  [17, 4],
-  [18, 3],
-  [18, 2],
-  [19, 1],
-])
-
-// Наблюдатель 5×8 в капюшоне, с тёмным контуром, чтобы читаться на ярком ядре портала.
-const observerArt = ['.###.', '##.##', '.###.', '#####', '#####', '.###.', '.#.#.', '.#.#.']
-const observerBody = cellsFromArt(observerArt)
-const observerPath = cellsToPath(observerBody)
-const observerOutline = cellsToPath(
-  (() => {
-    const body = new Set(observerBody.map(([x, y]) => `${x},${y}`))
-    const ring: Cell[] = []
-    for (let y = -1; y <= observerArt.length; y++) {
-      for (let x = -1; x <= 5; x++) {
-        if (body.has(`${x},${y}`)) continue
-        const touches = [
-          [x - 1, y],
-          [x + 1, y],
-          [x, y - 1],
-          [x, y + 1],
-        ].some(([nx, ny]) => body.has(`${nx},${ny}`))
-        if (touches && y < observerArt.length) ring.push([x, y])
-      }
-    }
-    return ring
-  })(),
-)
-const observerX = [8, 14, 20]
-const OBSERVER_Y = FLOOR_Y - observerArt.length
-
-const paths = {
-  stone: cellsToPath(stone),
-  mortar: cellsToPath(mortar),
-  glow: cellsToPath(glow),
-  floor: cellsToPath(floor),
-  floorSeams: cellsToPath(floorSeams),
+// Искры s1..s6: позиция и сдвиг фазы. Средний риск выпускает две, высокий — четыре, критический — все.
+const sparks: readonly (readonly [x: number, y: number, delay: string])[] = [
+  [7, 22, '-.2s'],
+  [16, 20, '-.7s'],
+  [12, 24, '-.4s'],
+  [9, 18, '-1s'],
+  [14, 16, '-.55s'],
+  [6, 15, '-.1s'],
+]
+const sparkCount: Record<PortalLook, number> = {
+  empty: 0,
+  low: 0,
+  medium: 2,
+  high: 4,
+  critical: 6,
+  archived: 0,
 }
+
+// Три тлеющие руны пустой арки, мерцают вразнобой.
+const emberRunes: readonly (readonly [d: string, delay: string | undefined])[] = [
+  ['M11,10h1v5h-1z M12,11h1v1h-1z M13,12h1v1h-1z', undefined],
+  ['M8,18h3v1h-3z M9,18h1v4h-1z', '-1s'],
+  ['M14,18h1v4h-1z M15,19h1v1h-1z M15,21h1v1h-1z', '-2s'],
+]
 
 function isRiskLook(look: PortalLook): look is RiskLevel {
   return look !== 'empty' && look !== 'archived'
@@ -170,61 +71,132 @@ function portalName(look: PortalLook, observers: number): string {
   return observers > 0 ? `${name}, наблюдателей: ${observers}` : name
 }
 
+/** Фигурка наблюдателя 5×8 с тёмным контуром, чтобы читаться на ярком ядре портала. */
+function Observer({
+  width,
+  height,
+  margin,
+  delay,
+}: Record<'width' | 'height' | 'margin', number> & { delay: string }) {
+  return (
+    <svg
+      className="px-portal__observer"
+      data-testid="observer"
+      viewBox="-1 -1 7 10"
+      width={width}
+      height={height}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      style={{ margin: `0 ${margin}px`, animationDelay: delay }}
+    >
+      <g
+        fill={sprite.observerOutline}
+        stroke={sprite.observerOutline}
+        strokeWidth={1.6}
+        strokeLinejoin="miter"
+      >
+        <path d="M1,0h3v1h-3z M0,2h5v3h-5z M1,5h3v1h-3z" />
+        <path d="M1,6h1v2h-1z M3,6h1v2h-1z" />
+      </g>
+      <path
+        d="M1,0h3v1h-3z M1,1h1v1h-1z M3,1h1v1h-1z M0,2h5v3h-5z M1,5h3v1h-3z"
+        fill={sprite.observerCloak}
+      />
+      <path d="M2,1h1v1h-1z" fill={sprite.observerFace} />
+      <path d="M0,4h5v1h-5z" fill={sprite.observerBelt} />
+      <path d="M1,6h1v2h-1z M3,6h1v2h-1z" fill={sprite.observerLegs} />
+    </svg>
+  )
+}
+
 /** Арка зала с порталом: свечение и анимация по уровню риска, наблюдатели у порога. */
-export function Portal({ look, observers = 0 }: { look: PortalLook; observers?: number }) {
-  const level = isRiskLook(look) ? look : null
-  const shown = level
-    ? Math.min(CONFIG.maxObserversPerPortal, observerX.length, Math.max(0, Math.floor(observers)))
+export function Portal({
+  look,
+  observers = 0,
+  width = 120,
+}: {
+  look: PortalLook
+  observers?: number
+  width?: number
+}) {
+  const height = Math.round((width * 28) / 24)
+  const shown = isRiskLook(look)
+    ? Math.min(CONFIG.maxObserversPerPortal, 3, Math.max(0, Math.floor(observers)))
     : 0
-  const shades = portalShades[look]
+  const [c0, c1, c2, c3] = portalShades[look]
+  // Клетка фигурки наблюдателя в пикселях экрана — от ширины арки.
+  const cell = Math.max(4, Math.round(width / 17))
 
   return (
-    <div className="px-portal" data-look={look} role="img" aria-label={portalName(look, shown)}>
+    <div
+      className={`px-portal px-portal--${look}`}
+      data-look={look}
+      role="img"
+      aria-label={portalName(look, shown)}
+      style={{ width, height }}
+    >
       <svg
-        className="px-portal__art"
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox="0 0 24 28"
+        width={width}
+        height={height}
         shapeRendering="crispEdges"
         aria-hidden="true"
       >
-        <path d={paths.floor} fill={colors.edgeSoft} />
-        <path d={paths.floorSeams} fill={colors.stoneSeam} />
-        <path d={paths.stone} fill={colors.edge} />
-        <path d={paths.mortar} fill={colors.stoneSeam} />
-        <g className="px-portal__swirl">
-          {(level ? frames[look] : frames[look].slice(0, 1)).map((frame, i) => (
-            <g key={i} className="px-portal__frame">
-              {frame.map((d, s) => (
-                <path key={s} d={d} fill={shades[s]} />
+        <g className="px-portal__shake">
+          <path d={ARCH_OUTLINE} fill={sprite.archStone} />
+          {stoneDetails.map(([x, y, w, h, fill], i) => (
+            <rect key={i} x={x} y={y} width={w} height={h} fill={fill} />
+          ))}
+          <path d={OPENING} fill={c0} />
+          {look === 'empty' ? (
+            <g>
+              {emberRunes.map(([d, delay]) => (
+                <path
+                  key={d}
+                  className="px-portal__rune"
+                  d={d}
+                  fill={sprite.emberRune}
+                  style={delay ? { animationDelay: delay } : undefined}
+                />
               ))}
             </g>
-          ))}
+          ) : (
+            <g>
+              <path className="px-portal__l2" d={LAYER_2} fill={c1} />
+              <path className="px-portal__l3" d={LAYER_3} fill={c2} />
+              <path className="px-portal__core" d={CORE} fill={c3} />
+              <rect x={5} y={12} width={1} height={1} fill={c3} />
+              <rect x={18} y={17} width={1} height={1} fill={c3} />
+              <rect x={7} y={21} width={1} height={1} fill={c2} />
+              <rect x={16} y={11} width={1} height={1} fill={c2} />
+              {sparks.slice(0, sparkCount[look]).map(([x, y, delay]) => (
+                <rect
+                  key={`${x},${y}`}
+                  className="px-portal__spark"
+                  x={x}
+                  y={y}
+                  width={1}
+                  height={1}
+                  fill={c3}
+                  style={{ animationDelay: delay }}
+                />
+              ))}
+            </g>
+          )}
+          <rect x={0} y={27} width={24} height={1} fill={sprite.sill} />
         </g>
-        {level && <path className="px-portal__glow" d={paths.glow} fill={risk[level].c} />}
-        {look === 'empty' && <path d={carvedRunes} fill={colors.textDim} />}
-        {level === 'critical' && (
-          <path className="px-portal__crack" d={cracks} fill={risk.critical.c} />
-        )}
-        {(level === 'high' || level === 'critical') && (
-          <g>
-            {sparks.map(([x, y], i) => (
-              <g key={i} className="px-portal__spark" transform={`translate(${x} ${y})`}>
-                <path d={sparkRays} fill={risk[level].c} />
-                <rect width={1} height={1} fill={shades[3]} />
-              </g>
-            ))}
-          </g>
-        )}
-        {observerX.slice(0, shown).map((x) => (
-          <g key={x} data-testid="observer" transform={`translate(${x} ${OBSERVER_Y})`}>
-            <path d={observerOutline} fill={colors.night} />
-            <path d={observerPath} fill={colors.observerOnSite} />
-          </g>
-        ))}
       </svg>
-      {level && (
-        <div className="px-portal__plate">
-          <Rune level={level} />
-          <span>{risk[level].label}</span>
+      {shown > 0 && (
+        <div className="px-portal__observers" style={{ bottom: -Math.round(cell * 1.6) }}>
+          {Array.from({ length: shown }, (_, i) => (
+            <Observer
+              key={i}
+              width={cell * 7}
+              height={cell * 10}
+              margin={-Math.round(cell * 0.7)}
+              delay={`-${i * 0.5}s`}
+            />
+          ))}
         </div>
       )}
     </div>

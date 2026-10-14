@@ -1,0 +1,51 @@
+<!-- Кадр канваса «Язык риска». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Язык риска</title>
+<script src="8504e447-41fb-4a36-a6f1-0dad757c1e83"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+</style>
+</helmet>
+<div style="width:1440px;height:660px;box-sizing:border-box;padding:36px 40px;background-color:#1b1724;background-image:repeating-linear-gradient(0deg,transparent 0 31px,#14111c 31px 32px),repeating-linear-gradient(90deg,transparent 0 63px,#14111c 63px 64px);box-shadow:inset 0 0 160px rgba(0,0,0,.7);font-family:'Tektur','Trebuchet MS',sans-serif;color:#efe6d0;display:flex;flex-direction:column;gap:24px">
+<span style="font-family:'Press Start 2P',monospace;font-size:14px;color:#ffb347;letter-spacing:1px">ЯЗЫК РИСКА · СВЕЧЕНИЕ, ЦВЕТ, РУНА И СЛОВО</span>
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;flex:1 1 0">
+<sc-for list="{{items}}" as="k" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px 10px 16px;background:#14111c;box-shadow:inset 0 0 0 3px #2e2840">
+<div style="height:200px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px">
+<dc-import name="Portal" risk="{{k.risk}}" w="130" obs="{{k.obs}}" hint-size="130px,152px"></dc-import>
+</div>
+<span style="display:flex;align-items:center;gap:8px;background:{{k.dark}};color:{{k.tx}};padding:4px 12px 4px 10px;font-size:16px;font-weight:600;letter-spacing:.5px"><dc-import name="Rune" level="{{k.rune}}" size="16" hint-size="16px,16px"></dc-import>{{k.word}}</span>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:16px;color:#b4abc6;text-align:center">{{k.range}}</span>
+<span style="font-family:'Alegreya',Georgia,serif;font-size:16px;line-height:20px;color:#d8cfea;text-align:center;text-wrap:pretty">{{k.desc}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:660}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      items: [
+        { risk: 'empty', obs: 0, rune: 'dead', word: 'ПУСТАЯ АРКА', dark: '#26222f', tx: '#d8cfea', range: 'клик — открыть', desc: 'Тёмная арка с тлеющими рунами. Факелы горят, портала нет.' },
+        { risk: 'low', obs: 0, rune: 'low', word: 'НИЗКИЙ', dark: '#0f4a40', tx: '#b4f7e6', range: 'балл 0–29', desc: 'Ровное спокойное сияние бирюзового света, без искр.' },
+        { risk: 'mid', obs: 0, rune: 'mid', word: 'СРЕДНИЙ', dark: '#5a4a10', tx: '#ffeaa3', range: 'балл 30–54', desc: 'Неровное мерцание жёлтого света, изредка вылетает искра.' },
+        { risk: 'high', obs: 0, rune: 'high', word: 'ВЫСОКИЙ', dark: '#6a3010', tx: '#ffcfa3', range: 'балл 55–74', desc: 'Тревожный оранжевый, частые вспышки и поднимающиеся искры.' },
+        { risk: 'crit', obs: 2, rune: 'crit', word: 'КРИТИЧЕСКИЙ', dark: '#6a1428', tx: '#ffbac6', range: 'балл 75+, время ≤ 10 или стаб. ≤ 15', desc: 'Пульсирует, трещит и дрожит. Заметен через весь зал.' },
+        { risk: 'dead', obs: 0, rune: 'dead', word: 'ЗАКРЫТ / СХЛОПНУЛСЯ', dark: '#26222f', tx: '#d8cfea', range: 'архив', desc: 'Выцветший камень без света. Живёт на странице своего мира.' }
+      ]
+    };
+  }
+}
+</script>
+
+
+</body></html>

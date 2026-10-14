@@ -1,0 +1,43 @@
+<!-- Кадр канваса «Пиксельная полоска». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Пиксельная полоска</title>
+<script src="d0c4105a-8856-4070-9892-03f1aff54f49"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#17141f}
+</style>
+</helmet>
+<div style="display:flex;gap:2px;width:100%;box-sizing:border-box;padding:2px;background:#0b0911;border:2px solid #3d3649" role="img" aria-label="{{label}}">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="10">
+<div style="flex:1 1 0;height:{{h}}px;background:{{s.bg}};box-shadow:{{s.sh}}"></div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;value&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:60,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1},&quot;color&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5be0c0&quot;},&quot;segs&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;min&quot;:4,&quot;max&quot;:20},&quot;h&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;min&quot;:4,&quot;max&quot;:24},&quot;$preview&quot;:{&quot;width&quot;:320,&quot;height&quot;:40}}">
+class Component extends DCLogic {
+  renderVals() {
+    const v = Math.max(0, Math.min(100, Number(this.props.value ?? 60)));
+    const n = Number(this.props.segs) || 10;
+    const h = Number(this.props.h) || 10;
+    const color = this.props.color || '#5be0c0';
+    const lit = Math.ceil((v / 100) * n - 0.001);
+    const segs = [];
+    for (let i = 0; i < n; i++) {
+      const on = i < lit && v > 0;
+      segs.push({
+        bg: on ? color : '#241f30',
+        sh: on ? 'inset 0 2px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.25)' : 'inset 0 2px 0 rgba(0,0,0,.35)'
+      });
+    }
+    return { segs: segs, h: h, label: 'Заполнено ' + Math.round(v) + ' из 100' };
+  }
+}
+</script>
+
+
+</body></html>
