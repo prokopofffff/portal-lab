@@ -17,6 +17,10 @@ const COMMAND_LABELS: Record<Command['type'], string> = {
   sendObserver: 'Отправить наблюдателя',
   recallObservers: 'Отозвать наблюдателей',
   hireObserver: 'Нанять наблюдателя',
+  closePortal: 'Закрыть',
+  cancelClose: 'Закрыть',
+  toggleQuestioned: 'Под вопросом',
+  acceptAsIs: 'Принять как есть',
 }
 
 // Портал с миром в именительном падеже: так он назван в журнале, сводке и уведомлениях (spec §2.4)
@@ -113,6 +117,33 @@ function actionEntry(lab: Lab, event: DomainEvent, now: number): LogEntry {
     case 'hireStarted': {
       const text = `Начат наём наблюдателя — будет через ${event.ticks} мин`
       return { ...base, portal: null, world: null, text }
+    }
+    case 'portalClosed': {
+      const { portal, world, leftUnstudied } = event
+      const closed = `Закрыт портал ${portalLabel(portal, world)}`
+      const text = leftUnstudied
+        ? `${closed} — последний открытый в мир, не изучено ${leftUnstudied.unstudied} из ${leftUnstudied.creatures}`
+        : closed
+      return { ...base, portal, world, text }
+    }
+    case 'closeCancelled': {
+      const { portal, world } = event
+      return { ...base, portal, world, text: `Закрытие ${portalLabel(portal, world)} отменено` }
+    }
+    case 'questionedMarked': {
+      const { portal, world, note } = event
+      const mark = `${portalLabel(portal, world)}: пометка «Под вопросом»`
+      return { ...base, portal, world, text: note ? `${mark} — ${note}` : mark }
+    }
+    case 'questionedUnmarked': {
+      const { portal, world } = event
+      const text = `${portalLabel(portal, world)}: пометка «Под вопросом» снята`
+      return { ...base, portal, world, text }
+    }
+    case 'portalAccepted': {
+      const { portal, world, level } = event
+      const text = `${portalLabel(portal, world)}: принят как есть — уровень риска ${RISK_LEVEL_LABELS[level]}`
+      return { ...base, portal, world, text }
     }
     case 'riskLevelChanged':
       return riskLevelEntry(lab.time, event, now)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { execute } from './commands'
+import { closeConfirmation, execute } from './commands'
 import { createLab, type Lab, type Portal } from './lab'
 import { tick } from './tick'
 import type { Rng } from './rng'
@@ -132,7 +132,7 @@ describe('execute openPortal: арки зала (spec §9)', () => {
 
   it('новый портал встаёт в первую освободившуюся арку, остальные не сдвигаются', () => {
     const three = openTimes(createLab(), 3)
-    // Портал во второй арке закрыт: арка 1 свободна (команды «Закрыть» пока нет — правим состояние)
+    // Портал во второй арке закрыт: арка 1 свободна (состояние правим напрямую)
     const closedMiddle: Lab = {
       ...three,
       portals: three.portals.map((p) => (p.arch === 1 ? { ...p, status: 'closed' } : p)),
@@ -714,5 +714,359 @@ describe('наблюдатели двух порталов в один мир (s
     expect(after.worlds['Пепельный Шпиль']?.studied).toBe(3)
     expect(after.portals.map((p) => p.studyProgress)).toEqual([0, 0])
     expect(after.staff.free).toBe(1)
+  })
+})
+
+describe('closeConfirmation: когда нужен диалог закрытия (spec §5)', () => {
+  it('открытый портал, в мире есть неизученные и других открытых порталов в него нет — сводка', () => {
+    const lab = labWithWorld([openPortalWith()])
+    expect(closeConfirmation(lab, 'ПШ-449-1')).toEqual({
+      world: 'Пепельный Шпиль',
+      unstudied: 3,
+      creatures: 4,
+    })
+  })
+
+  it('неизвестный портал — null', () => {
+    expect(closeConfirmation(labWithWorld([openPortalWith()]), 'нет-такого')).toBeNull()
+  })
+
+  it('закрытый или схлопнувшийся портал — null', () => {
+    const closed = labWithWorld([openPortalWith({ status: 'closed' })])
+    const collapsed = labWithWorld([openPortalWith({ status: 'collapsed' })])
+    expect(closeConfirmation(closed, 'ПШ-449-1')).toBeNull()
+    expect(closeConfirmation(collapsed, 'ПШ-449-1')).toBeNull()
+  })
+
+  it('мир изучен целиком — null', () => {
+    const lab = labWithWorld([openPortalWith()])
+    const studied = {
+      ...lab,
+      worlds: { 'Пепельный Шпиль': { ...lab.worlds['Пепельный Шпиль']!, studied: 4 } },
+    }
+    expect(closeConfirmation(studied, 'ПШ-449-1')).toBeNull()
+  })
+
+  it('в мире нет существ — null', () => {
+    const lab = labWithWorld([openPortalWith()])
+    const empty = {
+      ...lab,
+      worlds: {
+        'Пепельный Шпиль': { ...lab.worlds['Пепельный Шпиль']!, creatures: 0, studied: 0 },
+      },
+    }
+    expect(closeConfirmation(empty, 'ПШ-449-1')).toBeNull()
+  })
+
+  it('в тот же мир ведёт другой открытый портал — null', () => {
+    const lab = labWithWorld([openPortalWith(), openPortalWith({ name: 'ПШ-449-2', arch: 1 })])
+    expect(closeConfirmation(lab, 'ПШ-449-1')).toBeNull()
+  })
+
+  it('другой портал в тот же мир закрыт или схлопнулся — не в счёт, сводка есть', () => {
+    const closedOther = labWithWorld([
+      openPortalWith(),
+      openPortalWith({ name: 'ПШ-449-2', arch: 1, status: 'closed' }),
+    ])
+    const collapsedOther = labWithWorld([
+      openPortalWith(),
+      openPortalWith({ name: 'ПШ-449-2', arch: 1, status: 'collapsed' }),
+    ])
+    const summary = { world: 'Пепельный Шпиль', unstudied: 3, creatures: 4 }
+    expect(closeConfirmation(closedOther, 'ПШ-449-1')).toEqual(summary)
+    expect(closeConfirmation(collapsedOther, 'ПШ-449-1')).toEqual(summary)
+  })
+
+  it('открытый портал в другой мир не мешает', () => {
+    const lab = labWithWorld([
+      openPortalWith(),
+      openPortalWith({ name: 'ПТ-420-1', world: 'Пепельные Топи', arch: 1 }),
+    ])
+    expect(closeConfirmation(lab, 'ПШ-449-1')).toEqual({
+      world: 'Пепельный Шпиль',
+      unstudied: 3,
+      creatures: 4,
+    })
+  })
+})
+
+describe('execute closePortal: эффект (spec §2.2, §5)', () => {
+  const close = { type: 'closePortal', portal: 'ПШ-449-1' } as const
+
+  it('портал закрыт, пометки и прогресс изучения сняты, остальные метрики остаются последними', () => {
+    const lab = labWithWorld([
+      openPortalWith({
+        energy: 70,
+        stability: 40,
+        timeLeft: 55,
+        cooldown: 7,
+        studyProgress: 5,
+        questioned: { note: 'странный шум' },
+        acceptedAt: 'medium',
+      }),
+      openPortalWith({ name: 'ПШ-449-2', arch: 1 }),
+    ])
+
+    const result = execute(lab, close, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]).toEqual(
+      openPortalWith({
+        status: 'closed',
+        energy: 70,
+        stability: 40,
+        timeLeft: 55,
+        cooldown: 7,
+        questioned: null,
+        acceptedAt: null,
+      }),
+    )
+    expect(result.lab.portals[1]).toEqual(openPortalWith({ name: 'ПШ-449-2', arch: 1 }))
+  })
+
+  it('мир не меняется, исходная лаборатория тоже', () => {
+    const lab = labWithWorld([openPortalWith()])
+    const result = execute(lab, close, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.worlds).toEqual(lab.worlds)
+    expect(lab).toEqual(labWithWorld([openPortalWith()]))
+  })
+})
+
+describe('execute closePortal: событие (spec §5)', () => {
+  const close = { type: 'closePortal', portal: 'ПШ-449-1' } as const
+
+  it('последний открытый в мир с неизученными: leftUnstudied с числами из диалога', () => {
+    const result = execute(labWithWorld([openPortalWith()]), close, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.events).toEqual([
+      {
+        type: 'portalClosed',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        leftUnstudied: { unstudied: 3, creatures: 4 },
+      },
+    ])
+  })
+
+  it('есть другой открытый портал в тот же мир: leftUnstudied = null', () => {
+    const lab = labWithWorld([openPortalWith(), openPortalWith({ name: 'ПШ-449-2', arch: 1 })])
+    const result = execute(lab, close, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.events).toEqual([
+      { type: 'portalClosed', portal: 'ПШ-449-1', world: 'Пепельный Шпиль', leftUnstudied: null },
+    ])
+  })
+
+  it('мир изучен целиком: leftUnstudied = null', () => {
+    const base = labWithWorld([openPortalWith()])
+    const lab = {
+      ...base,
+      worlds: { 'Пепельный Шпиль': { ...base.worlds['Пепельный Шпиль']!, studied: 4 } },
+    }
+    const result = execute(lab, close, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.events).toEqual([
+      { type: 'portalClosed', portal: 'ПШ-449-1', world: 'Пепельный Шпиль', leftUnstudied: null },
+    ])
+  })
+})
+
+describe('execute closePortal: отказы (spec §5)', () => {
+  const close = { type: 'closePortal', portal: 'ПШ-449-1' } as const
+
+  it('неизвестный портал — «Портал не открыт»', () => {
+    expect(
+      execute(labWithWorld([openPortalWith()]), { ...close, portal: 'нет' }, edgeRng('min')),
+    ).toEqual({
+      rejection: 'Портал не открыт',
+    })
+  })
+
+  it('закрытый или схлопнувшийся портал — «Портал не открыт»', () => {
+    for (const status of ['closed', 'collapsed'] as const) {
+      const lab = labWithWorld([openPortalWith({ status })])
+      expect(execute(lab, close, edgeRng('min'))).toEqual({ rejection: 'Портал не открыт' })
+    }
+  })
+
+  it('на месте наблюдатели — сначала отзовите, лаборатория не меняется', () => {
+    const lab = labWithWorld([openPortalWith({ observers: 1 })])
+    expect(execute(lab, close, edgeRng('min'))).toEqual({
+      rejection: 'На месте наблюдатели — сначала отзовите',
+    })
+    expect(lab).toEqual(labWithWorld([openPortalWith({ observers: 1 })]))
+  })
+})
+
+describe('execute cancelClose: отмена закрытия (spec §5)', () => {
+  const cancel = { type: 'cancelClose', portal: 'ПШ-449-1' } as const
+
+  it('состояние не меняется, событие — «закрытие отменено»', () => {
+    const lab = labWithWorld([openPortalWith({ questioned: { note: 'шум' }, acceptedAt: 'high' })])
+
+    const result = execute(lab, cancel, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab).toEqual(lab)
+    expect(result.events).toEqual([
+      { type: 'closeCancelled', portal: 'ПШ-449-1', world: 'Пепельный Шпиль' },
+    ])
+  })
+
+  it('закрытый или неизвестный портал — «Портал не открыт»', () => {
+    const closed = labWithWorld([openPortalWith({ status: 'closed' })])
+    expect(execute(closed, cancel, edgeRng('min'))).toEqual({ rejection: 'Портал не открыт' })
+    expect(execute(labWithWorld([]), cancel, edgeRng('min'))).toEqual({
+      rejection: 'Портал не открыт',
+    })
+  })
+})
+
+describe('execute toggleQuestioned: «Под вопросом» (spec §5)', () => {
+  const toggle = { type: 'toggleQuestioned', portal: 'ПШ-449-1' } as const
+
+  it('без пометки ставит её с заметкой, заметка обрезается по краям', () => {
+    const result = execute(
+      labWithWorld([openPortalWith()]),
+      { ...toggle, note: '  странный шум  ' },
+      edgeRng('min'),
+    )
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]!.questioned).toEqual({ note: 'странный шум' })
+    expect(result.events).toEqual([
+      {
+        type: 'questionedMarked',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        note: 'странный шум',
+      },
+    ])
+  })
+
+  it('без заметки пометка с пустой строкой', () => {
+    const result = execute(labWithWorld([openPortalWith()]), toggle, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]!.questioned).toEqual({ note: '' })
+    expect(result.events).toEqual([
+      { type: 'questionedMarked', portal: 'ПШ-449-1', world: 'Пепельный Шпиль', note: '' },
+    ])
+  })
+
+  it('заметка из одних пробелов становится пустой', () => {
+    const result = execute(
+      labWithWorld([openPortalWith()]),
+      { ...toggle, note: '   ' },
+      edgeRng('min'),
+    )
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]!.questioned).toEqual({ note: '' })
+  })
+
+  it('с пометкой снимает её, новая заметка игнорируется', () => {
+    const lab = labWithWorld([openPortalWith({ questioned: { note: 'шум' } })])
+
+    const result = execute(lab, { ...toggle, note: 'другая' }, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]!.questioned).toBeNull()
+    expect(result.events).toEqual([
+      { type: 'questionedUnmarked', portal: 'ПШ-449-1', world: 'Пепельный Шпиль' },
+    ])
+  })
+
+  it('остальное состояние не меняется', () => {
+    const lab = labWithWorld([openPortalWith(), openPortalWith({ name: 'ПШ-449-2', arch: 1 })])
+
+    const result = execute(lab, { ...toggle, note: 'шум' }, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]).toEqual(openPortalWith({ questioned: { note: 'шум' } }))
+    expect(result.lab.portals[1]).toEqual(lab.portals[1])
+    expect(result.lab.worlds).toEqual(lab.worlds)
+    expect(lab.portals[0]!.questioned).toBeNull()
+  })
+
+  it('закрытый или неизвестный портал — «Портал не открыт»', () => {
+    const closed = labWithWorld([openPortalWith({ status: 'closed' })])
+    expect(execute(closed, toggle, edgeRng('min'))).toEqual({ rejection: 'Портал не открыт' })
+    expect(execute(labWithWorld([]), toggle, edgeRng('min'))).toEqual({
+      rejection: 'Портал не открыт',
+    })
+  })
+})
+
+describe('execute acceptAsIs: «Принять как есть» (spec §3, §5)', () => {
+  const accept = { type: 'acceptAsIs', portal: 'ПШ-449-1' } as const
+
+  it('запоминает текущий уровень риска (балл 49 — средний) и сообщает событие', () => {
+    const lab = labWithWorld([openPortalWith(), openPortalWith({ name: 'ПШ-449-2', arch: 1 })])
+
+    const result = execute(lab, accept, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]).toEqual(openPortalWith({ acceptedAt: 'medium' }))
+    expect(result.lab.portals[1]).toEqual(lab.portals[1])
+    expect(result.events).toEqual([
+      { type: 'portalAccepted', portal: 'ПШ-449-1', world: 'Пепельный Шпиль', level: 'medium' },
+    ])
+    expect(lab.portals[0]!.acceptedAt).toBeNull()
+  })
+
+  it('низкий уровень тоже запоминается', () => {
+    // Энергия 10, стабильность 100, времени много: балл 3 — низкий
+    const lab = labWithWorld([openPortalWith({ energy: 10, stability: 100, timeLeft: 400 })])
+
+    const result = execute(lab, accept, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab.portals[0]!.acceptedAt).toBe('low')
+  })
+
+  it('неизвестный, закрытый или схлопнувшийся портал — «Портал не открыт»', () => {
+    expect(execute(labWithWorld([]), accept, edgeRng('min'))).toEqual({
+      rejection: 'Портал не открыт',
+    })
+    for (const status of ['closed', 'collapsed'] as const) {
+      const lab = labWithWorld([openPortalWith({ status })])
+      expect(execute(lab, accept, edgeRng('min'))).toEqual({ rejection: 'Портал не открыт' })
+    }
+  })
+
+  it('критический риск — принять нельзя', () => {
+    // Стабильность 15 — жёсткое правило: критический при любом балле
+    const lab = labWithWorld([openPortalWith({ stability: 15 })])
+    expect(execute(lab, accept, edgeRng('min'))).toEqual({
+      rejection: 'Риск критический — принять как есть нельзя',
+    })
+  })
+
+  it('портал уже принят — отказ, принятие не перезаписывается', () => {
+    const lab = labWithWorld([openPortalWith({ acceptedAt: 'low' })])
+    expect(execute(lab, accept, edgeRng('min'))).toEqual({
+      rejection: 'Портал уже принят как есть',
+    })
+  })
+
+  it('порядок отказов: критический риск раньше «уже принят»', () => {
+    const lab = labWithWorld([openPortalWith({ stability: 15, acceptedAt: 'low' })])
+    expect(execute(lab, accept, edgeRng('min'))).toEqual({
+      rejection: 'Риск критический — принять как есть нельзя',
+    })
+  })
+
+  it('принятие снимается тиком, когда уровень вырос: балл 49 + 0,41 за тик, на 14-м тике 54,74 → 55 — высокий', () => {
+    const accepted = execute(labWithWorld([openPortalWith()]), accept, edgeRng('min'))
+    if ('rejection' in accepted) throw new Error(accepted.rejection)
+
+    expect(ticks(accepted.lab, 13).portals[0]!.acceptedAt).toBe('medium')
+    expect(ticks(accepted.lab, 14).portals[0]!.acceptedAt).toBeNull()
   })
 })

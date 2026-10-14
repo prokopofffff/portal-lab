@@ -2,7 +2,7 @@
 import { CONFIG } from './config'
 import { createLab, type Lab, type Portal, type World } from './lab'
 import type { Rng } from './rng'
-import { assessRisk } from './risk'
+import { assessRisk, type RiskLevel } from './risk'
 import { riskLevelChange, type RiskLevelChanged } from './tick'
 import { WORLD_NAMES, portalName, worldCode } from './worlds'
 
@@ -13,6 +13,10 @@ export type Command =
   | { type: 'sendObserver'; portal: string }
   | { type: 'recallObservers'; portal: string }
   | { type: 'hireObserver' }
+  | { type: 'closePortal'; portal: string }
+  | { type: 'cancelClose'; portal: string }
+  | { type: 'toggleQuestioned'; portal: string; note?: string }
+  | { type: 'acceptAsIs'; portal: string }
 
 export type DomainEvent =
   | { type: 'portalOpened'; portal: string; world: string; firstVisit: boolean }
@@ -26,6 +30,16 @@ export type DomainEvent =
   | { type: 'observerSent'; portal: string; world: string; onSite: number }
   | { type: 'observersRecalled'; portal: string; world: string; count: number }
   | { type: 'hireStarted'; ticks: number }
+  | {
+      type: 'portalClosed'
+      portal: string
+      world: string
+      leftUnstudied: { unstudied: number; creatures: number } | null
+    }
+  | { type: 'closeCancelled'; portal: string; world: string }
+  | { type: 'questionedMarked'; portal: string; world: string; note: string }
+  | { type: 'questionedUnmarked'; portal: string; world: string }
+  | { type: 'portalAccepted'; portal: string; world: string; level: RiskLevel }
   | RiskLevelChanged
 
 export type CommandResult = { lab: Lab; events: DomainEvent[] } | { rejection: string }
@@ -44,6 +58,14 @@ export function execute(lab: Lab, command: Command, rng: Rng): CommandResult {
       return recallObservers(lab, command.portal)
     case 'hireObserver':
       return hireObserver(lab)
+    case 'closePortal':
+      return closePortal(lab, command.portal)
+    case 'cancelClose':
+      return cancelClose(lab, command.portal)
+    case 'toggleQuestioned':
+      return toggleQuestioned(lab, command.portal, command.note)
+    case 'acceptAsIs':
+      return acceptAsIs(lab, command.portal)
   }
 }
 
@@ -228,4 +250,87 @@ function hireObserver(lab: Lab): CommandResult {
     lab: { ...lab, staff: { ...lab.staff, hireTicksLeft: hire.ticks } },
     events: [{ type: 'hireStarted', ticks: hire.ticks }],
   }
+}
+
+// Закрытие портала (spec §5): метрики остаются последними, пометки и прогресс изучения сбрасываются
+function closePortal(lab: Lab, name: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  if (portal.observers > 0) return { rejection: 'На месте наблюдатели — сначала отзовите' }
+  const confirmation = closeConfirmation(lab, name)
+  const closed: Portal = {
+    ...portal,
+    status: 'closed',
+    questioned: null,
+    acceptedAt: null,
+    studyProgress: 0,
+  }
+  const leftUnstudied = confirmation && {
+    unstudied: confirmation.unstudied,
+    creatures: confirmation.creatures,
+  }
+  return {
+    lab: withPortal(lab, closed),
+    events: [{ type: 'portalClosed', portal: portal.name, world: portal.world, leftUnstudied }],
+  }
+}
+
+// Отмена закрытия (spec §5): состояние не меняется, остаётся запись в журнале
+function cancelClose(lab: Lab, name: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  return { lab, events: [{ type: 'closeCancelled', portal: portal.name, world: portal.world }] }
+}
+
+// Пометка «Под вопросом» (spec §5): ставится с заметкой, повторный вызов снимает
+function toggleQuestioned(lab: Lab, name: string, note?: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  const { world } = portal
+  if (portal.questioned) {
+    return {
+      lab: withPortal(lab, { ...portal, questioned: null }),
+      events: [{ type: 'questionedUnmarked', portal: portal.name, world }],
+    }
+  }
+  const trimmed = note?.trim() ?? ''
+  return {
+    lab: withPortal(lab, { ...portal, questioned: { note: trimmed } }),
+    events: [{ type: 'questionedMarked', portal: portal.name, world, note: trimmed }],
+  }
+}
+
+// «Принять как есть» (spec §5): запоминает уровень риска; тик снимает принятие, когда уровень вырастет
+function acceptAsIs(lab: Lab, name: string): CommandResult {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return portal
+
+  const { level } = assessRisk(portal)
+  if (level === 'critical') return { rejection: 'Риск критический — принять как есть нельзя' }
+  if (portal.acceptedAt !== null) return { rejection: 'Портал уже принят как есть' }
+  return {
+    lab: withPortal(lab, { ...portal, acceptedAt: level }),
+    events: [{ type: 'portalAccepted', portal: portal.name, world: portal.world, level }],
+  }
+}
+
+// Сводка для диалога закрытия (spec §5): есть, только если закрытие оставит неизученных существ без прохода
+export function closeConfirmation(
+  lab: Lab,
+  name: string,
+): { world: string; unstudied: number; creatures: number } | null {
+  const portal = resolveOpenPortal(lab, name)
+  if ('rejection' in portal) return null
+
+  // Открытый портал всегда ведёт в известный лаборатории мир
+  const { creatures, studied } = lab.worlds[portal.world]!
+  const unstudied = creatures - studied
+  const otherOpenToWorld = lab.portals.some(
+    (p) => p.name !== portal.name && p.status === 'open' && p.world === portal.world,
+  )
+  if (unstudied <= 0 || otherOpenToWorld) return null
+  return { world: portal.world, unstudied, creatures }
 }
