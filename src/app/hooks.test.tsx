@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { StrictMode, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { LabStoreProvider, useDispatch, useLabSelector, useLabStore, useRejection } from './hooks'
 import { createLabStore, shallowEqual, type LabStore } from './store'
@@ -82,6 +82,37 @@ describe('React-хуки store лаборатории', () => {
       store.dispatch({ type: 'openPortal' })
     })
     expect(screen.getByText('1/3')).toBeInTheDocument()
+  })
+
+  it('в StrictMode срез обновляется после команды и не перерисовывается от тика', () => {
+    const store = newStore()
+    let renders = 0
+    function Count() {
+      renders++
+      const count = useLabSelector((s) => s.lab.portals.length)
+      return <p>Порталов: {count}</p>
+    }
+    render(
+      <StrictMode>
+        <LabStoreProvider store={store}>
+          <Count />
+        </LabStoreProvider>
+      </StrictMode>,
+    )
+    expect(screen.getByText('Порталов: 0')).toBeInTheDocument()
+
+    act(() => {
+      store.dispatch({ type: 'openPortal' })
+    })
+    expect(screen.getByText('Порталов: 1')).toBeInTheDocument()
+
+    // StrictMode удваивает рендеры, поэтому сравниваем счётчик до и после тика
+    const beforeAdvance = renders
+    act(() => {
+      store.advance(1)
+    })
+    expect(store.getState().lab.time).toBe(1)
+    expect(renders).toBe(beforeAdvance)
   })
 
   it('срез, зависящий от пропсов, пересчитывается при их смене', () => {

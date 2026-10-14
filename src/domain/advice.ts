@@ -2,10 +2,13 @@
 import { stabilizeRejection } from './commands'
 import { CONFIG } from './config'
 import type { Lab } from './lab'
+import { observersNoun } from './plural'
 import { assessRisk, RISK_LEVEL_LABELS } from './risk'
 
 export interface Recommendation {
-  action: 'recallObservers' | 'stabilize' | 'closePortal' | 'sendObserver' | 'acceptAsIs'
+  // keepOpen — команда не нужна: портал, уже принятый как есть, просто остаётся открытым
+  action:
+    'recallObservers' | 'stabilize' | 'closePortal' | 'sendObserver' | 'acceptAsIs' | 'keepOpen'
   reason: string
 }
 
@@ -70,7 +73,7 @@ export function recommend(lab: Lab, name: string): Recommendation | null {
   const label = RISK_LEVEL_LABELS[level]
   if (portal.acceptedAt !== null) {
     return {
-      action: 'acceptAsIs',
+      action: 'keepOpen',
       reason: `Уже принят как есть, риск ${label} — оставить открытым`,
     }
   }
@@ -78,7 +81,7 @@ export function recommend(lab: Lab, name: string): Recommendation | null {
     action: 'acceptAsIs',
     reason:
       portal.observers >= max
-        ? `Риск ${label}, на месте уже ${max} наблюдателя — можно оставить открытым`
+        ? `Риск ${label}, на месте уже ${max} ${observersNoun(max)} — можно оставить открытым`
         : `Риск ${label}, свободных наблюдателей нет — можно оставить открытым`,
   }
 }

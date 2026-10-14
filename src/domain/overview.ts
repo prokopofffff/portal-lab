@@ -1,7 +1,8 @@
 // Сводка лаборатории и список «Требуют внимания» (docs/spec.md §7).
 import { CONFIG } from './config'
 import type { Lab } from './lab'
-import { assessRisk, RISK_LEVEL_LABELS, type RiskLevel } from './risk'
+import { observersNoun } from './plural'
+import { assessRisk, RISK_LEVEL_LABELS, RISK_LEVEL_RANK, type RiskLevel } from './risk'
 
 export interface Summary {
   open: number
@@ -47,19 +48,6 @@ export interface AttentionItem {
   reason: string
 }
 
-// «наблюдатель» / «наблюдателя» / «наблюдателей» по числу
-function observersNoun(n: number): string {
-  const lastTwo = n % 100
-  const last = n % 10
-  if (lastTwo >= 11 && lastTwo <= 14) return 'наблюдателей'
-  if (last === 1) return 'наблюдатель'
-  if (last >= 2 && last <= 4) return 'наблюдателя'
-  return 'наблюдателей'
-}
-
-// Чем больше, тем опаснее (spec §3)
-const LEVEL_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 }
-
 // Порталы, требующие внимания (spec §7): открытые, кроме принятых как есть;
 // уровень риска ↓, время до схлопывания ↑, неизученные существа мира ↓ (сортировка устойчива)
 export function attentionList(lab: Lab): AttentionItem[] {
@@ -76,7 +64,7 @@ export function attentionList(lab: Lab): AttentionItem[] {
     })
     .sort(
       (a, b) =>
-        LEVEL_RANK[b.level] - LEVEL_RANK[a.level] ||
+        RISK_LEVEL_RANK[b.level] - RISK_LEVEL_RANK[a.level] ||
         a.portal.timeLeft - b.portal.timeLeft ||
         b.unstudied - a.unstudied,
     )

@@ -174,7 +174,7 @@ describe('recommend: принять как есть (spec §6, правило 7)
     const lab = labWith({ acceptedAt: 'medium' }, {}, 0)
 
     expect(recommend(lab, 'ПШ-449-1')).toEqual({
-      action: 'acceptAsIs',
+      action: 'keepOpen',
       reason: 'Уже принят как есть, риск средний — оставить открытым',
     })
   })

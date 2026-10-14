@@ -1,6 +1,7 @@
 // Команды смотрителя (docs/spec.md §5): (лаборатория, команда, ГСЧ) → новое состояние + события или отказ.
 import { CONFIG } from './config'
 import { createLab, type Lab, type Portal, type World } from './lab'
+import { observersNoun } from './plural'
 import type { Rng } from './rng'
 import { assessRisk, type RiskLevel } from './risk'
 import { riskLevelChange, type RiskLevelChanged } from './tick'
@@ -196,7 +197,9 @@ function sendObserver(lab: Lab, name: string): CommandResult {
   }
   const { maxObserversPerPortal } = CONFIG
   if (portal.observers >= maxObserversPerPortal) {
-    return { rejection: `На месте уже ${maxObserversPerPortal} наблюдателя` }
+    return {
+      rejection: `На месте уже ${maxObserversPerPortal} ${observersNoun(maxObserversPerPortal)}`,
+    }
   }
   if (lab.staff.free === 0) return { rejection: 'Нет свободных наблюдателей' }
   const sent: Portal = { ...portal, observers: portal.observers + 1 }

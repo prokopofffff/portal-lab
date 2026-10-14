@@ -1,7 +1,7 @@
 // Тик симуляции (docs/spec.md §4): чистая функция Lab → Lab + события.
 import { CONFIG } from './config'
 import type { Lab, Portal, Staff, World } from './lab'
-import { assessRisk, type RiskLevel } from './risk'
+import { assessRisk, RISK_LEVEL_RANK, type RiskLevel } from './risk'
 
 // Смена уровня риска открытого портала: бывает и в тике, и от команды (стабилизация)
 export type RiskLevelChanged = {
@@ -165,9 +165,6 @@ function collapseEvents(portal: Portal): TickEvent[] {
     : [collapsed]
 }
 
-// Порядок уровней риска: чем больше число, тем выше уровень
-const LEVEL_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 }
-
 // Событие смены уровня риска у портала, открытого до и после изменения; null — уровень тот же
 export function riskLevelChange(before: Portal, after: Portal): RiskLevelChanged | null {
   if (before.status !== 'open' || after.status !== 'open') return null
@@ -185,7 +182,7 @@ function reassess(before: Portal, after: Portal, events: TickEvent[]): Portal {
   const { name: portal, world } = after
   const to = assessRisk(after).level
   const { acceptedAt } = after
-  if (acceptedAt === null || LEVEL_RANK[to] <= LEVEL_RANK[acceptedAt]) return after
+  if (acceptedAt === null || RISK_LEVEL_RANK[to] <= RISK_LEVEL_RANK[acceptedAt]) return after
   events.push({ type: 'acceptanceRevoked', portal, world, acceptedAt, level: to })
   return { ...after, acceptedAt: null }
 }
