@@ -8,8 +8,17 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
   })
 
-  it('подписывает уровни риска словами', () => {
+  it('галерея спрайтов содержит все виды портала', () => {
+    const { container } = render(<App />)
+    for (const look of ['empty', 'low', 'medium', 'high', 'critical', 'archived']) {
+      expect(container.querySelector(`[data-look="${look}"]`)).toBeInTheDocument()
+    }
+  })
+
+  it('галерея показывает наблюдателей, полоски и существ', () => {
     render(<App />)
-    expect(screen.getByRole('list', { name: 'Уровни риска' })).toHaveTextContent('Критический')
+    expect(screen.getAllByTestId('observer').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('meter').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('img', { name: /^Изучено \d+ из \d+$/ }).length).toBeGreaterThan(0)
   })
 })
