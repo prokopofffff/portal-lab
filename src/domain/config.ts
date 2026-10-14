@@ -42,6 +42,8 @@ export const CONFIG = {
   staff: { initial: 3, max: 5 },
   // Найм нового сотрудника (spec Приложение B)
   hire: { ticks: 20 },
+  // Сколько порталов показывать в «Требуют внимания» (spec §7)
+  attentionLimit: 3,
   // Максимум записей в журнале (spec Приложение B)
   journalLimit: 500,
 } as const
