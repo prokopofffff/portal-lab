@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cssVariables, risk } from './tokens'
+import { cssVariables, risk, sprite } from './tokens'
 import { applyTheme } from './applyTheme'
 
 describe('cssVariables', () => {
@@ -14,6 +14,13 @@ describe('cssVariables', () => {
       expect(vars[`--risk-${level}-plate`]).toBeDefined()
       expect(vars[`--risk-${level}-on`]).toBeDefined()
     }
+  })
+
+  it('отдаёт цвета спрайтов как --s-*', () => {
+    const vars = cssVariables()
+    expect(vars['--s-bar-unlit']).toBe(sprite.barUnlit)
+    expect(vars['--s-studied-gold']).toBe('#e8b948')
+    expect(vars['--s-unknown-edge']).toBe('#2e2840')
   })
 })
 

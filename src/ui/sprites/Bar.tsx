@@ -1,46 +1,40 @@
-import type { RiskLevel } from '../theme/tokens'
+import type { CSSProperties } from 'react'
 import './sprites.css'
 
-const SEGMENTS = 10
-
-/** Сколько сегментов закрасить: пусто только при нуле, полно только при максимуме. */
-function filledSegments(value: number, max: number): number {
-  if (value <= 0) return 0
-  if (value >= max) return SEGMENTS
-  return Math.min(SEGMENTS - 1, Math.max(1, Math.round((value / max) * SEGMENTS)))
-}
-
-/** Пиксельная полоска из сегментов с подписью и числом. */
+/** Пиксельная полоска: только дорожка из сегментов. Подпись и число рисует потребитель рядом. */
 export function Bar({
   label,
   value,
   max = 100,
-  tone = 'neutral',
+  color = 'var(--risk-low-c)',
+  segments = 10,
+  height = 10,
 }: {
+  /** Доступное имя полоски; на экран не выводится. */
   label: string
   value: number
   max?: number
-  tone?: RiskLevel | 'neutral'
+  /** Цвет зажжённых сегментов: CSS-переменная токена. */
+  color?: string
+  segments?: number
+  height?: number
 }) {
   const clamped = Math.min(max, Math.max(0, value))
-  const filled = filledSegments(clamped, max)
+  // Как в канвасе: округление вверх, чтобы любое ненулевое значение зажигало сегмент.
+  const lit = clamped > 0 ? Math.ceil((clamped / max) * segments - 0.001) : 0
   return (
     <div
       className="px-bar"
-      data-tone={tone}
+      style={{ '--px-bar-fill': color } as CSSProperties}
       role="meter"
       aria-label={label}
       aria-valuenow={clamped}
       aria-valuemin={0}
       aria-valuemax={max}
     >
-      <span className="px-bar__label">{label}</span>
-      <span className="px-bar__track">
-        {Array.from({ length: SEGMENTS }, (_, i) => (
-          <span key={i} className="px-bar__seg" data-filled={i < filled} />
-        ))}
-      </span>
-      <span className="px-bar__value">{Math.round(clamped)}</span>
+      {Array.from({ length: segments }, (_, i) => (
+        <span key={i} className="px-bar__seg" data-lit={i < lit} style={{ height }} />
+      ))}
     </div>
   )
 }

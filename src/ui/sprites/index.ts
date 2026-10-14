@@ -1,4 +1,5 @@
 export { Bar } from './Bar'
 export { Creatures } from './Creatures'
 export { Portal } from './Portal'
+export { RiskTag } from './RiskTag'
 export { Rune } from './Rune'
