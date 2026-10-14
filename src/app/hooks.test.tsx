@@ -1,7 +1,14 @@
 import { act, render, renderHook, screen } from '@testing-library/react'
 import { StrictMode, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { LabStoreProvider, useDispatch, useLabSelector, useLabStore, useRejection } from './hooks'
+import {
+  LabStoreProvider,
+  useDispatch,
+  useLabSelector,
+  useLabStore,
+  useRejection,
+  useSpeed,
+} from './hooks'
 import { createLabStore, shallowEqual, type LabStore } from './store'
 
 const NOW = Date.UTC(2026, 9, 14, 12, 0, 0)
@@ -132,6 +139,23 @@ describe('React-хуки store лаборатории', () => {
     )
 
     expect(screen.getByText('Запись: нет')).toBeInTheDocument()
+  })
+
+  it('useSpeed отдаёт скорость и сеттер, перерисовывая компонент', () => {
+    const store = newStore()
+    function Speed() {
+      const [speed, setSpeed] = useSpeed()
+      return <button onClick={() => setSpeed(5)}>Скорость: {speed}</button>
+    }
+    renderWith(store, <Speed />)
+    expect(screen.getByText('Скорость: 1')).toBeInTheDocument()
+
+    act(() => {
+      screen.getByText('Скорость: 1').click()
+    })
+
+    expect(store.getState().speed).toBe(5)
+    expect(screen.getByText('Скорость: 5')).toBeInTheDocument()
   })
 
   it('useRejection показывает отказ и скрывает его после dismissRejection', () => {
