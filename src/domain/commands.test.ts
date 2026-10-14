@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { closeConfirmation, execute } from './commands'
+import { closeConfirmation, execute, hireRejection } from './commands'
 import { createLab, type Lab, type Portal } from './lab'
 import { tick } from './tick'
 import type { Rng } from './rng'
@@ -709,6 +709,27 @@ describe('execute hireObserver (spec §2.3, §5)', () => {
 
     const hired = ticks(waiting, 1)
     expect(hired.staff).toEqual({ free: 4, hireTicksLeft: 0, lost: 0 })
+  })
+})
+
+describe('hireRejection (spec §5)', () => {
+  const staffOf = (free: number, hireTicksLeft = 0) => ({ free, hireTicksLeft, lost: 0 })
+
+  it('наём доступен: null', () => {
+    expect(hireRejection(createLab())).toBeNull()
+  })
+
+  it('штат полон: та же причина, что у отказа команды', () => {
+    expect(hireRejection({ ...createLab(), staff: staffOf(5) })).toBe('Штат полон: 5 из 5')
+    expect(hireRejection({ ...createLab(), staff: staffOf(4, 7) })).toBe(
+      'Штат полон: 5 из 5, включая наём в пути',
+    )
+  })
+
+  it('наём уже идёт: оставшиеся минуты', () => {
+    expect(hireRejection({ ...createLab(), staff: staffOf(2, 12) })).toBe(
+      'Наём уже идёт — осталось 12 мин',
+    )
   })
 })
 

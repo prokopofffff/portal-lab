@@ -84,6 +84,21 @@ export const colors = {
   observerFree: '#7a9be0',
   observerOnSite: '#5fcf9a',
   observerTransit: '#a9a3c0',
+  // HUD и док: кнопки, пауза, слоты наблюдателей, счётчики, печать лаборатории
+  control: '#221e2d', // неактивная кнопка скорости и вкладка дока
+  pauseOn: '#8fb4ff',
+  pauseOnEdge: '#cfe0ff',
+  divider: '#2b2538',
+  observerFreeBg: '#1d2a47',
+  observerOnSiteBg: '#173a2c',
+  observerTransitEdge: '#8a85a0',
+  lostCount: '#c9c3d8',
+  statHigh: '#ffb36b',
+  statCritical: '#ff8099',
+  statCriticalLabel: '#ffb0bf',
+  seal: '#a79bb8',
+  sealEdge: '#5a2b3a',
+  sealLock: '#a84a63',
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -150,6 +165,14 @@ export const sprite = {
   unknownBg: '#0c0a12',
   unknownEdge: colors.edgeSoft,
   unknownGlyph: '#5e5478',
+  // HUD: песочные часы, лицо и значок портала в слоте наблюдателя, надгробие потерянных
+  hourglassFrame: '#c9a24a',
+  hourglassGlass: '#8a7fa6',
+  slotFace: '#f1d9b3',
+  slotPortalEdge: '#c8b8ff',
+  slotPortal: '#6d5ac8',
+  tombstone: '#8a85a0',
+  tombstoneMark: '#3a3548',
 } as const
 
 /** Пять цветов существ, по кругу. */
@@ -192,6 +215,23 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'закладка «портал»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonPortal, min: 4.5 },
   { name: 'закладка «мир»: название', fg: colors.onRibbon, bg: colors.ribbonWorld, min: 4.5 },
   { name: 'закладка «мир»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonWorld, min: 4.5 },
+  { name: 'время в HUD', fg: colors.torchLight, bg: colors.panel, min: 4.5 },
+  { name: 'подпись слота на панели', fg: colors.textSoft, bg: colors.panel, min: 4.5 },
+  { name: 'подпись пустого слота на панели', fg: colors.textDim, bg: colors.panel, min: 4.5 },
+  { name: 'число потерянных на панели', fg: colors.lostCount, bg: colors.panel, min: 4.5 },
+  { name: 'кнопка скорости', fg: colors.textSoft, bg: colors.control, min: 4.5 },
+  { name: 'пауза включена', fg: colors.onTorch, bg: colors.pauseOn, min: 4.5 },
+  { name: 'счётчик: подпись', fg: colors.textMuted, bg: colors.well, min: 4.5 },
+  { name: 'счётчик: число', fg: colors.text, bg: colors.well, min: 4.5 },
+  { name: 'счётчик: лимит порталов', fg: colors.statHigh, bg: colors.well, min: 4.5 },
+  { name: 'счётчик: критические, число', fg: colors.statCritical, bg: colors.well, min: 4.5 },
+  {
+    name: 'счётчик: критические, подпись',
+    fg: colors.statCriticalLabel,
+    bg: colors.well,
+    min: 4.5,
+  },
+  { name: 'печать лаборатории на панели', fg: colors.seal, bg: colors.panel, min: 4.5 },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,
