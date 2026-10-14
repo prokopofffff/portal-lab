@@ -35,7 +35,11 @@ export function assessRisk(metrics: RiskMetrics): RiskAssessment {
     energy: weights.energy * metrics.energy,
     urgency: weights.urgency * urgency,
   }
-  const score = Math.round(parts.instability + parts.energy + parts.urgency)
+  // Сумма в float может дать 29,4999… вместо ровно 29,5 и округлиться вниз.
+  // Сначала срезаем шум до 6 знаков, потом округляем до целого.
+  const noiseScale = 1e6
+  const rawScore = parts.instability + parts.energy + parts.urgency
+  const score = Math.round(Math.round(rawScore * noiseScale) / noiseScale)
   // Жёсткое правило: мало времени или низкая стабильность — критический уровень при любом балле
   const hardRule =
     metrics.timeLeft <= hardLimits.maxTimeLeft || metrics.stability <= hardLimits.maxStability
