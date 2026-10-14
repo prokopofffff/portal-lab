@@ -177,4 +177,35 @@ describe('цикл симуляции (spec §2.3, прил. B)', () => {
     clock.frame(2000)
     expect(store.getState().lab.time).toBe(0)
   })
+
+  it('stop из подписчика во время advance: новый кадр не запрашивается', () => {
+    const store = newStore(1)
+    const clock = fakeEnv()
+    const stop = startSimulation(store, clock.env)
+    store.subscribe(() => stop())
+
+    clock.frame(1000)
+
+    expect(store.getState().lab.time).toBe(1)
+    expect(clock.pendingFrames()).toBe(0)
+    clock.frame(1000)
+    expect(store.getState().lab.time).toBe(1)
+  })
+
+  it('advance бросает исключение: следующий кадр всё равно запрошен', () => {
+    const store = newStore(1)
+    const clock = fakeEnv()
+    startSimulation(store, clock.env)
+    const advance = store.advance
+    let calls = 0
+    store.advance = (ticks) => {
+      if (calls++ === 0) throw new Error('сбой тика')
+      advance(ticks)
+    }
+
+    expect(() => clock.frame(1000)).toThrow('сбой тика')
+    expect(clock.pendingFrames()).toBe(1)
+    clock.frame(1000)
+    expect(store.getState().lab.time).toBe(1)
+  })
 })

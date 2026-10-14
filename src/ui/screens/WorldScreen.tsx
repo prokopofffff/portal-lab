@@ -141,6 +141,11 @@ function PortalRow({ portal }: { portal: Portal }) {
 
 function HistoryItem({ entry }: { entry: LogEntry }) {
   const system = entry.kind === 'system'
+  const ink = system
+    ? 'var(--c-ink-system)'
+    : entry.kind === 'rejection'
+      ? 'var(--c-ink-rejection)'
+      : 'var(--c-ink-title)'
   return (
     <li style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
       <span
@@ -160,7 +165,7 @@ function HistoryItem({ entry }: { entry: LogEntry }) {
           fontFamily: 'var(--f-prose)',
           fontSize: 17,
           lineHeight: '21px',
-          color: system ? 'var(--c-ink-system)' : 'var(--c-ink-title)',
+          color: ink,
           fontStyle: system ? 'italic' : 'normal',
         }}
       >

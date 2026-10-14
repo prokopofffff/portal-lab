@@ -158,6 +158,17 @@ describe('Страница мира (spec §9)', () => {
     expect(within(items[0]!).getByText(/Открыт портал/)).toHaveStyle({ fontStyle: 'normal' })
   })
 
+  it('история мира: отказ тем же чернилом, что в журнале', () => {
+    renderWorld()
+
+    const history = screen.getByRole('list', { name: 'История мира' })
+    const items = within(history).getAllByRole('listitem')
+    expect(within(items[2]!).getByText(/Отказ/)).toHaveStyle({ color: 'var(--c-ink-rejection)' })
+    expect(within(items[0]!).getByText(/Открыт портал/)).toHaveStyle({
+      color: 'var(--c-ink-title)',
+    })
+  })
+
   it('пустая история мира не ломает страницу', () => {
     renderScreen(<WorldScreen world="Багровая Бездна" />, storeWithLab({ ...lab, log: [] }), route)
 

@@ -20,10 +20,14 @@ const MAX_FRAME_MS = 1000
 // Запускает цикл: за кадр копит тики по скорости и гонит целую часть одним advance; возвращает stop
 export function startSimulation(store: LabStore, env: SimulationEnv): () => void {
   let frameId: number | null = null
+  let stopped = false
   let last = env.now()
   let acc = 0
 
+  // Следующий кадр запрашиваем до advance: сбой тика не должен убивать цикл
   function frame(): void {
+    if (stopped) return
+    frameId = env.requestAnimationFrame(frame)
     const now = env.now()
     const elapsed = Math.min(now - last, MAX_FRAME_MS)
     last = now
@@ -36,7 +40,6 @@ export function startSimulation(store: LabStore, env: SimulationEnv): () => void
       acc -= ticks
       store.advance(ticks)
     }
-    frameId = env.requestAnimationFrame(frame)
   }
 
   // Время простоя вкладки не догоняется: начинаем отсчёт заново
@@ -49,6 +52,7 @@ export function startSimulation(store: LabStore, env: SimulationEnv): () => void
   frameId = env.requestAnimationFrame(frame)
 
   return () => {
+    stopped = true
     if (frameId !== null) env.cancelAnimationFrame(frameId)
     frameId = null
     env.document.removeEventListener('visibilitychange', onVisibilityChange)
