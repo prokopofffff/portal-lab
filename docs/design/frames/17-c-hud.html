@@ -1,0 +1,137 @@
+<!-- Кадр канваса «HUD смотрителя». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>HUD смотрителя</title>
+<script src="9529a720-1855-4fd6-96fd-59e9308c2a2f"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+@keyframes hgFall{0%{transform:translateY(0);opacity:1}100%{transform:translateY(6px);opacity:0}}
+.hg-grain{animation:hgFall 1s steps(4) infinite}
+.hud-paused .hg-grain{animation:none}
+</style>
+</helmet>
+<div class="{{rootClass}}" style="width:100%;box-sizing:border-box;height:112px;display:flex;align-items:center;gap:14px;padding:0 20px;background:#14111c;border-bottom:4px solid #3d3649;box-shadow:inset 0 -4px 0 #0b0911;font-family:'Tektur','Trebuchet MS',sans-serif;color:#efe6d0;filter:{{dim}}">
+
+<div style="display:flex;align-items:center;gap:12px;min-width:150px">
+<svg sc-camel-view-box="0 0 9 11" width="36" height="44" shape-rendering="crispEdges" aria-hidden="true">
+<path d="M0,0h9v1h-9z M0,10h9v1h-9z" fill="#c9a24a"></path>
+<path d="M1,1h1v2h-1z M7,1h1v2h-1z M2,3h1v1h-1z M6,3h1v1h-1z M3,4h1v1h-1z M5,4h1v1h-1z M3,6h1v1h-1z M5,6h1v1h-1z M2,7h1v1h-1z M6,7h1v1h-1z M1,8h1v2h-1z M7,8h1v2h-1z" fill="#8a7fa6"></path>
+<path d="M2,1h5v1h-5z M3,2h3v1h-3z M4,3h1v1h-1z" fill="#ffb347"></path>
+<path d="M3,9h3v1h-3z M2,8h5v1h-5z M4,7h1v1h-1z" fill="#ffb347"></path>
+<rect class="hg-grain" x="4" y="4" width="1" height="2" fill="#ffd98a"></rect>
+</svg>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:13px;letter-spacing:1px;color:#b4abc6">ВРЕМЯ</span>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:26px;line-height:26px;color:#ffd98a">мин <span style="font-family:'Press Start 2P',monospace;font-weight:400;font-size:20px">{{min}}</span></span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:13px;letter-spacing:1px;color:#b4abc6">СКОРОСТЬ{{pauseTag}}</span>
+<div style="display:flex;gap:6px">
+<sc-for list="{{speeds}}" as="s" hint-placeholder-count="4">
+<button type="button" aria-label="{{s.label}}" aria-pressed="{{s.on}}" style="width:42px;height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P',monospace;font-size:11px;color:{{s.fg}};background:{{s.bg}};border:3px solid {{s.bd}};box-shadow:inset 0 -3px 0 rgba(0,0,0,.35);cursor:pointer;padding:0">
+<sc-if value="{{s.isPause}}" hint-placeholder-val="{{ false }}">
+<svg sc-camel-view-box="0 0 7 8" width="14" height="16" shape-rendering="crispEdges" aria-hidden="true"><path d="M0,0h3v8h-3z M4,0h3v8h-3z" fill="{{s.fg}}"></path></svg>
+</sc-if>
+<sc-if value="{{s.notPause}}" hint-placeholder-val="{{ true }}">
+<span>{{s.text}}</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="width:4px;align-self:stretch;margin:18px 0;background:#2b2538"></div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:13px;letter-spacing:1px;color:#b4abc6">НАБЛЮДАТЕЛИ</span>
+<div style="display:flex;align-items:flex-start;gap:8px">
+<sc-for list="{{slots}}" as="o" hint-placeholder-count="5">
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px" aria-label="{{o.aria}}">
+<div style="position:relative;width:44px;height:44px;box-sizing:border-box;background:{{o.bg}};border:3px {{o.bs}} {{o.bd}};opacity:{{o.op}};display:flex;align-items:center;justify-content:center">
+<sc-if value="{{o.face}}" hint-placeholder-val="{{ true }}">
+<svg sc-camel-view-box="0 0 8 8" width="32" height="32" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h4v1h-4z M1,1h6v1h-6z M1,2h1v3h-1z M6,2h1v3h-1z M1,5h6v1h-6z M0,6h8v2h-8z" fill="{{o.hood}}"></path><path d="M2,2h4v3h-4z" fill="#f1d9b3"></path><path d="M2,3h1v1h-1z M5,3h1v1h-1z" fill="#1b1424"></path></svg>
+</sc-if>
+<sc-if value="{{o.badge}}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;right:-8px;bottom:-8px;width:18px;height:18px;box-sizing:border-box;background:#0b0911;border:2px solid {{o.bd}};display:flex;align-items:center;justify-content:center">
+<svg sc-camel-view-box="0 0 6 7" width="10" height="12" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h2v1h-2z M1,1h1v1h-1z M4,1h1v1h-1z M0,2h1v5h-1z M5,2h1v5h-1z" fill="#c8b8ff"></path><path d="M1,2h4v5h-4z" fill="#6d5ac8"></path></svg>
+</div>
+</sc-if>
+</div>
+<span style="font-size:13px;line-height:14px;color:{{o.tc}};white-space:nowrap">{{o.text}}</span>
+<sc-if value="{{o.hire}}" hint-placeholder-val="{{ false }}">
+<div style="width:44px;height:5px;background:#0b0911;border:1px solid #6a5f80"><div style="width:60%;height:100%;background:#ffb347"></div></div>
+</sc-if>
+</div>
+</sc-for>
+<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;margin-left:4px" aria-label="Потеряно наблюдателей: {{lost}}">
+<div style="display:flex;align-items:flex-end;gap:4px;height:44px">
+<svg sc-camel-view-box="0 0 8 9" width="28" height="32" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h4v1h-4z M1,1h6v8h-6z" fill="#8a85a0"></path><path d="M3,2h2v1h-2z M2,3h4v1h-4z M3,4h2v3h-2z" fill="#3a3548"></path></svg>
+<span style="font-family:'Press Start 2P',monospace;font-size:14px;color:#c9c3d8;padding-bottom:4px">×{{lost}}</span>
+</div>
+<span style="font-size:13px;line-height:14px;color:#b4abc6">потеряно</span>
+</div>
+<button type="button" style="align-self:flex-start;margin-left:4px;height:44px;padding:0 12px;box-sizing:border-box;font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:15px;color:#1b1424;background:#ffb347;border:3px solid #ffd98a;box-shadow:inset 0 -4px 0 #b86a14;cursor:pointer;display:flex;align-items:center;gap:8px">
+<svg sc-camel-view-box="0 0 7 7" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="M3,0h1v7h-1z M0,3h7v1h-7z" fill="#1b1424"></path></svg>
+Нанять
+</button>
+</div>
+</div>
+
+<div style="flex:1 1 0;min-width:0"></div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:420px">
+<sc-for list="{{stats}}" as="c" hint-placeholder-count="6">
+<div style="height:46px;box-sizing:border-box;padding:4px 8px;background:#0b0911;border:3px solid {{c.bd}};box-shadow:inset 0 3px 0 rgba(255,255,255,.05);display:flex;flex-direction:column;justify-content:center;gap:3px">
+<span style="font-size:12px;line-height:12px;color:{{c.lc}}">{{c.label}}</span>
+<span style="font-family:'Press Start 2P',monospace;font-size:13px;line-height:13px;color:{{c.vc}}">{{c.value}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;min&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:143,&quot;min&quot;:0,&quot;max&quot;:9999},&quot;speed&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;pause&quot;,&quot;1&quot;,&quot;5&quot;,&quot;20&quot;],&quot;default&quot;:&quot;1&quot;},&quot;slots&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;free,onsite,onsite,onsite,transit&quot;},&quot;lost&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:2,&quot;min&quot;:0,&quot;max&quot;:99},&quot;open&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:0,&quot;max&quot;:12},&quot;crit&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:12},&quot;closed&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:2,&quot;min&quot;:0,&quot;max&quot;:99},&quot;collapsed&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:99},&quot;worlds&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6,&quot;min&quot;:0,&quot;max&quot;:99},&quot;studied&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:17,&quot;min&quot;:0,&quot;max&quot;:999},&quot;total&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:41,&quot;min&quot;:0,&quot;max&quot;:999},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:112}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const num = (v, d) => (v === undefined || v === null || v === '' ? d : Number(v));
+    const speed = String(p.speed ?? '1');
+    const paused = speed === 'pause';
+    const speeds = [['pause', '', 'Пауза'], ['1', '×1', 'Скорость ×1'], ['5', '×5', 'Скорость ×5'], ['20', '×20', 'Скорость ×20']].map(([k, t, a]) => {
+      const on = k === speed;
+      return { isPause: k === 'pause', notPause: k !== 'pause', text: t, label: a, on: on,
+        fg: on ? '#1b1424' : '#d8cfea', bg: on ? (paused ? '#8fb4ff' : '#ffb347') : '#221e2d', bd: on ? (paused ? '#cfe0ff' : '#ffd98a') : '#453d56' };
+    });
+    const kinds = {
+      free:    { text: 'свободен', hood: '#7a9be0', bg: '#1d2a47', bd: '#7a9be0', bs: 'solid', op: 1, face: true, badge: false, hire: false, tc: '#d8cfea', aria: 'Наблюдатель свободен' },
+      onsite:  { text: 'на месте', hood: '#5fcf9a', bg: '#173a2c', bd: '#5fcf9a', bs: 'solid', op: 1, face: true, badge: true, hire: false, tc: '#d8cfea', aria: 'Наблюдатель на месте, в портале' },
+      transit: { text: 'в пути', hood: '#a9a3c0', bg: '#221e2d', bd: '#8a85a0', bs: 'solid', op: 0.5, face: true, badge: false, hire: true, tc: '#b4abc6', aria: 'Наблюдатель в пути, идёт найм' },
+      empty:   { text: 'пусто', hood: '#453d56', bg: '#0b0911', bd: '#3d3649', bs: 'dashed', op: 1, face: false, badge: false, hire: false, tc: '#8f86a3', aria: 'Пустой слот' }
+    };
+    const slots = String(p.slots ?? 'free,onsite,onsite,onsite,transit').split(',').map((s) => kinds[s.trim()] || kinds.empty);
+    const open = num(p.open, 5), crit = num(p.crit, 1), closed = num(p.closed, 2), col = num(p.collapsed, 1), worlds = num(p.worlds, 6), st = num(p.studied, 17), tot = num(p.total, 41);
+    const base = { bd: '#3d3649', lc: '#b4abc6', vc: '#efe6d0' };
+    const stats = [
+      Object.assign({ label: 'ОТКРЫТО', value: open + ' / 12' }, base, open >= 12 ? { bd: '#ff8a2b', vc: '#ffb36b' } : {}),
+      Object.assign({ label: 'КРИТИЧЕСКИХ', value: String(crit) }, base, crit > 0 ? { bd: '#ff4466', vc: '#ff8099', lc: '#ffb0bf' } : {}),
+      Object.assign({ label: 'ЗАКРЫТО', value: String(closed) }, base),
+      Object.assign({ label: 'СХЛОПНУЛОСЬ', value: String(col) }, base),
+      Object.assign({ label: 'МИРОВ', value: String(worlds) }, base),
+      Object.assign({ label: 'ИЗУЧЕНО СУЩЕСТВ', value: st + ' / ' + tot }, base)
+    ];
+    return { rootClass: paused ? 'hud-paused' : 'hud-live', dim: paused ? 'brightness(.72) saturate(.7)' : 'none', pauseTag: paused ? ' · ПАУЗА' : '',
+      min: num(p.min, 143), speeds: speeds, slots: slots, lost: num(p.lost, 2), stats: stats };
+  }
+}
+</script>
+
+
+</body></html>

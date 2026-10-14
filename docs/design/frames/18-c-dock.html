@@ -1,0 +1,52 @@
+<!-- Кадр канваса «Нижняя панель входа». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Нижняя панель входа</title>
+<script src="16484cd7-6983-440f-ad40-eff2ab604f03"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+</style>
+</helmet>
+<div style="width:100%;box-sizing:border-box;height:84px;display:flex;align-items:center;justify-content:center;gap:12px;padding:0 24px;background:#14111c;border-top:4px solid #3d3649;box-shadow:inset 0 4px 0 #0b0911;font-family:'Tektur','Trebuchet MS',sans-serif;position:relative">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<a href="{{t.href}}" style="display:flex;align-items:center;gap:12px;width:250px;height:56px;box-sizing:border-box;padding:0 16px;text-decoration:none;color:{{t.fg}};background:{{t.bg}};border:3px solid {{t.bd}};box-shadow:inset 0 -4px 0 rgba(0,0,0,.35)">
+<svg sc-camel-view-box="0 0 9 9" width="27" height="27" shape-rendering="crispEdges" aria-hidden="true"><path d="{{t.d}}" fill="{{t.ic}}"></path></svg>
+<span style="font-size:18px;font-weight:600;letter-spacing:.5px">{{t.label}}</span>
+</a>
+</sc-for>
+<div style="position:absolute;right:24px;top:50%;transform:translateY(-50%)">
+<button type="button" style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;box-sizing:border-box;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:13px;color:#a79bb8;background:transparent;border:2px dashed #5a2b3a;cursor:pointer">
+<svg sc-camel-view-box="0 0 7 7" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h3v1h-3z M1,1h1v2h-1z M5,1h1v2h-1z M0,3h7v4h-7z" fill="#a84a63"></path><path d="M3,4h1v2h-1z" fill="#14111c"></path></svg>
+Запечатать лабораторию
+</button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;hall&quot;,&quot;atlas&quot;,&quot;book&quot;],&quot;default&quot;:&quot;hall&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:84}}">
+class Component extends DCLogic {
+  renderVals() {
+    const act = this.props.active || 'hall';
+    const defs = [
+      { k: 'hall', label: 'Зал лаборатории', href: 'Main.dc.html', d: 'M2,0h5v1h-5z M1,1h7v1h-7z M0,2h2v1h-2z M7,2h2v1h-2z M0,3h1v5h-1z M8,3h1v5h-1z M0,8h9v1h-9z' },
+      { k: 'atlas', label: 'Атлас миров', href: 'Atlas.dc.html', d: 'M2,0h5v1h-5z M1,1h1v1h-1z M4,1h1v1h-1z M7,1h1v1h-1z M0,2h1v2h-1z M4,2h1v2h-1z M8,2h1v2h-1z M0,4h9v1h-9z M0,5h1v2h-1z M4,5h1v2h-1z M8,5h1v2h-1z M1,7h1v1h-1z M4,7h1v1h-1z M7,7h1v1h-1z M2,8h5v1h-5z' },
+      { k: 'book', label: 'Книга журнала', href: 'Book.dc.html', d: 'M0,1h9v1h-9z M0,7h9v1h-9z M0,2h1v5h-1z M8,2h1v5h-1z M4,2h1v5h-1z M2,3h1v1h-1z M2,5h1v1h-1z M6,3h1v1h-1z M6,5h1v1h-1z' }
+    ];
+    const tabs = defs.map((t) => {
+      const on = t.k === act;
+      return { label: t.label, href: t.href, d: t.d,
+        fg: on ? '#1b1424' : '#d8cfea', bg: on ? '#ffb347' : '#221e2d', bd: on ? '#ffd98a' : '#453d56', ic: on ? '#1b1424' : '#ffb347' };
+    });
+    return { tabs: tabs };
+  }
+}
+</script>
+
+
+</body></html>

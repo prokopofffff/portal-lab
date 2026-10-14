@@ -1,0 +1,121 @@
+<!-- Кадр канваса «Атлас миров · сортировка работает». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Атлас миров</title>
+<script src="78baf452-cecf-416f-b57a-4fd61a7e8b85"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style></style>
+<style>
+body{margin:0;background:#0e0c16}
+.nc{clip-path:polygon(0 6px,6px 6px,6px 0,calc(100% - 6px) 0,calc(100% - 6px) 6px,100% 6px,100% calc(100% - 6px),calc(100% - 6px) calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 6px),0 calc(100% - 6px))}
+</style>
+</helmet>
+<div style="width:1440px;height:1000px;display:flex;flex-direction:column;background:#0e0c16;color:#efe6d0;font-family:'Tektur','Trebuchet MS',sans-serif;overflow:hidden">
+
+<dc-import name="Hud" min="{{hud.min}}" speed="1" slots="{{hud.slots}}" lost="{{hud.lost}}" open="{{hud.open}}" crit="{{hud.crit}}" closed="{{hud.closed}}" collapsed="{{hud.collapsed}}" worlds="{{hud.worlds}}" studied="{{hud.studied}}" total="{{hud.total}}" hint-size="100%,112px"></dc-import>
+
+<div style="flex:1 1 0;min-height:0;box-sizing:border-box;padding:22px 48px 26px;display:flex;flex-direction:column;gap:18px;background-color:#1d1510;background-image:repeating-linear-gradient(0deg,transparent 0 15px,#17100c 15px 16px);box-shadow:inset 0 0 140px rgba(0,0,0,.7)">
+
+<div style="display:flex;align-items:center;justify-content:space-between;gap:24px">
+<div style="display:flex;align-items:center;gap:16px">
+<svg sc-camel-view-box="0 0 9 9" width="36" height="36" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h5v1h-5z M1,1h1v1h-1z M4,1h1v1h-1z M7,1h1v1h-1z M0,2h1v2h-1z M4,2h1v2h-1z M8,2h1v2h-1z M0,4h9v1h-9z M0,5h1v2h-1z M4,5h1v2h-1z M8,5h1v2h-1z M1,7h1v1h-1z M4,7h1v1h-1z M7,7h1v1h-1z M2,8h5v1h-5z" fill="#c9a24a"></path></svg>
+<span style="font-family:'Press Start 2P',monospace;font-size:22px;color:#f1deae;letter-spacing:1px">АТЛАС МИРОВ</span>
+</div>
+<sc-if value="{{hasWorlds}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-size:14px;color:#cdb98a;margin-right:6px">Сортировка</span>
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{t.on}}" sc-camel-on-click="{{t.pick}}" style="height:40px;padding:0 14px;box-sizing:border-box;font-family:'Tektur','Trebuchet MS',sans-serif;font-size:15px;font-weight:600;color:{{t.fg}};background:{{t.bg}};border:3px solid {{t.bd}};box-shadow:inset 0 -3px 0 rgba(0,0,0,.3);cursor:pointer">{{t.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{hasWorlds}}" hint-placeholder-val="{{ true }}">
+<div style="flex:1 1 0;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:22px">
+<sc-for list="{{worlds}}" as="w" hint-placeholder-count="6">
+<div class="nc" style="background:{{w.frame}};padding:6px">
+<div class="nc" style="height:100%;box-sizing:border-box;background:#e9d9b0;color:#2a1d12;padding:14px 18px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:inset 0 -5px 0 #bda877">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<span style="font-family:'Press Start 2P',monospace;font-size:11px;color:#6e4a1a;background:#d6c392;padding:4px 8px">{{w.code}}</span>
+<sc-if value="{{w.full}}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;letter-spacing:1px;color:#5a4208;background:#f0cf6a;border:3px double #a67a12;padding:2px 10px"><svg sc-camel-view-box="0 0 8 8" width="14" height="14" shape-rendering="crispEdges" aria-hidden="true"><path d="M3,0h2v1h-2z M3,1h2v2h-2z M0,3h8v1h-8z M1,4h6v1h-6z M2,5h4v1h-4z M1,6h2v2h-2z M5,6h2v2h-2z" fill="#5a4208"></path></svg>ИЗУЧЕН ПОЛНОСТЬЮ</span>
+</sc-if>
+</div>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:26px;line-height:28px;color:#2a1d12">{{w.name}}</span>
+<dc-import name="Creatures" got="{{w.got}}" total="{{w.tot}}" progress="{{w.cur}}" size="32" hint-size="100%,80px"></dc-import>
+<div style="display:flex;align-items:center;gap:10px">
+<span style="flex:1 1 0;min-width:0;height:12px;box-sizing:border-box;padding:2px;background:#2a1d12;display:flex"><span style="display:block;height:8px;width:{{w.donePct}}%;background:repeating-linear-gradient(90deg,{{w.barColor}} 0 8px,transparent 8px 10px)"></span><span style="display:block;height:8px;width:{{w.nextPct}}%;background:repeating-linear-gradient(90deg,#7a64b8 0 8px,transparent 8px 10px)"></span></span>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:17px;color:#2a1d12">{{w.pct}} %</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px;font-size:17px;line-height:20px;color:#3a2a1a">
+<span>Изучено: <b style="font-weight:600;color:#2a1d12">{{w.got}} / {{w.tot}}</b></span>
+<span>Посещений: <b style="font-weight:600;color:#2a1d12">{{w.visits}}</b></span>
+<span>Открыто сейчас: <b style="font-weight:600;color:#2a1d12">{{w.open}}</b></span>
+<span>Последнее: <b style="font-weight:600;color:#2a1d12">мин {{w.last}}</b></span>
+</div>
+<a href="World.dc.html" style="margin-top:auto;font-size:16px;font-weight:600;color:#4a2f8a;text-decoration:underline;text-underline-offset:3px">Страница мира →</a>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{noWorlds}}" hint-placeholder-val="{{ false }}">
+<div style="flex:1 1 0;display:flex;align-items:center;justify-content:center">
+<div class="nc" style="width:620px;box-sizing:border-box;background:#e9d9b0;color:#2a1d12;padding:48px 40px;display:flex;flex-direction:column;align-items:center;gap:22px;box-shadow:inset 0 -5px 0 #bda877">
+<svg sc-camel-view-box="0 0 9 9" width="90" height="90" shape-rendering="crispEdges" aria-hidden="true"><path d="M2,0h5v1h-5z M1,1h1v1h-1z M4,1h1v1h-1z M7,1h1v1h-1z M0,2h1v2h-1z M4,2h1v2h-1z M8,2h1v2h-1z M0,4h9v1h-9z M0,5h1v2h-1z M4,5h1v2h-1z M8,5h1v2h-1z M1,7h1v1h-1z M4,7h1v1h-1z M7,7h1v1h-1z M2,8h5v1h-5z" fill="#a89468"></path></svg>
+<span style="font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:30px;line-height:36px;text-align:center;color:#2a1d12">Ни один мир ещё не открыт</span>
+<span style="font-family:'Alegreya',Georgia,serif;font-size:19px;line-height:25px;text-align:center;color:#5a4a34;text-wrap:pretty">Страницы появятся здесь, как только смотритель откроет первый портал в зале лаборатории.</span>
+<a href="HallEmpty.dc.html" style="font-size:17px;font-weight:600;color:#1b1424;background:#ffb347;border:3px solid #ffd98a;box-shadow:inset 0 -4px 0 #b86a14;padding:10px 18px;text-decoration:none">В зал лаборатории</a>
+</div>
+</div>
+</sc-if>
+</div>
+
+<dc-import name="Dock" active="atlas" hint-size="100%,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;empty&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false},&quot;sort&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;study&quot;,&quot;visits&quot;,&quot;last&quot;],&quot;default&quot;:&quot;study&quot;},&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000}}">
+class Component extends DCLogic {
+  renderVals() {
+    const empty = this.props.empty === true || this.props.empty === 'true';
+    const sort = (this.state && this.state.sort) || this.props.sort || 'study';
+    const W = [
+      { name: 'Пепельные Топи', code: 'ПТ-420', got: 3, tot: 9, cur: 62, visits: 2, open: 2, last: 131 },
+      { name: 'Багровая Бездна', code: 'ББ-310', got: 0, tot: 12, cur: 0, visits: 1, open: 1, last: 97 },
+      { name: 'Ледяные Чертоги', code: 'ЛЧ-244', got: 4, tot: 6, cur: 40, visits: 1, open: 1, last: 60 },
+      { name: 'Шепчущее Зеркало', code: 'ШЗ-793', got: 2, tot: 2, cur: 0, visits: 1, open: 1, last: 12 },
+      { name: 'Забытый Маяк', code: 'ЗМ-517', got: 1, tot: 5, cur: 0, visits: 1, open: 0, last: 5 },
+      { name: 'Янтарный Сад', code: 'ЯС-179', got: 7, tot: 7, cur: 0, visits: 2, open: 0, last: 88 }
+    ];
+    const cmp = {
+      study: (a, b) => (b.got / b.tot) - (a.got / a.tot) || b.tot - a.tot,
+      visits: (a, b) => b.visits - a.visits || b.last - a.last,
+      last: (a, b) => b.last - a.last
+    };
+    const worlds = W.slice().sort(cmp[sort]).map((w) => Object.assign({}, w, {
+      full: w.got === w.tot, frame: w.got === w.tot ? '#e8b948' : '#6a5238',
+      pct: Math.round(w.got / w.tot * 100), donePct: Math.round(w.got / w.tot * 100),
+      nextPct: w.got < w.tot ? Math.round(w.cur / 100 / w.tot * 100) : 0,
+      barColor: w.got === w.tot ? '#c9961a' : '#5a3fa8'
+    }));
+    const tabs = [['study', 'по изученности'], ['visits', 'по посещениям'], ['last', 'по последнему посещению']].map(([k, l]) => ({
+      label: l, on: k === sort, pick: () => this.setState({ sort: k }),
+      fg: k === sort ? '#1b1424' : '#e9d9b0', bg: k === sort ? '#f0cf6a' : '#2a1d14', bd: k === sort ? '#ffe59a' : '#6a5238'
+    }));
+    const hud = empty
+      ? { min: 0, slots: 'empty,empty,empty,empty,empty', lost: 0, open: 0, crit: 0, closed: 0, collapsed: 0, worlds: 0, studied: 0, total: 0 }
+      : { min: 143, slots: 'free,onsite,onsite,onsite,transit', lost: 2, open: 5, crit: 1, closed: 2, collapsed: 1, worlds: 6, studied: 17, total: 41 };
+    return { hud: hud, worlds: worlds, tabs: tabs, hasWorlds: !empty, noWorlds: empty };
+  }
+}
+</script>
+
+
+</body></html>

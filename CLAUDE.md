@@ -67,4 +67,4 @@ _Add a brief overview of your project architecture_
 
 ## Conventions & Patterns
 
-_Add your project-specific conventions here_
+- **Design source of truth: `docs/design/`** — the exported Claude Design canvas (`canvas.html`) unpacked into `docs/design/frames/NN-slug.{png,html}` (screenshot + readable source per frame). Read `docs/design/README.md` before any UI work: copy SVG paths, sizes, animations and timings verbatim from the frame source; colours go through `src/ui/theme/tokens.ts`; reuse the already-ported components in `src/ui/sprites`. Behaviour comes from `docs/spec.md`.

@@ -1,0 +1,63 @@
+<!-- Кадр канваса «Существа мира». Сгенерировано scripts/extract-design.mjs из docs/design/canvas.html — не редактировать. -->
+<!DOCTYPE html>
+<html lang="ru"><head>
+<meta charset="utf-8">
+<title>Существа мира</title>
+<script src="bb97ac0e-64a5-45e7-8692-6e6043580155"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#17141f}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px" role="img" aria-label="{{label}}">
+<sc-for list="{{cells}}" as="c" hint-placeholder-count="9">
+<div style="position:relative;width:{{size}}px;height:{{size}}px;box-sizing:border-box;background:{{c.bg}};border:2px {{c.bs}} {{c.edge}};display:flex;align-items:center;justify-content:center;box-shadow:{{c.glow}}">
+<svg sc-camel-view-box="0 0 8 8" width="{{c.px}}" height="{{c.px}}" shape-rendering="crispEdges" aria-hidden="true"><path d="{{c.d}}" fill="{{c.fill}}"></path></svg>
+<sc-if value="{{c.partial}}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center">
+<svg sc-camel-view-box="0 0 8 8" width="{{c.px}}" height="{{c.px}}" shape-rendering="crispEdges" aria-hidden="true" style="clip-path:inset({{c.clip}}% 0 0 0)"><path d="{{c.d}}" fill="{{c.fill2}}"></path></svg>
+</div>
+<span style="position:absolute;left:0;right:0;bottom:0;height:13px;display:flex;align-items:center;justify-content:center;background:rgba(11,9,17,.82);font-family:'Tektur','Trebuchet MS',sans-serif;font-weight:600;font-size:12px;line-height:12px;color:#e3d6ff">{{c.pct}}%</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;got&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;min&quot;:0,&quot;max&quot;:20},&quot;total&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:9,&quot;min&quot;:1,&quot;max&quot;:20},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:32,&quot;min&quot;:16,&quot;max&quot;:96},&quot;progress&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:99,&quot;step&quot;:1},&quot;$preview&quot;:{&quot;width&quot;:340,&quot;height&quot;:120}}">
+class Component extends DCLogic {
+  renderVals() {
+    const sprites = [
+      'M2,1h4v1h-4z M1,2h6v1h-6z M0,3h2v1h-2z M3,3h2v1h-2z M6,3h2v1h-2z M0,4h8v2h-8z M1,6h1v1h-1z M3,6h2v1h-2z M6,6h1v1h-1z',
+      'M0,0h1v1h-1z M7,0h1v1h-1z M0,1h2v1h-2z M6,1h2v1h-2z M1,2h6v1h-6z M1,3h1v1h-1z M3,3h2v1h-2z M6,3h1v1h-1z M1,4h6v1h-6z M2,5h4v1h-4z M1,6h1v1h-1z M3,6h2v1h-2z M6,6h1v1h-1z M1,7h1v1h-1z M6,7h1v1h-1z',
+      'M2,0h4v1h-4z M1,1h6v1h-6z M1,2h1v1h-1z M3,2h2v1h-2z M6,2h1v1h-1z M1,3h6v4h-6z M1,7h1v1h-1z M3,7h2v1h-2z M6,7h1v1h-1z',
+      'M0,0h1v1h-1z M7,0h1v1h-1z M1,1h1v1h-1z M6,1h1v1h-1z M2,2h4v1h-4z M1,3h6v1h-6z M0,4h2v1h-2z M3,4h2v1h-2z M6,4h2v1h-2z M1,5h6v1h-6z M0,6h1v1h-1z M2,6h1v1h-1z M5,6h1v1h-1z M7,6h1v1h-1z M0,7h1v1h-1z M7,7h1v1h-1z'
+    ];
+    const unk = 'M2,0h4v1h-4z M1,1h2v1h-2z M5,1h2v1h-2z M4,2h2v1h-2z M3,3h2v2h-2z M3,6h2v2h-2z';
+    const colors = ['#7ee0a8', '#ff9a5c', '#9bb7ff', '#f0c8ff', '#ffd96a'];
+    const total = Number(this.props.total) || 9;
+    const got = Math.max(0, Math.min(total, Number(this.props.got ?? 3)));
+    const size = Number(this.props.size) || 32;
+    const px = Math.floor((size - 4) / 8) * 8 || 8;
+    const full = got === total;
+    const prog = Math.max(0, Math.min(99, Math.round(Number(this.props.progress) || 0)));
+    const cells = [];
+    for (let i = 0; i < total; i++) {
+      if (i < got) {
+        cells.push({ bg: '#1e1a2b', bs: 'solid', edge: full ? '#e8b948' : '#8a7fa6', glow: full ? '0 0 6px #e8b94888' : 'none', d: sprites[i % 4], fill: colors[i % 5], px: px, partial: false });
+      } else if (i === got && prog > 0) {
+        cells.push({ bg: '#14101f', bs: 'solid', edge: '#b78cff', glow: '0 0 8px #b78cff77', d: sprites[i % 4], fill: '#2f2945', fill2: colors[i % 5], px: px, partial: true, clip: 100 - prog, pct: prog });
+      } else {
+        cells.push({ bg: '#0c0a12', bs: 'solid', edge: '#2e2840', glow: 'none', d: unk, fill: '#5e5478', px: px, partial: false });
+      }
+    }
+    const label = 'Изучено ' + got + ' из ' + total + (got < total && prog > 0 ? ', следующее изучено на ' + prog + ' %' : '');
+    return { cells: cells, size: size, label: label };
+  }
+}
+</script>
+
+
+</body></html>
