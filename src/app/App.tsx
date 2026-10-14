@@ -90,7 +90,12 @@ export function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: 640 }}>
           {bars.map(({ label, value, shown, color }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ width: 140, fontSize: 16, color: 'var(--c-text-soft)' }}>{label}</span>
+              <span
+                aria-hidden="true"
+                style={{ width: 140, fontSize: 16, color: 'var(--c-text-soft)' }}
+              >
+                {label}
+              </span>
               <div style={{ flex: '1 1 0', minWidth: 0 }}>
                 <Bar label={label} value={value} color={color} segments={20} height={12} />
               </div>

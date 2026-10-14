@@ -21,6 +21,7 @@ describe('cssVariables', () => {
     expect(vars['--s-bar-unlit']).toBe(sprite.barUnlit)
     expect(vars['--s-studied-gold']).toBe('#e8b948')
     expect(vars['--s-unknown-edge']).toBe('#2e2840')
+    expect(vars['--s-arch-stone']).toBe(sprite.archStone)
   })
 })
 

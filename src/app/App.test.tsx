@@ -34,7 +34,9 @@ describe('App', () => {
       '14',
     )
     expect(screen.getByRole('meter', { name: 'Изучение' })).toHaveAttribute('aria-valuenow', '40')
-    expect(screen.getByText('Энергия')).toBeVisible()
+    const visibleLabel = screen.getByText('Энергия')
+    expect(visibleLabel).toBeVisible()
+    expect(visibleLabel).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('существа: частичное изучение, полный набор и пустой мир', () => {

@@ -143,7 +143,7 @@ export function Portal({
         aria-hidden="true"
       >
         <g className="px-portal__shake">
-          <path d={ARCH_OUTLINE} fill={sprite.stone} />
+          <path d={ARCH_OUTLINE} fill={sprite.archStone} />
           {stoneDetails.map(([x, y, w, h, fill], i) => (
             <rect key={i} x={x} y={y} width={w} height={h} fill={fill} />
           ))}
