@@ -167,3 +167,32 @@ describe('execute openPortal: лимит открытых (spec §5)', () => {
     expect(lab.portals.at(-1)).toMatchObject({ name: 'ПШ-449-13', arch: 5 })
   })
 })
+
+describe('execute sealLab: запечатать лабораторию (spec §5)', () => {
+  it('сбрасывает лабораторию: порталы, миры, журнал, время, найм и потери — всё как новая, события пусты', () => {
+    const full = openTimes(createLab(), 2)
+    const lab: Lab = {
+      ...full,
+      time: 143,
+      staff: { free: 1, hireTicksLeft: 5, lost: 2 },
+      log: [{ time: 0, realTime: 0, portal: null, world: null, kind: 'action', text: 'test' }],
+    }
+
+    const result = execute(lab, { type: 'sealLab' }, edgeRng('min'))
+    if ('rejection' in result) throw new Error(result.rejection)
+
+    expect(result.lab).toEqual(createLab())
+    expect(result.events).toEqual([])
+  })
+
+  it('не меняет исходную лабораторию', () => {
+    const lab: Lab = {
+      ...openTimes(createLab(), 2),
+      time: 143,
+      staff: { free: 1, hireTicksLeft: 5, lost: 2 },
+    }
+    execute(lab, { type: 'sealLab' }, edgeRng('min'))
+    expect(lab.time).toBe(143)
+    expect(lab.portals).toHaveLength(2)
+  })
+})

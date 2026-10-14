@@ -12,6 +12,7 @@ export type DispatchResult = { lab: Lab; events: DomainEvent[]; rejection?: stri
 // Названия действий смотрителя для записей об отказе (spec §5)
 const COMMAND_LABELS: Record<Command['type'], string> = {
   openPortal: 'Открыть портал',
+  sealLab: 'Запечатать лабораторию',
 }
 
 // Выполняет команду и пишет её итог в журнал; now — реальное время, мс

@@ -390,3 +390,21 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     ])
   })
 })
+
+describe('dispatch sealLab: запечатать лабораторию (spec §5)', () => {
+  it('очищает журнал, без отказа, события пусты', () => {
+    const full = fullLab()
+    const lab: Lab = {
+      ...full,
+      time: 143,
+      staff: { free: 1, hireTicksLeft: 5, lost: 2 },
+      log: labWithLog(10).log,
+    }
+
+    const result = dispatch(lab, { type: 'sealLab' }, minRng, NOW)
+
+    expect(result.lab.log).toEqual([])
+    expect(result.rejection).toBeUndefined()
+    expect(result.events).toEqual([])
+  })
+})
