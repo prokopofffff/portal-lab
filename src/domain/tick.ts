@@ -1,7 +1,7 @@
 // Тик симуляции (docs/spec.md §4): чистая функция Lab → Lab + события.
 import { CONFIG } from './config'
 import type { Lab, Portal, Staff, World } from './lab'
-import type { RiskLevel } from './risk'
+import { assessRisk, type RiskLevel } from './risk'
 
 // События тика: журнал по ним пишет advance (journal.ts), сам тик журнал не трогает
 export type TickEvent =
@@ -42,11 +42,12 @@ export function tick(lab: Lab): TickResult {
     events.push(...collapseEvents(degraded))
     lost += degraded.observers
   }
+  const assessed = portals.map((portal, index) => reassess(lab.portals[index]!, portal, events))
   return {
     lab: {
       ...lab,
       time: lab.time + 1,
-      portals,
+      portals: assessed,
       worlds: studying.worlds,
       staff: { ...staff, lost },
     },
@@ -153,4 +154,20 @@ function collapseEvents(portal: Portal): TickEvent[] {
   return observers > 0
     ? [collapsed, { type: 'observersLost', portal: name, world, count: observers }]
     : [collapsed]
+}
+
+// Порядок уровней риска: чем больше число, тем выше уровень
+const LEVEL_RANK: Record<RiskLevel, number> = { low: 0, medium: 1, high: 2, critical: 3 }
+
+// Шаг 5: открытый до и после тика портал — событие при смене уровня; принятие снимается при росте выше него
+function reassess(before: Portal, after: Portal, events: TickEvent[]): Portal {
+  if (before.status !== 'open' || after.status !== 'open') return after
+  const from = assessRisk(before).level
+  const to = assessRisk(after).level
+  const { name: portal, world } = after
+  if (from !== to) events.push({ type: 'riskLevelChanged', portal, world, from, to })
+  const { acceptedAt } = after
+  if (acceptedAt === null || LEVEL_RANK[to] <= LEVEL_RANK[acceptedAt]) return after
+  events.push({ type: 'acceptanceRevoked', portal, world, acceptedAt, level: to })
+  return { ...after, acceptedAt: null }
 }

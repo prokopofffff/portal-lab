@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createLab, type Lab, type Portal } from './lab'
-import { tick } from './tick'
+import { tick, type TickEvent } from './tick'
 
 // Открытый портал без наблюдателей; переопределения задают нужную метрику
 function portal(overrides: Partial<Portal> = {}): Portal {
@@ -366,5 +366,94 @@ describe('tick: изучение мира (spec §4, шаг 2)', () => {
     expect(result.lab.worlds['Пепельный Шпиль']!.studied).toBe(2)
     expect(result.events.map((e) => e.type)).toEqual(['creatureStudied', 'worldStudied'])
     expect(result.events[1]).toMatchObject({ returned: 2 })
+  })
+})
+
+describe('tick: уровни риска и принятие (spec §3, §4 шаг 5)', () => {
+  it('уровень не меняется несколько тиков подряд: событий смены уровня нет', () => {
+    // Энергия 80, стабильность 50, время 100: балл 20 + 24 + 5 = 49 (средний);
+    // через 3 тика (стаб. 48.8, время 97) балл 20.48 + 24 + 5.75 ≈ 50 — всё ещё средний
+    let lab = labWith([portal()])
+    const events: TickEvent[] = []
+
+    for (let i = 0; i < 3; i++) {
+      const result = tick(lab)
+      events.push(...result.events)
+      lab = result.lab
+    }
+
+    expect(events).toEqual([])
+  })
+
+  it('тик пересекает порог: одно событие смены уровня, время 11 → 10 даёт критический по жёсткому правилу', () => {
+    // Время 11: балл 20 + 24 + 27.25 = 71.25 → 71 (высокий).
+    // После тика время 10 → жёсткое правило (spec §3): критический при любом балле
+    const lab = labWith([portal({ timeLeft: 11 })])
+
+    const result = tick(lab)
+
+    expect(result.events).toEqual([
+      {
+        type: 'riskLevelChanged',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        from: 'high',
+        to: 'critical',
+      },
+    ])
+  })
+
+  it('уровень вырос выше принятого: принятие снимается, событие сразу после смены уровня', () => {
+    // Принят на высоком (71); время 11 → 10 даёт критический — выше принятого
+    const lab = labWith([portal({ timeLeft: 11, acceptedAt: 'high' })])
+
+    const result = tick(lab)
+
+    expect(result.lab.portals[0]!.acceptedAt).toBeNull()
+    expect(result.events).toEqual([
+      {
+        type: 'riskLevelChanged',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        from: 'high',
+        to: 'critical',
+      },
+      {
+        type: 'acceptanceRevoked',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        acceptedAt: 'high',
+        level: 'critical',
+      },
+    ])
+  })
+
+  it('уровень вырос, но не выше принятого: принятие остаётся', () => {
+    // Энергия 90, стабильность 50, время 91: балл 20 + 27 + 7.25 = 54.25 → 54 (средний).
+    // После тика (стаб. 49.55, время 90): 20.18 + 27 + 7.5 = 54.68 → 55 (высокий) — принят на высоком
+    const lab = labWith([portal({ energy: 90, timeLeft: 91, acceptedAt: 'high' })])
+
+    const result = tick(lab)
+
+    expect(result.lab.portals[0]!.acceptedAt).toBe('high')
+    expect(result.events).toEqual([
+      {
+        type: 'riskLevelChanged',
+        portal: 'ПШ-449-1',
+        world: 'Пепельный Шпиль',
+        from: 'medium',
+        to: 'high',
+      },
+    ])
+  })
+
+  it('портал, обрушившийся в этот тик, не даёт событий о риске', () => {
+    // Время 1 → 0: обрушение по времени; принятие сбрасывается самим обрушением
+    const lab = labWith([portal({ timeLeft: 1, acceptedAt: 'medium' })])
+
+    const result = tick(lab)
+
+    expect(result.lab.portals[0]).toMatchObject({ status: 'collapsed', acceptedAt: null })
+    expect(result.events.map((e) => e.type)).toEqual(['portalCollapsed'])
   })
 })
