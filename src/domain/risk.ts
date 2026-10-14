@@ -11,6 +11,14 @@ export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = {
   critical: 'критический',
 }
 
+// Порядок уровней риска: чем больше число, тем выше уровень (spec §3)
+export const RISK_LEVEL_RANK: Record<RiskLevel, number> = {
+  low: 0,
+  medium: 1,
+  high: 2,
+  critical: 3,
+}
+
 export interface RiskMetrics {
   stability: number
   energy: number

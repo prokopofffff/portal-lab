@@ -1,6 +1,7 @@
 // Команды смотрителя (docs/spec.md §5): (лаборатория, команда, ГСЧ) → новое состояние + события или отказ.
 import { CONFIG } from './config'
 import { createLab, type Lab, type Portal, type World } from './lab'
+import { observersNoun } from './plural'
 import type { Rng } from './rng'
 import { assessRisk, type RiskLevel } from './risk'
 import { riskLevelChange, type RiskLevelChanged } from './tick'
@@ -140,22 +141,25 @@ function openPortal(lab: Lab, rng: Rng): CommandResult {
   }
 }
 
+// Отказ в стабилизации (spec §5) или null, если она доступна: перезарядка или слишком высокая стабильность
+export function stabilizeRejection(portal: Portal): string | null {
+  const { forbiddenFromStability } = CONFIG.stabilize
+  if (portal.cooldown > 0) return `Кулдаун стабилизации — осталось ${portal.cooldown} мин`
+  if (portal.stability >= forbiddenFromStability) {
+    return `Стабильность ${forbiddenFromStability}% или выше — стабилизация запрещена`
+  }
+  return null
+}
+
 // Стабилизация (spec §5): рывок стабильности и времени за энергию, затем перезарядка
 function stabilize(lab: Lab, name: string): CommandResult {
   const portal = resolveOpenPortal(lab, name)
   if ('rejection' in portal) return portal
 
-  const { stabilityGain, energyCost, timeGain, cooldownTicks, forbiddenFromStability } =
-    CONFIG.stabilize
+  const { stabilityGain, energyCost, timeGain, cooldownTicks } = CONFIG.stabilize
   const { bounds } = CONFIG
-  if (portal.cooldown > 0) {
-    return { rejection: `Кулдаун стабилизации — осталось ${portal.cooldown} мин` }
-  }
-  if (portal.stability >= forbiddenFromStability) {
-    return {
-      rejection: `Стабильность ${forbiddenFromStability}% или выше — стабилизация запрещена`,
-    }
-  }
+  const rejection = stabilizeRejection(portal)
+  if (rejection !== null) return { rejection }
   const stabilized: Portal = {
     ...portal,
     stability: Math.min(bounds.stability.max, portal.stability + stabilityGain),
@@ -193,7 +197,9 @@ function sendObserver(lab: Lab, name: string): CommandResult {
   }
   const { maxObserversPerPortal } = CONFIG
   if (portal.observers >= maxObserversPerPortal) {
-    return { rejection: `На месте уже ${maxObserversPerPortal} наблюдателя` }
+    return {
+      rejection: `На месте уже ${maxObserversPerPortal} ${observersNoun(maxObserversPerPortal)}`,
+    }
   }
   if (lab.staff.free === 0) return { rejection: 'Нет свободных наблюдателей' }
   const sent: Portal = { ...portal, observers: portal.observers + 1 }
