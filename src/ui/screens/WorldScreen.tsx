@@ -2,14 +2,16 @@ import type { CSSProperties } from 'react'
 import { useLabSelector } from '../../app/hooks'
 import {
   assessRisk,
+  creatureName,
   filterLog,
   type Lab,
   type LogEntry,
   type Portal,
   type World,
 } from '../../domain'
-import { risk } from '../theme/tokens'
+import { creatureColors, risk, sprite } from '../theme/tokens'
 import { Creatures, Portal as PortalSprite, RiskTag, Rune } from '../sprites'
+import { CREATURE_BODIES, UNKNOWN_CREATURE } from '../sprites/creatureGlyphs'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
 import { WorldProgress } from './WorldProgress'
@@ -258,13 +260,107 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
           </span>
         )}
       </div>
-      <Creatures
-        total={world.creatures}
-        studied={world.studied}
-        progress={stats.nextPct}
-        size={72}
-      />
+      <CreatureGrid world={world} nextPct={stats.full ? 0 : stats.nextPct} />
     </section>
+  )
+}
+
+// Клетка существа на странице мира (кадр 12): изученное — по имени, изучаемое проступает снизу
+const tileLook = {
+  known: { bg: sprite.cellBg, edge: sprite.cellEdge, glow: 'none', text: 'var(--c-text)' },
+  study: {
+    bg: sprite.studyBg,
+    edge: sprite.study,
+    glow: `0 0 10px color-mix(in srgb, ${sprite.study} 46.7%, transparent)`,
+    text: sprite.studyBadge,
+  },
+  unknown: {
+    bg: sprite.unknownBg,
+    edge: sprite.unknownEdge,
+    glow: 'none',
+    text: sprite.unknownLabel,
+  },
+} as const
+
+function CreatureGlyph({ d, fill, clip }: { d: string; fill: string; clip?: number }) {
+  return (
+    <svg
+      viewBox="0 0 8 8"
+      width={64}
+      height={64}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      style={
+        clip === undefined
+          ? undefined
+          : { position: 'absolute', left: 0, top: 0, clipPath: `inset(${clip}% 0 0 0)` }
+      }
+    >
+      <path d={d} fill={fill} />
+    </svg>
+  )
+}
+
+/** Существа мира плитками 3 в ряд: имя изученного, «Изучается · N %» и «???» для неизвестных. */
+function CreatureGrid({ world, nextPct }: { world: World; nextPct: number }) {
+  if (world.creatures === 0) return <Creatures total={0} studied={0} />
+  const tiles = Array.from({ length: world.creatures }, (_, i) => {
+    const body = CREATURE_BODIES[i % CREATURE_BODIES.length]!
+    const color = creatureColors[i % creatureColors.length]!
+    if (i < world.studied) return { kind: 'known', body, color, name: creatureName(world.name, i) }
+    if (i === world.studied && nextPct > 0) {
+      return { kind: 'study', body, color, name: `Изучается · ${nextPct} %` }
+    }
+    return { kind: 'unknown', body: UNKNOWN_CREATURE, color: sprite.unknownGlyph, name: '???' }
+  })
+  return (
+    <ul
+      aria-label="Существа мира"
+      style={{
+        flex: '1 1 0',
+        margin: 0,
+        padding: 0,
+        listStyle: 'none',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        // Девять плиток делят страницу поровну, как в канвасе; больше — страница растёт
+        gridAutoRows: 'minmax(108px, 1fr)',
+        gap: 12,
+      }}
+    >
+      {tiles.map((t, i) => {
+        const look = tileLook[t.kind as keyof typeof tileLook]
+        return (
+          <li
+            key={i}
+            data-creature={t.kind}
+            style={{
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              background: look.bg,
+              border: `3px solid ${look.edge}`,
+              boxShadow: look.glow,
+            }}
+          >
+            <div style={{ position: 'relative', width: 64, height: 64 }}>
+              {t.kind === 'study' ? (
+                <>
+                  <CreatureGlyph d={t.body} fill={sprite.studyGhost} />
+                  <CreatureGlyph d={t.body} fill={t.color} clip={100 - nextPct} />
+                </>
+              ) : (
+                <CreatureGlyph d={t.body} fill={t.color} />
+              )}
+            </div>
+            <span style={{ fontSize: 16, fontWeight: 600, color: look.text }}>{t.name}</span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
