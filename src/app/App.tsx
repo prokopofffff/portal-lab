@@ -1,6 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { AtlasScreen } from '../ui/screens/AtlasScreen'
+import { PortalStub } from '../ui/screens/PortalStub'
+import { RouteLink } from '../ui/screens/RouteLink'
+import { WorldScreen } from '../ui/screens/WorldScreen'
 import { Bar, Creatures, Portal, RiskTag } from '../ui/sprites'
 import type { PortalLook } from '../ui/theme/tokens'
+import { NavigationProvider, useRoute, type Route } from './navigation'
 
 // Колонки «Языка риска»: у критического портала стоят двое наблюдателей, как в канвасе.
 const looks: [PortalLook, number][] = [
@@ -56,7 +61,8 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-export function App() {
+// Галерея спрайтов вместо зала: lab-9dr.4 заменит её настоящим залом
+function HallGallery() {
   return (
     <main style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', gap: 32 }}>
       <h1
@@ -124,5 +130,74 @@ export function App() {
         </div>
       </Section>
     </main>
+  )
+}
+
+// Временная навигация «Зал · Атлас · Книга»: lab-9dr.3 заменит её доком
+const NAV_ITEMS: readonly (readonly [Route['screen'], string, Route])[] = [
+  ['hall', 'Зал', { screen: 'hall' }],
+  ['atlas', 'Атлас', { screen: 'atlas' }],
+  ['journal', 'Книга', { screen: 'journal' }],
+]
+
+function TempNav() {
+  const route = useRoute()
+  return (
+    <nav
+      aria-label="Разделы"
+      style={{
+        display: 'flex',
+        gap: 24,
+        padding: '10px 40px',
+        background: 'var(--c-panel)',
+        boxShadow: 'inset 0 -3px 0 var(--c-edge-soft)',
+      }}
+    >
+      {NAV_ITEMS.map(([screen, label, to]) => (
+        <RouteLink
+          key={screen}
+          to={to}
+          style={{
+            color: route.screen === screen ? 'var(--c-torch)' : 'var(--c-text-soft)',
+            fontWeight: 600,
+          }}
+          current={route.screen === screen}
+        >
+          {label}
+        </RouteLink>
+      ))}
+    </nav>
+  )
+}
+
+// Экран по текущему маршруту; книга журнала — заглушка до lab-9dr.9
+function Screen() {
+  const route = useRoute()
+  switch (route.screen) {
+    case 'hall':
+      return <HallGallery />
+    case 'atlas':
+      return <AtlasScreen />
+    case 'world':
+      return <WorldScreen world={route.world} />
+    case 'portal':
+      return <PortalStub portal={route.portal} />
+    case 'journal':
+      return (
+        <main style={{ padding: '32px 40px' }}>
+          <p>Книга журнала появится здесь.</p>
+        </main>
+      )
+  }
+}
+
+export function App() {
+  return (
+    <NavigationProvider>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <TempNav />
+        <Screen />
+      </div>
+    </NavigationProvider>
   )
 }

@@ -38,6 +38,7 @@ function labWith(
         creatures: world.creatures ?? 9,
         studied: world.studied ?? 3,
         visits: 1,
+        lastVisit: 0,
       },
     },
     staff: { ...lab.staff, free },

@@ -195,6 +195,7 @@ function labWith(portals: Portal[], overrides: Partial<Lab> = {}): Lab {
         creatures: 4,
         studied: 1,
         visits: 1,
+        lastVisit: 0,
       },
     },
     ...overrides,
@@ -249,6 +250,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
           creatures: 4,
           studied: 3,
           visits: 1,
+          lastVisit: 0,
         },
       },
     })

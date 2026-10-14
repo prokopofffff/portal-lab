@@ -54,6 +54,7 @@ describe('summarize: смешанная лаборатория', () => {
           creatures: 9,
           studied: 3,
           visits: 2,
+          lastVisit: 0,
         },
         'Тихий Склон': {
           name: 'Тихий Склон',
@@ -61,6 +62,7 @@ describe('summarize: смешанная лаборатория', () => {
           creatures: 5,
           studied: 5,
           visits: 2,
+          lastVisit: 0,
         },
       },
       staff: { free: 0, hireTicksLeft: 12, lost: 1 },
@@ -85,7 +87,14 @@ function labOf(portals: Portal[], unstudiedByWorld: Record<string, number> = {})
   const unstudied: Record<string, number> = { 'Пепельный Шпиль': 6, ...unstudiedByWorld }
   const worlds: Lab['worlds'] = {}
   for (const [name, left] of Object.entries(unstudied)) {
-    worlds[name] = { name, code: 'ХХ-000', creatures: 9, studied: 9 - left, visits: 1 }
+    worlds[name] = {
+      name,
+      code: 'ХХ-000',
+      creatures: 9,
+      studied: 9 - left,
+      visits: 1,
+      lastVisit: 0,
+    }
   }
   return { ...createLab(), portals, worlds }
 }

@@ -76,8 +76,16 @@ describe('parseSave: принимает допустимые нетривиал�
           creatures: 4,
           studied: 2,
           visits: 2,
+          lastVisit: 9,
         },
-        'Ледяной Дол': { name: 'Ледяной Дол', code: 'ЛД-102', creatures: 3, studied: 0, visits: 1 },
+        'Ледяной Дол': {
+          name: 'Ледяной Дол',
+          code: 'ЛД-102',
+          creatures: 3,
+          studied: 0,
+          visits: 1,
+          lastVisit: 12,
+        },
       },
       staff: { free: 1, hireTicksLeft: 2, lost: 1 },
       log: [
@@ -110,6 +118,15 @@ describe('parseSave: версия схемы', () => {
     const saved = { ...savedObject(), version: SAVE_VERSION + 1 }
 
     expect(parseSave(JSON.stringify(saved))).toBeNull()
+  })
+
+  it('сохранение версии 1 (без lastVisit у миров) отвергается', () => {
+    const saved = savedObject()
+    for (const world of Object.values((saved.lab as { worlds: Record<string, object> }).worlds)) {
+      delete (world as { lastVisit?: number }).lastVisit
+    }
+
+    expect(parseSave(JSON.stringify({ ...saved, version: 1 }))).toBeNull()
   })
 
   it('версия не задана', () => {
@@ -166,6 +183,9 @@ describe('parseSave: порталы, миры, штат, журнал', () => {
     ['acceptedAt неизвестный уровень', (lab) => (lab.portals[0].acceptedAt = 'extreme')],
     ['мира портала нет в worlds', (lab) => (lab.worlds = {})],
     ['у мира нет кода', (lab) => delete lab.worlds[lab.portals[0].world].code],
+    ['у мира нет lastVisit', (lab) => delete lab.worlds[lab.portals[0].world].lastVisit],
+    ['lastVisit дробное', (lab) => (lab.worlds[lab.portals[0].world].lastVisit = 1.5)],
+    ['lastVisit отрицательное', (lab) => (lab.worlds[lab.portals[0].world].lastVisit = -1)],
     ['существ отрицательно', (lab) => (lab.worlds[lab.portals[0].world].creatures = -1)],
     ['штат: свободных дробно', (lab) => (lab.staff.free = 2.5)],
     ['штат: потерь нет', (lab) => delete lab.staff.lost],

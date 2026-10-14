@@ -5,7 +5,7 @@ import type { RiskLevel } from './risk'
 
 // Версия схемы сохранения: поднимать при любом изменении формы Lab/Portal
 // и одновременно обновлять проверки (isPortal, isLab и др.)
-export const SAVE_VERSION = 1
+export const SAVE_VERSION = 2
 
 export interface SavedGame {
   lab: Lab
@@ -73,7 +73,8 @@ function isWorld(value: unknown): value is World {
     typeof value.code === 'string' &&
     isNonNegativeInteger(value.creatures) &&
     isNonNegativeInteger(value.studied) &&
-    isNonNegativeInteger(value.visits)
+    isNonNegativeInteger(value.visits) &&
+    isNonNegativeInteger(value.lastVisit)
   )
 }
 

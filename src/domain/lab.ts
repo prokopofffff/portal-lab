@@ -11,6 +11,8 @@ export interface World {
   creatures: number
   studied: number
   visits: number
+  // Время симуляции последнего открытия портала в этот мир (spec §9, атлас)
+  lastVisit: number
 }
 
 // Портал — один проход в мир (spec §2.2)

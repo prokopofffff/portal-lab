@@ -16,6 +16,12 @@ describe('cssVariables', () => {
     }
   })
 
+  it('отдаёт цвета атласа как --c-*', () => {
+    const vars = cssVariables()
+    expect(vars['--c-parchment-shade']).toBe('#bda877')
+    expect(vars['--c-bar-study-next']).toBe('#7a64b8')
+  })
+
   it('отдаёт цвета спрайтов как --s-*', () => {
     const vars = cssVariables()
     expect(vars['--s-bar-unlit']).toBe(sprite.barUnlit)
