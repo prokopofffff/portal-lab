@@ -3,6 +3,14 @@ import { CONFIG } from './config'
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 
+// Названия уровней для журнала и UI (spec §3)
+export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = {
+  low: 'низкий',
+  medium: 'средний',
+  high: 'высокий',
+  critical: 'критический',
+}
+
 export interface RiskMetrics {
   stability: number
   energy: number

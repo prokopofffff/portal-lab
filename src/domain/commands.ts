@@ -1,10 +1,10 @@
 // Команды смотрителя (docs/spec.md §5): (лаборатория, команда, ГСЧ) → новое состояние + события или отказ.
 import { CONFIG } from './config'
-import type { Lab, Portal, World } from './lab'
+import { createLab, type Lab, type Portal, type World } from './lab'
 import type { Rng } from './rng'
 import { WORLD_NAMES, portalName, worldCode } from './worlds'
 
-export type Command = { type: 'openPortal' }
+export type Command = { type: 'openPortal' } | { type: 'sealLab' }
 
 export type DomainEvent = {
   type: 'portalOpened'
@@ -19,6 +19,8 @@ export function execute(lab: Lab, command: Command, rng: Rng): CommandResult {
   switch (command.type) {
     case 'openPortal':
       return openPortal(lab, rng)
+    case 'sealLab':
+      return { lab: createLab(), events: [] }
   }
 }
 
