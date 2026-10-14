@@ -84,6 +84,9 @@
   opacity: 0.35;
 }
 
+/* Статичные значения свечения (без анимации, например при prefers-reduced-motion) держат
+   порядок low < medium < high < critical: анимация перекрывает их только на время показа. */
+
 /* Средний: неровный, мерцающий свет. */
 .px-portal[data-look='medium'] {
   --px-swirl: 1.8s;
@@ -92,6 +95,7 @@
   filter: drop-shadow(0 0 3px var(--px-glow));
 }
 .px-portal[data-look='medium'] .px-portal__glow {
+  opacity: 0.4;
   animation: px-flicker 2.6s steps(1, end) infinite;
 }
 
@@ -124,11 +128,12 @@
   filter: drop-shadow(0 0 5px var(--px-glow));
 }
 .px-portal[data-look='high'] .px-portal__glow {
+  opacity: 0.5;
   animation: px-flicker 1.2s steps(1, end) infinite;
 }
 
 .px-portal__spark {
-  opacity: 0;
+  opacity: 1;
   animation: px-spark 1.4s steps(1, end) infinite;
 }
 .px-portal__spark:nth-child(2n) {
@@ -156,13 +161,15 @@
   --px-swirl: 0.6s;
 }
 .px-portal[data-look='critical'] .px-portal__swirl {
+  filter: drop-shadow(0 0 10px var(--px-glow));
   animation: px-pulse 1s steps(3, end) infinite alternate;
 }
 .px-portal[data-look='critical'] .px-portal__glow {
+  opacity: 0.65;
   animation: px-pulse-glow 1s steps(3, end) infinite alternate;
 }
 .px-portal__crack {
-  opacity: 0;
+  opacity: 1;
   animation: px-crack 1.6s steps(1, end) infinite;
 }
 
@@ -230,8 +237,10 @@
 /* Полоска */
 .px-bar {
   --px-bar-fill: var(--c-torch);
+  /* Ширина колонки подписи: зададьте одинаковую у стопки полосок, чтобы дорожки начинались с одного места. */
+  --px-bar-label-width: 14ch;
   display: grid;
-  grid-template-columns: minmax(0, auto) 1fr auto;
+  grid-template-columns: minmax(0, var(--px-bar-label-width)) 1fr auto;
   align-items: center;
   gap: 8px;
   font-family: var(--f-ui);
@@ -251,6 +260,11 @@
   --px-bar-fill: var(--risk-critical-c);
 }
 
+.px-bar__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .px-bar__track {
   display: flex;
   gap: 2px;

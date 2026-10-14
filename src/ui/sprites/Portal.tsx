@@ -174,7 +174,7 @@ function portalName(look: PortalLook, observers: number): string {
 export function Portal({ look, observers = 0 }: { look: PortalLook; observers?: number }) {
   const level = isRiskLook(look) ? look : null
   const shown = level
-    ? Math.min(CONFIG.maxObserversPerPortal, Math.max(0, Math.floor(observers)))
+    ? Math.min(CONFIG.maxObserversPerPortal, observerX.length, Math.max(0, Math.floor(observers)))
     : 0
   const shades = portalShades[look]
 
