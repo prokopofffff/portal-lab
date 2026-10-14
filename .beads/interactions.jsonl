@@ -1,0 +1,4 @@
+{"id":"int-5f7571a0","kind":"field_change","created_at":"2026-10-14T06:52:04.175908Z","actor":"jonya_ko","issue_id":"lab-b4a.1","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
+{"id":"int-1ebec8b0","kind":"field_change","created_at":"2026-10-14T06:52:04.374322Z","actor":"jonya_ko","issue_id":"lab-b4a.2","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
+{"id":"int-a5ba4eea","kind":"field_change","created_at":"2026-10-14T06:52:04.589855Z","actor":"jonya_ko","issue_id":"lab-b4a.3","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
+{"id":"int-aa58239d","kind":"field_change","created_at":"2026-10-14T06:52:04.806027Z","actor":"jonya_ko","issue_id":"lab-9dr.1","extra":{"field":"status","new_value":"closed","old_value":"in_progress","reason":"Closed"}}
