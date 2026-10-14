@@ -367,6 +367,43 @@ describe('tick: изучение мира (spec §4, шаг 2)', () => {
     expect(result.events.map((e) => e.type)).toEqual(['creatureStudied', 'worldStudied'])
     expect(result.events[1]).toMatchObject({ returned: 2 })
   })
+
+  it('мир завершает не первый в массиве портал: ранее набравший прогресс первый портал тоже возвращает наблюдателей и обнуляется', () => {
+    const lab = labWith(
+      [
+        portal({ name: 'ПШ-449-1', observers: 1, studyProgress: 5, stability: 100 }),
+        portal({ name: 'ПШ-449-2', observers: 2, studyProgress: 18, stability: 100 }),
+      ],
+      {
+        staff: { free: 0, hireTicksLeft: 0, lost: 0 },
+        worlds: {
+          'Пепельный Шпиль': {
+            name: 'Пепельный Шпиль',
+            code: 'ПШ-449',
+            creatures: 2,
+            studied: 1,
+            visits: 1,
+          },
+        },
+      },
+    )
+
+    const result = tick(lab)
+
+    expect(result.lab.portals[0]).toMatchObject({ observers: 0, studyProgress: 0 })
+    expect(result.lab.portals[1]).toMatchObject({ observers: 0, studyProgress: 0 })
+    expect(result.lab.staff.free).toBe(3)
+    expect(result.events).toEqual([
+      {
+        type: 'creatureStudied',
+        portal: 'ПШ-449-2',
+        world: 'Пепельный Шпиль',
+        studied: 2,
+        creatures: 2,
+      },
+      { type: 'worldStudied', world: 'Пепельный Шпиль', creatures: 2, returned: 3 },
+    ])
+  })
 })
 
 describe('tick: уровни риска и принятие (spec §3, §4 шаг 5)', () => {

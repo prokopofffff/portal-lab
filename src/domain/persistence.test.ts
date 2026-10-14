@@ -39,6 +39,66 @@ describe('сохранение: туда и обратно (spec §10)', () => {
   })
 })
 
+describe('parseSave: принимает допустимые нетривиальные состояния (spec §10)', () => {
+  it('закрытый и схлопнувшийся порталы, вопрос, принятие, изученные существа и все виды записей журнала', () => {
+    const base = {
+      arch: 0,
+      energy: 40,
+      stability: 62.5,
+      timeLeft: 80,
+      observers: 0,
+      studyProgress: 0,
+      cooldown: 0,
+      questioned: null,
+      acceptedAt: null,
+    }
+    const lab: Lab = {
+      time: 12,
+      portals: [
+        { ...base, name: 'ПШ-449-1', world: 'Пепельный Шпиль', status: 'closed', cooldown: 3 },
+        { ...base, name: 'ПШ-449-2', world: 'Пепельный Шпиль', status: 'collapsed', arch: 1 },
+        {
+          ...base,
+          name: 'ЛД-102-1',
+          world: 'Ледяной Дол',
+          status: 'open',
+          arch: 2,
+          observers: 2,
+          studyProgress: 7,
+          questioned: { note: 'x' },
+          acceptedAt: 'medium',
+        },
+      ],
+      worlds: {
+        'Пепельный Шпиль': {
+          name: 'Пепельный Шпиль',
+          code: 'ПШ-449',
+          creatures: 4,
+          studied: 2,
+          visits: 2,
+        },
+        'Ледяной Дол': { name: 'Ледяной Дол', code: 'ЛД-102', creatures: 3, studied: 0, visits: 1 },
+      },
+      staff: { free: 1, hireTicksLeft: 2, lost: 1 },
+      log: [
+        {
+          time: 1,
+          realTime: NOW,
+          portal: 'ПШ-449-1',
+          world: 'Пепельный Шпиль',
+          kind: 'action',
+          text: 'a',
+        },
+        { time: 2, realTime: NOW, portal: null, world: null, kind: 'rejection', text: 'r' },
+        { time: 3, realTime: NOW, portal: null, world: 'Ледяной Дол', kind: 'system', text: 's' },
+      ],
+    }
+    const save: SavedGame = { lab, rngState: 123456 }
+
+    expect(parseSave(serializeSave(save))).toEqual(save)
+  })
+})
+
 describe('parseSave: непригодный ввод даёт null, не исключение', () => {
   it.each([null, '', '{', 'null', '[]', '42'])('%j', (raw) => {
     expect(parseSave(raw)).toBeNull()
@@ -60,14 +120,11 @@ describe('parseSave: версия схемы', () => {
 })
 
 describe('parseSave: состояние ГСЧ (lab-cl5.13)', () => {
-  it.each([1.5, -1, 2 ** 32, Number.NaN, Number.POSITIVE_INFINITY, '7', null])(
-    'rngState %j отвергается',
-    (rngState) => {
-      const saved = { ...savedObject(), rngState }
+  it.each([1.5, -1, 2 ** 32, '7', null])('rngState %j отвергается', (rngState) => {
+    const saved = { ...savedObject(), rngState }
 
-      expect(parseSave(JSON.stringify(saved))).toBeNull()
-    },
-  )
+    expect(parseSave(JSON.stringify(saved))).toBeNull()
+  })
 
   it('rngState не задан', () => {
     const { rngState: _rngState, ...saved } = savedObject()

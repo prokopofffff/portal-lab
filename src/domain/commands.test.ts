@@ -185,6 +185,17 @@ describe('execute sealLab: запечатать лабораторию (spec §5
     expect(result.events).toEqual([])
   })
 
+  it('не расходует ГСЧ', () => {
+    const fail = (): never => {
+      throw new Error('sealLab не должен трогать ГСЧ')
+    }
+    const rng: Rng = { next: fail, int: fail, pick: fail, state: fail }
+
+    const result = execute(openTimes(createLab(), 2), { type: 'sealLab' }, rng)
+
+    expect('rejection' in result).toBe(false)
+  })
+
   it('не меняет исходную лабораторию', () => {
     const lab: Lab = {
       ...openTimes(createLab(), 2),

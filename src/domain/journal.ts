@@ -15,6 +15,11 @@ const COMMAND_LABELS: Record<Command['type'], string> = {
   sealLab: 'Запечатать лабораторию',
 }
 
+// Портал с миром в именительном падеже: так он назван в журнале, сводке и уведомлениях (spec §2.4)
+export function portalLabel(portal: string, world: string): string {
+  return `${portal} (${world})`
+}
+
 // Выполняет команду и пишет её итог в журнал; now — реальное время, мс
 export function dispatch(lab: Lab, command: Command, rng: Rng, now: number): DispatchResult {
   const result = execute(lab, command, rng)
@@ -35,8 +40,10 @@ export function dispatch(lab: Lab, command: Command, rng: Rng, now: number): Dis
   return { lab: { ...result.lab, log: append(result.lab.log, entries) }, events: result.events }
 }
 
+export type AdvanceResult = { lab: Lab; events: TickEvent[] }
+
 // Тик + записи журнала вида 'system' (spec §4, §8); now — реальное время, мс
-export function advance(lab: Lab, now: number): { lab: Lab; events: TickEvent[] } {
+export function advance(lab: Lab, now: number): AdvanceResult {
   const result = tick(lab)
   const entries = result.events.map((event) => systemEntry(result.lab.time, event, now))
   return { lab: { ...result.lab, log: append(result.lab.log, entries) }, events: result.events }
@@ -72,7 +79,7 @@ function actionEntry(lab: Lab, event: DomainEvent, now: number): LogEntry {
     portal: event.portal,
     world: event.world,
     kind: 'action',
-    text: `Открыт портал ${event.portal} (${event.world}) — ${visit}`,
+    text: `Открыт портал ${portalLabel(event.portal, event.world)} — ${visit}`,
   }
 }
 
@@ -89,7 +96,7 @@ function systemEntry(time: number, event: TickEvent, now: number): LogEntry {
       }
     case 'creatureStudied': {
       const { portal, world, studied, creatures } = event
-      const text = `${portal} (${world}): изучено существо — ${studied} из ${creatures}`
+      const text = `${portalLabel(portal, world)}: изучено существо — ${studied} из ${creatures}`
       return { ...base, portal, world, text }
     }
     case 'worldStudied': {
@@ -100,7 +107,7 @@ function systemEntry(time: number, event: TickEvent, now: number): LogEntry {
     case 'portalCollapsed': {
       const { portal, world, cause } = event
       const reason = cause === 'time' ? 'время вышло' : 'стабильность упала до 0'
-      return { ...base, portal, world, text: `${portal} (${world}) схлопнулся: ${reason}` }
+      return { ...base, portal, world, text: `${portalLabel(portal, world)} схлопнулся: ${reason}` }
     }
     case 'observersLost': {
       const { portal, world, count } = event
@@ -108,17 +115,17 @@ function systemEntry(time: number, event: TickEvent, now: number): LogEntry {
         ...base,
         portal,
         world,
-        text: `${portal} (${world}): потеряно наблюдателей — ${count}`,
+        text: `${portalLabel(portal, world)}: потеряно наблюдателей — ${count}`,
       }
     }
     case 'riskLevelChanged': {
       const { portal, world, from, to } = event
-      const text = `${portal} (${world}): уровень риска: ${RISK_LEVEL_LABELS[from]} → ${RISK_LEVEL_LABELS[to]}`
+      const text = `${portalLabel(portal, world)}: уровень риска: ${RISK_LEVEL_LABELS[from]} → ${RISK_LEVEL_LABELS[to]}`
       return { ...base, portal, world, text }
     }
     case 'acceptanceRevoked': {
       const { portal, world, acceptedAt, level } = event
-      const text = `${portal} (${world}): принятие снято — уровень риска вырос: ${RISK_LEVEL_LABELS[acceptedAt]} → ${RISK_LEVEL_LABELS[level]}`
+      const text = `${portalLabel(portal, world)}: принятие снято — уровень риска вырос: ${RISK_LEVEL_LABELS[acceptedAt]} → ${RISK_LEVEL_LABELS[level]}`
       return { ...base, portal, world, text }
     }
   }

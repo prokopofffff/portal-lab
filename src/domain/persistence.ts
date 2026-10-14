@@ -3,6 +3,8 @@ import { CONFIG } from './config'
 import type { Lab, LogEntry, LogKind, Portal, PortalStatus, Staff, World } from './lab'
 import type { RiskLevel } from './risk'
 
+// Версия схемы сохранения: поднимать при любом изменении формы Lab/Portal
+// и одновременно обновлять проверки (isPortal, isLab и др.)
 export const SAVE_VERSION = 1
 
 export interface SavedGame {

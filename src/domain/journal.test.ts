@@ -202,7 +202,7 @@ function labWith(portals: Portal[], overrides: Partial<Lab> = {}): Lab {
 }
 
 // Ожидаемая системная запись тика
-function systemEntry(
+function expectedSystemEntry(
   time: number,
   portal: string | null,
   world: string | null,
@@ -218,7 +218,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(10, null, null, 'Наём завершён: свободных наблюдателей +1'),
+      expectedSystemEntry(10, null, null, 'Наём завершён: свободных наблюдателей +1'),
     ])
   })
 
@@ -229,7 +229,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(
+      expectedSystemEntry(
         5,
         'ПШ-449-1',
         'Пепельный Шпиль',
@@ -256,13 +256,13 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(
+      expectedSystemEntry(
         5,
         'ПШ-449-1',
         'Пепельный Шпиль',
         'ПШ-449-1 (Пепельный Шпиль): изучено существо — 4 из 4',
       ),
-      systemEntry(
+      expectedSystemEntry(
         5,
         null,
         'Пепельный Шпиль',
@@ -277,7 +277,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(
+      expectedSystemEntry(
         21,
         'ПШ-449-1',
         'Пепельный Шпиль',
@@ -292,7 +292,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(
+      expectedSystemEntry(
         21,
         'ПШ-449-1',
         'Пепельный Шпиль',
@@ -307,7 +307,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log.at(-1)).toEqual(
-      systemEntry(
+      expectedSystemEntry(
         21,
         'ПШ-449-1',
         'Пепельный Шпиль',
@@ -323,7 +323,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(
+      expectedSystemEntry(
         21,
         'ПШ-449-1',
         'Пепельный Шпиль',
@@ -333,19 +333,20 @@ describe('advance: системные записи тика (spec §4, §8)', ()
   })
 
   it('принятие снято: уровень принятия и новый уровень, после записи о смене уровня', () => {
+    // Фикстура проверяет только тексты: acceptedAt 'low' при портале уже на среднем уровне — искусственное состояние.
     // Принят на низком, тик поднимает средний → высокий: смена уровня, затем снятие принятия
     const lab = labWith([openPortal({ energy: 90, timeLeft: 91, acceptedAt: 'low' })], { time: 20 })
 
     const result = advance(lab, NOW)
 
     expect(result.lab.log).toEqual([
-      systemEntry(
+      expectedSystemEntry(
         21,
         'ПШ-449-1',
         'Пепельный Шпиль',
         'ПШ-449-1 (Пепельный Шпиль): уровень риска: средний → высокий',
       ),
-      systemEntry(
+      expectedSystemEntry(
         21,
         'ПШ-449-1',
         'Пепельный Шпиль',
@@ -355,7 +356,7 @@ describe('advance: системные записи тика (spec §4, §8)', ()
   })
 
   it('тик без событий не добавляет записей, но двигает время', () => {
-    const entry = systemEntry(3, null, null, 'Старая запись')
+    const entry = expectedSystemEntry(3, null, null, 'Старая запись')
     const lab = labWith([openPortal()], { time: 7, log: [entry] })
 
     const result = advance(lab, NOW)
