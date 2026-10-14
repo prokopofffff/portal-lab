@@ -99,6 +99,17 @@ export const colors = {
   seal: '#a79bb8',
   sealEdge: '#5a2b3a',
   sealLock: '#a84a63',
+  // зал: баннеры «все арки заняты» и «пауза», значки у арки, табличка портала
+  fullBanner: '#ffc2cd',
+  fullBannerBg: '#4a0f20',
+  pauseBanner: '#dbe8ff',
+  observerOnSiteText: '#a8f5c8',
+  questionedBg: '#3a2a05',
+  acceptedBg: '#0f3a2c',
+  sharedWorld: '#c8b8ff',
+  sharedWorldBg: '#241d3d',
+  sharedWorldEdge: '#6d5ac8',
+  studyNext: '#6a55a0',
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -173,6 +184,11 @@ export const sprite = {
   slotPortal: '#6d5ac8',
   tombstone: '#8a85a0',
   tombstoneMark: '#3a3548',
+  // факел на стене зала: древко, пламя, сердцевина и самый жар
+  torchHandle: '#5b4a3a',
+  flame: '#e8821e',
+  flameCore: colors.torchLight,
+  flameHeart: '#fff4c2',
 } as const
 
 /** Пять цветов существ, по кругу. */
@@ -232,6 +248,24 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
     min: 4.5,
   },
   { name: 'печать лаборатории на панели', fg: colors.seal, bg: colors.panel, min: 4.5 },
+  { name: 'зал: метка тревожных знаков', fg: colors.torch, bg: colors.stone, min: 4.5 },
+  { name: 'зал: подпись фильтра', fg: colors.textSoft, bg: colors.stone, min: 4.5 },
+  { name: 'зал: все арки заняты', fg: colors.fullBanner, bg: colors.fullBannerBg, min: 4.5 },
+  { name: 'зал: пауза', fg: colors.pauseBanner, bg: colors.observerFreeBg, min: 4.5 },
+  { name: 'зал: пустое состояние', fg: colors.torchLight, bg: colors.control, min: 4.5 },
+  { name: 'пустая арка: подпись', fg: colors.textDim, bg: colors.stone, min: 4.5 },
+  { name: 'первая арка: подсказка', fg: colors.torchLight, bg: colors.stone, min: 4.5 },
+  { name: 'табличка: имя', fg: colors.rowTitle, bg: sprite.sill, min: 4.5 },
+  { name: 'табличка: мир', fg: colors.rowText, bg: sprite.sill, min: 4.5 },
+  { name: 'табличка: метка полоски', fg: colors.textMuted, bg: sprite.sill, min: 4.5 },
+  { name: 'табличка: число', fg: colors.text, bg: sprite.sill, min: 4.5 },
+  { name: 'табличка: общий мир', fg: colors.sharedWorld, bg: colors.sharedWorldBg, min: 4.5 },
+  {
+    name: 'значок наблюдателей у арки',
+    fg: colors.observerOnSiteText,
+    bg: colors.observerOnSiteBg,
+    min: 4.5,
+  },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,
