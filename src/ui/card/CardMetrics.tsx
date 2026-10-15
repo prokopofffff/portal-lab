@@ -226,7 +226,8 @@ export function RiskBox({
   )
 }
 
-// Знак перед частью разбора: «+» между слагаемыми, «=» перед итогом (отдельные элементы flex, как в канвасе)
+// Знак перед частью разбора: «+» между слагаемыми, «=» перед итогом. Знак и часть — одна группа с тем
+// же зазором, что у строки: при переносе знак уходит на новую строку вместе с частью, а не висит в конце
 function PartGroup({
   first,
   last,
@@ -239,9 +240,9 @@ function PartGroup({
   children: ReactNode
 }) {
   return (
-    <>
+    <span style={{ display: 'flex', alignItems: 'center', gap: 'inherit' }}>
       {!first && <span style={op}>{last ? '=' : '+'}</span>}
       {children}
-    </>
+    </span>
   )
 }

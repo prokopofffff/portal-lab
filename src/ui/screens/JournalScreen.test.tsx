@@ -141,6 +141,19 @@ describe('Книга журнала (spec §8, §9)', () => {
       expect(texts(left(3))).toEqual(numbers(15, 20))
     })
 
+    it('пустая правая страница помечена journal-page--blank (на узком экране её не видно)', () => {
+      const page = (n: number) => left(n).closest('section')!
+      const { unmount } = renderJournal(log(20))
+      expect(page(3)).not.toHaveClass('journal-page--blank')
+      expect(page(4)).toHaveClass('journal-page--blank')
+      unmount()
+
+      // В пустой книге на правой странице подсказка — она не пустая
+      renderJournal([])
+      expect(page(1)).not.toHaveClass('journal-page--blank')
+      expect(page(2)).not.toHaveClass('journal-page--blank')
+    })
+
     it('ровно разворот записей — один разворот, листать некуда', () => {
       renderJournal(log(14))
 

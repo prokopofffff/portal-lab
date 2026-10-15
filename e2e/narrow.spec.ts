@@ -445,7 +445,7 @@ test.describe('узкий экран, 390×844: атлас, страница м�
     }
   })
 
-  test('страница мира: страницы книги и существа столбцом, без горизонтальной прокрутки', async ({
+  test('страница мира: страницы книги столбцом, существа в два столбца, без горизонтальной прокрутки', async ({
     page,
   }) => {
     await playedLab(page)
@@ -455,14 +455,32 @@ test.describe('узкий экран, 390×844: атлас, страница м�
     await expect(creatures).toBeVisible()
     await expectNoHorizontalOverflow(page)
     await expectNoHorizontalOverflow(page.getByRole('main'))
-    await expectColumn(creatures.getByRole('listitem'))
+    // Плитки парами: соседи по ряду на одной высоте, ряды друг под другом
+    const tiles = await creatures.getByRole('listitem').evaluateAll((els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect()
+        return { left: r.left, top: r.top }
+      }),
+    )
+    expect(tiles.length).toBeGreaterThan(2)
+    expect(tiles[1]!.top).toBeCloseTo(tiles[0]!.top, 0)
+    expect(tiles[1]!.left).toBeGreaterThan(tiles[0]!.left)
+    expect(tiles[2]!.top).toBeGreaterThan(tiles[0]!.top)
+    expect(tiles[2]!.left).toBeCloseTo(tiles[0]!.left, 0)
     await expectColumn(page.getByRole('main').locator('section'))
   })
 
   test('журнал: страницы разворота одна под другой, закладки в окне', async ({ page }) => {
     await playedLab(page)
     await page.getByRole('link', { name: 'Книга журнала' }).click()
-    await expect(page.getByRole('list', { name: /^Страница \d+$/ })).toHaveCount(2)
+    // Последний разворот (в этой игре на нём меньше 8 записей): пустая правая страница с корешком
+    // не показывается, видна одна левая; на предыдущем развороте — обе
+    const pages = page.getByRole('list', { name: /^Страница \d+$/ })
+    await expect(page.locator('.journal-page--right')).toBeHidden()
+    await expect(page.locator('.journal-spine')).toBeHidden()
+    await expect(pages).toHaveCount(1)
+    await page.getByRole('button', { name: 'Предыдущий разворот' }).click()
+    await expect(pages).toHaveCount(2)
     await expectNoHorizontalOverflow(page)
     await expectNoHorizontalOverflow(page.getByRole('main'))
     await expectColumn(page.getByRole('main').locator('section'))

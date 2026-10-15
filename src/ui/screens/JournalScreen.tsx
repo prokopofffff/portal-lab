@@ -48,7 +48,7 @@ const ruledPage: CSSProperties = {
   backgroundColor: 'var(--c-parchment)',
   backgroundImage:
     'repeating-linear-gradient(0deg,transparent 0 35px,var(--c-parchment-line) 35px 36px)',
-  display: 'flex',
+  // display — в классе journal-page: пустую страницу на узком экране прячет media query
   flexDirection: 'column',
 }
 
@@ -176,10 +176,12 @@ function Page({
   children?: ReactNode
 }) {
   const left = side === 'left'
+  const blank = !left && entries.length === 0 && !children
   return (
     <section
-      // Отступы и тень у корешка — в классах journal-page: на узком экране страницы друг под другом
-      className={`journal-page journal-page--${side}`}
+      // Отступы и тень у корешка — в классах journal-page: на узком экране страницы друг под другом,
+      // и пустая страница (journal-page--blank) там не показывается
+      className={`journal-page journal-page--${side}${blank ? ' journal-page--blank' : ''}`}
       style={ruledPage}
     >
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0' }}>

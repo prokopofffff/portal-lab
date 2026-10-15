@@ -114,7 +114,9 @@ test('подсказка отказа от наведения: курсор пе
   await expect(send).toHaveAttribute('aria-disabled', 'true')
   const tip = page.getByRole('tooltip')
 
-  // Курсор с кнопки вверх на подсказку, через зазор между ними: подсказка не пропадает (WCAG 1.4.13)
+  // Курсор с кнопки вверх на подсказку, через зазор между ними: подсказка не пропадает (WCAG 1.4.13).
+  // Карточка открывается в 20 px от верха, и кнопка у нижнего края окна — сначала прокручиваем к ней
+  await send.scrollIntoViewIfNeeded()
   const button = (await send.boundingBox())!
   await page.mouse.move(button.x + button.width / 2, button.y + button.height / 2)
   await expect(tip).toBeVisible()

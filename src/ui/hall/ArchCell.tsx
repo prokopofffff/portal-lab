@@ -27,8 +27,6 @@ const bareButton: CSSProperties = {
   lineHeight: 0,
 }
 
-const archBox: CSSProperties = { position: 'relative', width: ARCH_W, height: 117 }
-
 const pixelLabel: CSSProperties = { fontFamily: 'var(--f-pixel)', fontSize: 11 }
 
 // Рамка фокуса вокруг всей ячейки: пунктир у выбранного портала, у остальных прозрачная (ring в канвасе).
@@ -147,14 +145,10 @@ function Plate({
         gap: 5,
       }}
     >
+      {/* Строки с именем, миром и изученными — в классах: на узком экране они переносятся */}
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          height: 20,
-          whiteSpace: 'nowrap',
-        }}
+        className="hall-plate-title"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
       >
         <span style={{ ...pixelLabel, color: 'var(--c-row-title)' }}>{cell.name}</span>
         {cell.shared && (
@@ -172,13 +166,8 @@ function Plate({
         )}
       </div>
       <span
-        style={{
-          fontSize: 16,
-          color: 'var(--c-row-text)',
-          lineHeight: '17px',
-          height: 17,
-          whiteSpace: 'nowrap',
-        }}
+        className="hall-plate-world"
+        style={{ fontSize: 16, color: 'var(--c-row-text)', lineHeight: '17px' }}
       >
         {cell.world}
       </span>
@@ -207,6 +196,7 @@ function Plate({
         color="var(--c-torch-light)"
       />
       <div
+        className="hall-plate-study"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -215,7 +205,6 @@ function Plate({
           fontSize: 14,
           fontWeight: 500,
           color: 'var(--c-row-text)',
-          whiteSpace: 'nowrap',
           marginTop: 2,
         }}
       >
@@ -249,6 +238,7 @@ function Plate({
         />
       </div>
       <div
+        className="hall-plate-risk"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -270,8 +260,11 @@ function Plate({
           <>
             <span className="hall-sr">Открыт, риск </span>
             <span>{band.label.toUpperCase()}</span>
-            <span aria-hidden="true">·</span>
-            <span>{cell.score}</span>
+            {/* «· балл» не разрывается: на узком экране переносится целиком */}
+            <span style={{ display: 'flex', gap: 8 }}>
+              <span aria-hidden="true">·</span>
+              <span>{cell.score}</span>
+            </span>
           </>
         ) : status === 'closed' ? (
           'ЗАКРЫТ'
@@ -395,7 +388,8 @@ export function PortalArch({
           pointerEvents: 'none',
         }}
       />
-      <div style={archBox}>
+      {/* Размер арки и место значков (слева и справа, на узком экране — под ней) — в классе hall-arch */}
+      <div className="hall-arch">
         <button
           type="button"
           aria-label={`Открыть карточку портала ${cell.name}`}
@@ -407,7 +401,6 @@ export function PortalArch({
         <div
           className="hall-observers"
           style={{
-            position: 'absolute',
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
@@ -419,7 +412,6 @@ export function PortalArch({
         <div
           className="hall-flags"
           style={{
-            position: 'absolute',
             display: 'flex',
             flexDirection: 'column',
             gap: 6,

@@ -78,9 +78,11 @@ function Overlay({
     inertRef.current = inert
   })
 
+  // Без preventScroll фокус на диалоге выше окна прокручивал затемнение к его верху (на 20 px, до
+  // самого края окна) — карточка открывалась то в 20 px от верха, как в кадре 04, то без отступа
   useEffect(() => {
     overlayRef.current?.scrollTo?.(0, 0)
-    dialogRef.current?.focus()
+    dialogRef.current?.focus({ preventScroll: true })
   }, [focusKey])
 
   // Карточка ушла в архив, пока открыта: если фокус был на исчезнувшей кнопке (теперь он на body),

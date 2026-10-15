@@ -239,17 +239,36 @@
   top: -10px;
   left: 50%;
 }
+/* Арка 100×117; наблюдатели и пометки — по бокам, вне потока */
+.hall-arch {
+  position: relative;
+  width: 100px;
+  height: 117px;
+}
 .hall-observers {
+  position: absolute;
   right: calc(100% + 6px);
   top: 8px;
 }
 .hall-flags {
+  position: absolute;
   left: calc(100% + 12px);
   top: 8px;
 }
 .hall-plate {
   width: 208px;
   margin-top: 10px;
+}
+.hall-plate-title,
+.hall-plate-study {
+  white-space: nowrap;
+}
+.hall-plate-title {
+  height: 20px;
+}
+.hall-plate-world {
+  height: 17px;
+  white-space: nowrap;
 }
 .hall-empty-arch {
   position: relative;
@@ -327,6 +346,7 @@
   .hall-flame {
     display: none;
   }
+  /* Свечение (230 px) обрезано по карточке: иначе оно ложится на соседние */
   .hall-cell {
     display: grid;
     grid-template-columns: 112px minmax(0, 1fr);
@@ -334,27 +354,49 @@
     align-items: start;
     justify-items: center;
     padding: 6px;
+    overflow: clip;
   }
-  .hall-cell > :last-child {
+  .hall-cell > .hall-plate,
+  .hall-cell > .hall-empty-plate {
     justify-self: stretch;
   }
   .hall-glow {
     left: 62px;
   }
-  /* Наблюдатели и пометки — под аркой: слева от неё нет места, справа табличка */
-  .hall-observers {
-    right: auto;
-    left: 0;
-    top: calc(100% + 6px);
+  /* Наблюдатели и пометки — под аркой, в потоке: слева от неё нет места, справа табличка.
+     Арка под ними растёт, и высота карточки их учитывает */
+  .hall-arch {
+    height: auto;
+    min-height: 117px;
+    padding-top: 123px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
   }
+  .hall-observers,
   .hall-flags {
-    left: auto;
-    right: 0;
-    top: calc(100% + 6px);
+    position: static;
   }
   .hall-plate {
     width: auto;
     margin-top: 0;
+  }
+  /* Длинное имя мира и «изучено существ N / M» переносятся, а не вылезают за табличку */
+  .hall-plate-title {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 20px;
+    gap: 2px 6px;
+  }
+  .hall-plate-world {
+    height: auto;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .hall-plate-study,
+  .hall-plate-risk {
+    flex-wrap: wrap;
   }
   .hall-cell--empty {
     align-items: center;
@@ -364,9 +406,13 @@
   .hall-empty-arch {
     position: static;
   }
-  /* Арка 24×28 ровно вдвое: 48×56 (масштабируем сам спрайт, не кнопку — иначе ужмётся и фокус) */
+  /* Арка 24×28 ровно вдвое: 48×56 (масштабируем сам спрайт, не кнопку — иначе ужмётся и фокус).
+     transform, а не zoom (zoom в Firefox только с 126): отрицательные поля убирают из раскладки
+     то, что масштаб срезал, 100×117 → 48×56 */
   .hall-empty-arch > * {
-    zoom: 0.48;
+    transform: scale(0.48);
+    transform-origin: 0 0;
+    margin: 0 -52px -61px 0;
   }
   /* Вся строка — цель нажатия; фокус рисуется по строке */
   .hall-empty-arch::after {
