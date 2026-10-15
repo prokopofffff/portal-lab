@@ -5,5 +5,5 @@ test-results
 .beads
 docs
 *.md
-package-lock.json
+pnpm-lock.yaml
 .context

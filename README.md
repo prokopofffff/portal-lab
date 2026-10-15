@@ -21,15 +21,18 @@ React 19 + TypeScript + Vite, без бэкенда. Состояние хран
 
 ## Запуск
 
+Пакетный менеджер — pnpm, версия зафиксирована в `packageManager` в `package.json`. Нужен Node 24; pnpm проще всего включить через Corepack.
+
 ```bash
-npm install
-npm run dev        # dev-сервер Vite
-npm test           # Vitest: домен (node) и компоненты (jsdom)
-npm run e2e        # Playwright (нужен `npx playwright install chromium`)
-npm run build      # tsc -b && vite build, результат в dist/
+corepack enable    # один раз: pnpm нужной версии из packageManager
+pnpm install
+pnpm dev           # dev-сервер Vite
+pnpm test          # Vitest: домен (node) и компоненты (jsdom)
+pnpm e2e           # Playwright (нужен `pnpm exec playwright install chromium`)
+pnpm build         # tsc -b && vite build, результат в dist/
 ```
 
-Остальное: `npm run typecheck`, `npm run lint` (oxlint), `npm run format:check` (prettier), `npm run coverage`. Все проверки, сборка и e2e гоняются в CI на каждый push в `main` и на pull request.
+Остальное: `pnpm typecheck`, `pnpm lint` (oxlint), `pnpm format:check` (prettier), `pnpm coverage`. Все проверки, сборка и e2e гоняются в CI на каждый push в `main` и на pull request.
 
 Тестовый режим `?seed=…&test=1`: фиксированный seed, старт на паузе и хук `window.__lab.advance(n)` для прокрутки тиков без ожидания. На нём построены e2e.
 
