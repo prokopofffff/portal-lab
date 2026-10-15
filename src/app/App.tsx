@@ -5,12 +5,14 @@ import { ScrollDialog } from '../ui/dialog/ScrollDialog'
 import { Dock } from '../ui/hud/Dock'
 import { Hud } from '../ui/hud/Hud'
 import { HallScreen } from '../ui/hall/HallScreen'
+import { Coach } from '../ui/onboarding/Coach'
 import { AtlasScreen } from '../ui/screens/AtlasScreen'
 import { JournalScreen } from '../ui/screens/JournalScreen'
 import { WorldScreen } from '../ui/screens/WorldScreen'
 import { WorklogScreen } from '../ui/worklog/WorklogScreen'
 import { useDispatch, useSpeed } from './hooks'
 import { baseRoute, NavigationProvider, useRoute, type BaseRoute, type Route } from './navigation'
+import { useOnboarding } from './onboarding'
 
 // Экран без карточки; focus — портал с рамкой фокуса в зале
 function Screen({ route, focus }: { route: BaseRoute; focus?: string }) {
@@ -66,7 +68,7 @@ function useCardFocusReturn(open: boolean): void {
 
 // HUD сверху, экран посередине, док снизу; на паузе корень замораживает спрайты.
 // Карточка портала и свиток печати — диалоги поверх всего: экран под ними виден сквозь затемнение,
-// но инертен.
+// но инертен. Обучение (spec §12): приглашение — такой же свиток, подсказки — поверх всего.
 function Shell() {
   const [speed] = useSpeed()
   const dispatch = useDispatch()
@@ -75,16 +77,21 @@ function Shell() {
   useCardFocusReturn(card !== null)
   // Подтверждение печати (spec §5, §9): свиток из канваса 15-dialogs
   const [sealing, setSealing] = useState(false)
+  const onboarding = useOnboarding()
+  const offer = onboarding?.offer ?? false
   const under = baseRoute(route)
   return (
     <div
       className={speed === 0 ? 'is-paused' : undefined}
       style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
     >
-      <div inert={card !== null || sealing} style={{ display: 'contents' }}>
+      <div inert={card !== null || sealing || offer} style={{ display: 'contents' }}>
         <Hud />
         <Screen route={under} focus={card ?? undefined} />
-        <Dock onSeal={() => setSealing(true)} />
+        <Dock
+          onSeal={() => setSealing(true)}
+          onTour={onboarding && !onboarding.tour ? onboarding.start : undefined}
+        />
       </div>
       {card !== null && <PortalCardDialog portal={card} back={under} />}
       {sealing && (
@@ -102,6 +109,20 @@ function Shell() {
           onCancel={() => setSealing(false)}
         />
       )}
+      {onboarding?.offer && (
+        <ScrollDialog
+          rune="low"
+          tone="medium"
+          title="ДОБРО ПОЖАЛОВАТЬ, СМОТРИТЕЛЬ"
+          text="Пара минут в учебной лаборатории: откроете портал, отправите туда наблюдателя, стабилизируете и закроете портал. Ваша лаборатория подождёт на паузе."
+          okLabel="Пройти обучение"
+          okTone="mark"
+          cancelLabel="Пропустить"
+          onOk={onboarding.start}
+          onCancel={onboarding.skip}
+        />
+      )}
+      {onboarding?.tour && <Coach facts={onboarding.tour.facts} onExit={onboarding.exit} />}
       <NotificationStack cardOpen={card !== null} />
     </div>
   )

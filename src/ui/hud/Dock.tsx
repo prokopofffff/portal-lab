@@ -46,8 +46,14 @@ const TAB_OF: Record<BaseRoute['screen'], Tab> = {
   worklog: 'worklog',
 }
 
-/** Нижняя панель входа (канвас 18-c-dock): разделы и печать лаборатории. */
-export function Dock({ onSeal }: { onSeal: () => void }) {
+// Указатель 7×7 для «Обучения»: в канвасе кнопки нет — нарисован в сетке значка печати
+const TOUR_ICON = 'M3,0h1v1h-1z M0,1h6v3h-6z M6,2h1v1h-1z M3,4h1v3h-1z'
+
+/**
+ * Нижняя панель входа (канвас 18-c-dock): разделы и печать лаборатории. onTour — кнопка
+ * «Обучение» слева (spec §12); без него (идёт обучение, тесты экранов) кнопки нет.
+ */
+export function Dock({ onSeal, onTour }: { onSeal: () => void; onTour?: () => void }) {
   const active = TAB_OF[baseRoute(useRoute()).screen]
   return (
     <div
@@ -66,6 +72,40 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
         zIndex: 10,
       }}
     >
+      {onTour && (
+        <div className="dock-tour">
+          <button
+            type="button"
+            className="dock-tour-btn"
+            // Имя задано явно: на узкой ширине подпись скрыта, остаётся один значок
+            aria-label="Обучение"
+            title="Обучение"
+            onClick={onTour}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              boxSizing: 'border-box',
+              fontFamily: 'var(--f-ui)',
+              fontSize: 13,
+              color: 'var(--c-text-soft)',
+              background: 'transparent',
+              border: '2px dashed var(--c-edge-strong)',
+              cursor: 'pointer',
+            }}
+          >
+            <svg
+              viewBox="0 0 7 7"
+              width={14}
+              height={14}
+              shapeRendering="crispEdges"
+              aria-hidden="true"
+            >
+              <path d={TOUR_ICON} fill="var(--c-torch)" />
+            </svg>
+            <span className="dock-tour-text">Обучение</span>
+          </button>
+        </div>
+      )}
       <nav aria-label="Разделы" className="dock-tabs">
         {TABS.map(({ tab, label, short, to, d }) => {
           const on = tab === active
@@ -75,6 +115,7 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
               to={to}
               current={on}
               className="dock-tab"
+              tour={`tab-${tab}`}
               style={{
                 boxSizing: 'border-box',
                 textDecoration: 'none',

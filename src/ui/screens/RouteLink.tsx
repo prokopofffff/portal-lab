@@ -11,6 +11,7 @@ export function RouteLink({
   style,
   className,
   current,
+  tour,
   children,
 }: {
   to: Route
@@ -18,6 +19,8 @@ export function RouteLink({
   className?: string
   /** Ссылка ведёт на текущий экран. */
   current?: boolean
+  /** Цель подсказки обучения (data-tour). */
+  tour?: string
   children: ReactNode
 }) {
   const navigate = useNavigate()
@@ -27,6 +30,7 @@ export function RouteLink({
       tabIndex={0}
       className={className}
       aria-current={current ? 'page' : undefined}
+      data-tour={tour}
       style={{ cursor: 'pointer', ...style }}
       onClick={() => navigate(to)}
       onKeyDown={(event) => {

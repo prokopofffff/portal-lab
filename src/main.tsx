@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './app/App'
-import { LabStoreProvider } from './app/hooks'
 import { installTestMode, parseLaunch } from './app/launch'
+import { OnboardingProvider, onboardingSeen } from './app/onboarding'
 import { startSimulation } from './app/simulation'
 import { createLabStore } from './app/store'
 import { applyTheme } from './ui/theme/applyTheme'
@@ -17,17 +17,25 @@ const store = createLabStore({
   now: Date.now,
 })
 if (launch.test) installTestMode(store, window)
-startSimulation(store, {
+const simulation = {
   requestAnimationFrame: window.requestAnimationFrame.bind(window),
   cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
   now: () => performance.now(),
   document,
-})
+}
+startSimulation(store, simulation)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <LabStoreProvider store={store}>
+    <OnboardingProvider
+      store={store}
+      storage={localStorage}
+      now={Date.now}
+      // В тестовом режиме приглашение помешало бы сценариям; обучение — по кнопке в доке
+      offer={!launch.test && !onboardingSeen(localStorage)}
+      simulation={simulation}
+    >
       <App />
-    </LabStoreProvider>
+    </OnboardingProvider>
   </StrictMode>,
 )

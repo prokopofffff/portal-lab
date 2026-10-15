@@ -23,6 +23,7 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       type="button"
       aria-label="Закрыть карточку"
       title="Закрыть карточку (Esc)"
+      data-tour="card-close"
       onClick={onClose}
       // Место крестика (слева от карточки, на узком экране — над ней) — в классе card-close
       className="card-close"

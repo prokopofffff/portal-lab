@@ -1,0 +1,115 @@
+/* Обучение: рамка факела вокруг цели и свиток-подсказка. Свиток — уменьшенный свиток диалога
+   (канвас 15-dialogs): те же пергамент, валики и кнопки. Выше карточки (20), свитков (25) и
+   баннеров (30) */
+
+.tour-ring {
+  z-index: 40;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 3px solid var(--c-torch-light);
+  box-shadow:
+    0 0 0 3px var(--c-well),
+    0 0 18px color-mix(in srgb, var(--c-torch) 66.7%, transparent);
+  animation: tour-pulse 1.2s steps(2, jump-none) infinite alternate;
+}
+
+@keyframes tour-pulse {
+  from {
+    box-shadow:
+      0 0 0 3px var(--c-well),
+      0 0 6px color-mix(in srgb, var(--c-torch) 40%, transparent);
+  }
+  to {
+    box-shadow:
+      0 0 0 3px var(--c-well),
+      0 0 22px color-mix(in srgb, var(--c-torch) 80%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-ring {
+    animation: none;
+  }
+}
+
+.tour-panel {
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--f-ui);
+  color: var(--c-ink-title);
+  filter: drop-shadow(0 6px 0 color-mix(in srgb, var(--c-well) 70%, transparent));
+}
+
+/* Валики: градиент из свитка диалога, тоньше */
+.tour-roller {
+  height: 12px;
+  margin: 0 -6px;
+  background: linear-gradient(
+    180deg,
+    var(--c-scroll-roll-light) 0,
+    var(--c-scroll-roll-mid) 55%,
+    var(--c-scroll-edge) 100%
+  );
+  box-shadow: 0 2px 0 var(--c-scroll-roll-shadow);
+}
+.tour-roller:last-child {
+  background: linear-gradient(
+    0deg,
+    var(--c-scroll-roll-light) 0,
+    var(--c-scroll-roll-mid) 55%,
+    var(--c-scroll-edge) 100%
+  );
+}
+
+.tour-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px 16px;
+  background: var(--c-parchment);
+  box-shadow: inset 0 -4px 0 var(--c-parchment-shade);
+}
+
+.tour-title {
+  font-family: var(--f-pixel);
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--c-scroll-title-medium);
+}
+
+.tour-text {
+  margin: 0;
+  font-family: var(--f-prose);
+  font-size: 17px;
+  line-height: 22px;
+  text-wrap: pretty;
+}
+
+.tour-btn {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 4px 14px;
+  box-sizing: border-box;
+  font-family: var(--f-ui);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--c-ink-body);
+  background: var(--c-parchment-plate);
+  border: 3px solid var(--c-scroll-edge);
+  box-shadow: inset 0 -4px 0 var(--c-bevel-faint);
+}
+.tour-btn-ok {
+  align-self: stretch;
+  color: var(--c-on-torch);
+  background: var(--c-torch);
+  border-color: var(--c-torch-light);
+  box-shadow: inset 0 -4px 0 var(--c-bevel-soft);
+}
+
+/* Контур фокуса на пергаменте — тёмные чернила, как в свитке диалога */
+.tour-panel :focus-visible {
+  outline: 3px solid var(--c-ink-title);
+  outline-offset: 2px;
+}
