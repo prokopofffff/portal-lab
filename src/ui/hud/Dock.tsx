@@ -2,27 +2,38 @@ import { baseRoute, useRoute, type BaseRoute, type Route } from '../../app/navig
 import { RouteLink } from '../screens/RouteLink'
 import './dock.css'
 
-type Tab = 'hall' | 'atlas' | 'book'
+type Tab = 'hall' | 'atlas' | 'book' | 'worklog'
 
-// Вкладки дока и иконки 9×9 из канваса 18-c-dock
-const TABS: readonly { tab: Tab; label: string; to: Route; d: string }[] = [
+// Вкладки дока и иконки 9×9 из канваса 18-c-dock; AI Worklog (перо) в канвасе нет — нарисовано в той же сетке
+// short — подпись на узкой ширине: «лаборатории» не влезает во вкладку 73 px; имя ссылки остаётся полным
+const TABS: readonly { tab: Tab; label: string; short: string; to: Route; d: string }[] = [
   {
     tab: 'hall',
     label: 'Зал лаборатории',
+    short: 'Зал',
     to: { screen: 'hall' },
     d: 'M2,0h5v1h-5z M1,1h7v1h-7z M0,2h2v1h-2z M7,2h2v1h-2z M0,3h1v5h-1z M8,3h1v5h-1z M0,8h9v1h-9z',
   },
   {
     tab: 'atlas',
     label: 'Атлас миров',
+    short: 'Атлас',
     to: { screen: 'atlas' },
     d: 'M2,0h5v1h-5z M1,1h1v1h-1z M4,1h1v1h-1z M7,1h1v1h-1z M0,2h1v2h-1z M4,2h1v2h-1z M8,2h1v2h-1z M0,4h9v1h-9z M0,5h1v2h-1z M4,5h1v2h-1z M8,5h1v2h-1z M1,7h1v1h-1z M4,7h1v1h-1z M7,7h1v1h-1z M2,8h5v1h-5z',
   },
   {
     tab: 'book',
     label: 'Книга журнала',
+    short: 'Книга',
     to: { screen: 'journal' },
     d: 'M0,1h9v1h-9z M0,7h9v1h-9z M0,2h1v5h-1z M8,2h1v5h-1z M4,2h1v5h-1z M2,3h1v1h-1z M2,5h1v1h-1z M6,3h1v1h-1z M6,5h1v1h-1z',
+  },
+  {
+    tab: 'worklog',
+    label: 'AI Worklog',
+    short: 'AI Worklog',
+    to: { screen: 'worklog' },
+    d: 'M6,0h3v1h-3z M5,1h2v1h-2z M8,1h1v1h-1z M4,2h2v1h-2z M7,2h1v1h-1z M3,3h2v1h-2z M6,3h1v1h-1z M3,4h1v1h-1z M5,4h1v1h-1z M2,5h3v1h-3z M2,6h2v1h-2z M1,7h1v1h-1z M0,8h1v1h-1z M3,8h6v1h-6z',
   },
 ]
 
@@ -32,6 +43,7 @@ const TAB_OF: Record<BaseRoute['screen'], Tab> = {
   atlas: 'atlas',
   world: 'atlas',
   journal: 'book',
+  worklog: 'worklog',
 }
 
 /** Нижняя панель входа (канвас 18-c-dock): разделы и печать лаборатории. */
@@ -55,7 +67,7 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
       }}
     >
       <nav aria-label="Разделы" className="dock-tabs">
-        {TABS.map(({ tab, label, to, d }) => {
+        {TABS.map(({ tab, label, short, to, d }) => {
           const on = tab === active
           return (
             <RouteLink
@@ -81,7 +93,15 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
               >
                 <path d={d} fill={on ? 'var(--c-on-torch)' : 'var(--c-torch)'} />
               </svg>
-              <span className="dock-tab-label">{label}</span>
+              <span className="dock-tab-label">
+                {short}
+                {short !== label && (
+                  <>
+                    {' '}
+                    <span className="dock-tab-label-rest">{label.slice(short.length + 1)}</span>
+                  </>
+                )}
+              </span>
             </RouteLink>
           )
         })}

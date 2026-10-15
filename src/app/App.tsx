@@ -8,6 +8,7 @@ import { HallScreen } from '../ui/hall/HallScreen'
 import { AtlasScreen } from '../ui/screens/AtlasScreen'
 import { JournalScreen } from '../ui/screens/JournalScreen'
 import { WorldScreen } from '../ui/screens/WorldScreen'
+import { WorklogScreen } from '../ui/worklog/WorklogScreen'
 import { useDispatch, useSpeed } from './hooks'
 import { baseRoute, NavigationProvider, useRoute, type BaseRoute, type Route } from './navigation'
 
@@ -22,6 +23,8 @@ function Screen({ route, focus }: { route: BaseRoute; focus?: string }) {
       return <WorldScreen world={route.world} />
     case 'journal':
       return <JournalScreen />
+    case 'worklog':
+      return <WorklogScreen />
   }
 }
 
