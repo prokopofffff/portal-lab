@@ -8,7 +8,22 @@ export type Route =
   | { screen: 'atlas' }
   | { screen: 'world'; world: string }
   | { screen: 'journal' }
-  | { screen: 'portal'; portal: string }
+  | { screen: 'portal'; portal: string; back?: Route }
+
+// Маршрут без карточки портала: что лежит под карточкой
+export type BaseRoute = Exclude<Route, { screen: 'portal' }>
+
+/** Экран под маршрутом: у карточки это её `back` (по умолчанию зал), у остальных — он сам. */
+export function baseRoute(route: Route): BaseRoute {
+  if (route.screen !== 'portal') return route
+  return route.back ? baseRoute(route.back) : { screen: 'hall' }
+}
+
+// `back` никогда не карточка: вложенную разворачиваем до экрана под ней
+function normalize(route: Route): Route {
+  if (route.screen !== 'portal' || !route.back) return route
+  return { ...route, back: baseRoute(route.back) }
+}
 
 type Navigate = (route: Route) => void
 
@@ -17,8 +32,8 @@ const NavigateContext = createContext<Navigate | null>(null)
 
 // Хранит текущий экран для всего приложения; по умолчанию — зал
 export function NavigationProvider(props: { initialRoute?: Route; children: ReactNode }) {
-  const [route, setRoute] = useState<Route>(props.initialRoute ?? { screen: 'hall' })
-  const navigate = useCallback<Navigate>((next) => setRoute(next), [])
+  const [route, setRoute] = useState<Route>(normalize(props.initialRoute ?? { screen: 'hall' }))
+  const navigate = useCallback<Navigate>((next) => setRoute(normalize(next)), [])
   // Отдельные контексты: кнопки с navigate не перерисовываются при смене экрана
   return (
     <NavigateContext.Provider value={navigate}>

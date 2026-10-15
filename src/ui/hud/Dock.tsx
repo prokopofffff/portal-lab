@@ -1,4 +1,4 @@
-import { useRoute, type Route } from '../../app/navigation'
+import { baseRoute, useRoute, type BaseRoute, type Route } from '../../app/navigation'
 import { RouteLink } from '../screens/RouteLink'
 
 type Tab = 'hall' | 'atlas' | 'book'
@@ -25,10 +25,9 @@ const TABS: readonly { tab: Tab; label: string; to: Route; d: string }[] = [
   },
 ]
 
-// Карточка портала открывается из зала, страница мира — из атласа
-const TAB_OF: Record<Route['screen'], Tab> = {
+// Страница мира — из атласа; карточка портала подсвечивает вкладку экрана под ней
+const TAB_OF: Record<BaseRoute['screen'], Tab> = {
   hall: 'hall',
-  portal: 'hall',
   atlas: 'atlas',
   world: 'atlas',
   journal: 'book',
@@ -36,7 +35,7 @@ const TAB_OF: Record<Route['screen'], Tab> = {
 
 /** Нижняя панель входа (канвас 18-c-dock): разделы и печать лаборатории. */
 export function Dock({ onSeal }: { onSeal: () => void }) {
-  const active = TAB_OF[useRoute().screen]
+  const active = TAB_OF[baseRoute(useRoute()).screen]
   return (
     <div
       style={{

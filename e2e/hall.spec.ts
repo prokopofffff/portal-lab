@@ -27,7 +27,11 @@ test('пустая арка открывает портал; критическ�
 
   await advance(page, 50)
   await expect(page.locator('.px-portal--critical')).toHaveCount(1)
-  await expect(page.getByText('КРИТИЧЕСКИЙ', { exact: true })).toBeVisible()
+  // Слово риска стоит и на табличке арки, и на записке «Тревожных знаков»
+  await expect(page.getByText('КРИТИЧЕСКИЙ', { exact: true })).toHaveCount(2)
+  const note = page.getByRole('region', { name: 'Тревожные знаки' }).getByRole('button')
+  await expect(note).toHaveCount(1)
+  await expect(note).toContainText('КРИТИЧЕСКИЙ')
 
   const opened = page.getByRole('button', { name: /^Открыть карточку портала/ })
   const name = (await opened.getAttribute('aria-label'))!.replace('Открыть карточку портала ', '')

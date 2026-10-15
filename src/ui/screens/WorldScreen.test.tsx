@@ -213,7 +213,11 @@ describe('Страница мира (spec §9)', () => {
 
     await userEvent.click(row('ПТ-420-2'))
 
-    expect(current()).toEqual({ screen: 'portal', portal: 'ПТ-420-2' })
+    expect(current()).toEqual({
+      screen: 'portal',
+      portal: 'ПТ-420-2',
+      back: { screen: 'world', world: 'Пепельные Топи' },
+    })
   })
 
   it('архивный портал тоже открывается (только просмотр)', async () => {
@@ -221,7 +225,11 @@ describe('Страница мира (spec §9)', () => {
 
     await userEvent.click(row('ПТ-420-3'))
 
-    expect(current()).toEqual({ screen: 'portal', portal: 'ПТ-420-3' })
+    expect(current()).toEqual({
+      screen: 'portal',
+      portal: 'ПТ-420-3',
+      back: { screen: 'world', world: 'Пепельные Топи' },
+    })
   })
 
   it('«← Атлас миров» возвращает в атлас', async () => {

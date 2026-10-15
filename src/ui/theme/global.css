@@ -34,6 +34,11 @@ button {
   outline-offset: 2px;
 }
 
+/* Основная область получает фокус только программно (после закрытия карточки) — без контура на весь экран */
+main[tabindex='-1']:focus {
+  outline: none;
+}
+
 /* Пауза (канвас 00-hall, .is-paused): замирают спрайты и песок в часах, но не запись книги */
 .is-paused :is(.px-portal, .px-rune, .px-risk-tag, .px-bar, .px-creatures, .hg-grain),
 .is-paused :is(.px-portal, .px-rune, .px-risk-tag, .px-bar, .px-creatures) * {

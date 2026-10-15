@@ -1,0 +1,53 @@
+/* Карточка портала (канвас 23-c-portal-card). Цвета — из токенов через CSS-переменные applyTheme. */
+
+/* Скошенные пиксельные углы рамки, панели, записки и совета (.nc канваса) */
+.card-notch {
+  clip-path: polygon(
+    0 6px,
+    6px 6px,
+    6px 0,
+    calc(100% - 6px) 0,
+    calc(100% - 6px) 6px,
+    100% 6px,
+    100% calc(100% - 6px),
+    calc(100% - 6px) calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    6px 100%,
+    6px calc(100% - 6px),
+    0 calc(100% - 6px)
+  );
+}
+
+.card-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Кнопки, которые выглядят ссылками (мир, другой портал) или подписью (свиток истории) */
+.card-link {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.card-link--underline {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Недоступная способность приглушена целиком (opacity .5), и контур фокуса на ней тускнел бы
+   вместе с ней — рисуем его на обёртке, которая не приглушена */
+.card-ability:focus-visible {
+  outline: none;
+}
+.card-ability-slot:has(> .card-ability:focus-visible) {
+  outline: 3px solid var(--c-torch-light);
+  outline-offset: 2px;
+}
