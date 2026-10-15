@@ -67,7 +67,7 @@ function MetricRow({
 }) {
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="card-bar-row">
         <svg
           viewBox="0 0 7 7"
           width={20}
@@ -77,13 +77,15 @@ function MetricRow({
         >
           <path d={icon} fill={color} />
         </svg>
-        <span style={{ width: 140, fontSize: 16, color: 'var(--c-text-soft)' }}>{label}</span>
-        <div style={{ flex: '1 1 0', minWidth: 0 }}>
+        <span className="card-metric-label" style={{ fontSize: 16, color: 'var(--c-text-soft)' }}>
+          {label}
+        </span>
+        <div className="card-bar-row__bar">
           <Bar label={label} value={metric.pct} color={color} segments={20} height={12} />
         </div>
         <span
+          className="card-metric-value"
           style={{
-            width: 104,
             textAlign: 'right',
             fontWeight: 600,
             fontSize: 21,
@@ -96,8 +98,8 @@ function MetricRow({
       </div>
       {change && change.was !== change.now && (
         <span
+          className="card-metric-change"
           style={{
-            margin: '-6px 0 0 172px',
             fontSize: 13,
             color: 'var(--c-observer-on-site-text)',
           }}
@@ -172,7 +174,10 @@ export function RiskBox({
         gap: 10,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+      <div
+        className="card-risk-row"
+        style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}
+      >
         <span style={{ fontSize: 13, letterSpacing: 1, color: 'var(--c-text-muted)' }}>РИСК</span>
         <span style={{ ...pixel, fontSize: 30, lineHeight: '34px', color: palette.rc }}>
           {model.risk.score}
@@ -180,7 +185,7 @@ export function RiskBox({
         {delta && delta.before.score !== delta.after.score && (
           <ScoreChange from={delta.before.score} to={delta.after.score} />
         )}
-        <span style={{ flex: '1 1 0' }} />
+        <span className="card-risk-gap" />
         {parts.map((part, i) => (
           <PartGroup key={part.label} first={i === 0} last={i === parts.length - 1} op={op}>
             <span

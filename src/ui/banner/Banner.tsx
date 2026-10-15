@@ -160,8 +160,6 @@ export function Banner({ kind, text, onDismiss }: BannerProps) {
             style={{
               flex: 'none',
               alignSelf: 'flex-start',
-              width: 20,
-              height: 20,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

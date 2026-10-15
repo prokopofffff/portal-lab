@@ -16,9 +16,9 @@ export function WorldProgress({
       aria-valuenow={stats.donePct}
       aria-valuemin={0}
       aria-valuemax={100}
+      // Доля строки (flex) — в классе world-meter: на узком экране полоска уходит на свою строку
+      className="world-meter"
       style={{
-        flex: '1 1 0',
-        minWidth: 0,
         height,
         boxSizing: 'border-box',
         padding: 2,

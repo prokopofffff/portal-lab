@@ -153,6 +153,7 @@ export function ScrollDialog({
   return createPortal(
     <div
       data-testid="scroll-backdrop"
+      className="scroll-backdrop"
       onMouseDown={(e) => {
         pressedBackdrop.current = e.target === e.currentTarget
       }}
@@ -168,7 +169,6 @@ export function ScrollDialog({
         inset: 0,
         zIndex: 25, // выше карточки портала (20), ниже стопки баннеров (30)
         display: 'flex',
-        padding: '24px 20px',
         overflowY: 'auto',
         background: 'var(--c-overlay)',
       }}
@@ -182,8 +182,6 @@ export function ScrollDialog({
         aria-describedby={textId}
         onKeyDown={trapTab}
         style={{
-          width: 420,
-          maxWidth: 'calc(100% - 20px)',
           margin: 'auto',
           display: 'flex',
           flexDirection: 'column',

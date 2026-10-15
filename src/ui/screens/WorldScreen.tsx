@@ -23,13 +23,13 @@ const SHARED_ICON = 'M3,0h2v1h-2z M3,1h2v2h-2z M0,3h8v1h-8z M1,4h6v1h-6z M2,5h4v
 
 const pageLabel: CSSProperties = { fontSize: 14, letterSpacing: 1, color: 'var(--c-ink-label)' }
 
+// Отступы страницы и тень у корешка — в классах world-page (на узком экране страницы друг под другом)
 const page: CSSProperties = {
   flex: '1 1 0',
   minWidth: 0,
   boxSizing: 'border-box',
   background: 'var(--c-parchment)',
   color: 'var(--c-ink-title)',
-  padding: '22px 26px 20px',
   display: 'flex',
   flexDirection: 'column',
   gap: 14,
@@ -39,7 +39,7 @@ const statNumber: CSSProperties = { fontFamily: 'var(--f-ui)', fontSize: 22, fon
 
 function BackLink() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+    <div className="world-back" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
       <RouteLink
         to={{ screen: 'atlas' }}
         style={{
@@ -183,8 +183,9 @@ function HistoryItem({ entry }: { entry: LogEntry }) {
 
 function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
   return (
-    <section style={{ ...page, boxShadow: 'inset -10px 0 18px -8px rgba(60,40,10,.45)' }}>
+    <section className="world-page world-page--left" style={page}>
       <div
+        className="world-head"
         style={{
           display: 'flex',
           alignItems: 'flex-start',
@@ -238,7 +239,10 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
           <b style={statNumber}>мин {world.lastVisit}</b>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+      <div
+        className="world-wrap"
+        style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}
+      >
         <span style={pageLabel}>
           СУЩЕСТВА · ИЗУЧЕНО {world.studied} ИЗ {world.creatures}
         </span>
@@ -253,7 +257,7 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
           неизученные проявятся, когда наблюдатели доберутся до них
         </span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="world-progress" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ flex: 'none', fontSize: 17, fontWeight: 600 }}>
           Прогресс мира: {stats.donePct} %
         </span>
@@ -320,15 +324,15 @@ function CreatureGrid({ world, nextPct }: { world: World; nextPct: number }) {
   return (
     <ul
       aria-label="Существа мира"
+      // Девять плиток делят страницу поровну, как в канвасе; больше — страница растёт.
+      // Столбцы и ряды сетки, расположение в плитке — в классах world-creatures
+      className="world-creatures"
       style={{
         flex: '1 1 0',
         margin: 0,
         padding: 0,
         listStyle: 'none',
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-        // Девять плиток делят страницу поровну, как в канвасе; больше — страница растёт
-        gridAutoRows: 'minmax(108px, 1fr)',
         gap: 12,
       }}
     >
@@ -338,19 +342,18 @@ function CreatureGrid({ world, nextPct }: { world: World; nextPct: number }) {
           <li
             key={i}
             data-creature={t.kind}
+            className="world-creature"
             style={{
               boxSizing: 'border-box',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
               gap: 8,
               background: look.bg,
               border: `3px solid ${look.edge}`,
               boxShadow: look.glow,
             }}
           >
-            <div style={{ position: 'relative', width: 64, height: 64 }}>
+            <div style={{ position: 'relative', flex: 'none', width: 64, height: 64 }}>
               {t.kind === 'study' ? (
                 <>
                   <CreatureGlyph d={t.body} fill={sprite.studyGhost} />
@@ -377,7 +380,7 @@ function RightPage({ lab, world, stats }: { lab: Lab; world: World; stats: World
   ]
   const history = filterLog(lab.log, { world: world.name })
   return (
-    <section style={{ ...page, boxShadow: 'inset 10px 0 18px -8px rgba(60,40,10,.45)' }}>
+    <section className="world-page world-page--right" style={page}>
       <h2 style={{ ...pageLabel, margin: 0, fontWeight: 400 }}>ПОРТАЛЫ В ЭТОТ МИР</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ordered.map((portal) => (
@@ -439,10 +442,14 @@ export function WorldScreen({ world: worldName }: { world: string }) {
       <BackLink />
       {world ? (
         <div
+          className="world-book"
           style={{ flex: '1 1 0', display: 'flex', boxShadow: '0 0 0 4px var(--c-parchment-edge)' }}
         >
           <LeftPage world={world} stats={worldStats(lab, world)} />
-          <div style={{ flex: 'none', width: 8, background: 'var(--c-parchment-spine)' }} />
+          <div
+            className="world-spine"
+            style={{ flex: 'none', background: 'var(--c-parchment-spine)' }}
+          />
           <RightPage lab={lab} world={world} stats={worldStats(lab, world)} />
         </div>
       ) : (

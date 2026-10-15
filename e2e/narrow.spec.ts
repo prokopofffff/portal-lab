@@ -254,3 +254,206 @@ test('на 1440×1000 зал остаётся сеткой 6×2', async ({ page 
   expect(new Set(tops.slice(6)).size).toBe(1)
   expect(tops[6]).toBeGreaterThan(tops[0]!)
 })
+
+/**
+ * Элемент и все его потомки целиком внутри окна по горизонтали (по рамкам, а не по scrollWidth:
+ * валики свитка нарочно шире пергамента). Блоки в 1 px — текст для скринридера.
+ */
+async function expectInsideViewport(target: Locator): Promise<void> {
+  const inner = target.page().viewportSize()!.width
+  const outside = await target.evaluate((root, width) => {
+    return [root, ...root.querySelectorAll('*')]
+      .map((el) => ({ el, r: el.getBoundingClientRect() }))
+      .filter(({ r }) => r.width > 1 && (r.left < -0.5 || r.right > width + 0.5))
+      .map(({ el, r }) => `${el.tagName.toLowerCase()}.${el.className} ${r.left}…${r.right}`)
+  }, inner)
+  expect(outside, 'вылезает за окно').toEqual([])
+}
+
+// Критический портал в арке 1 и его карточка через записку «Тревожных знаков»
+async function openCriticalCard(page: Page): Promise<Locator> {
+  await page.goto('/?seed=3&test=1')
+  await page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' }).click()
+  await page.evaluate((n) => (globalThis as LabGlobal).__lab!.advance(n), 50)
+  await page.getByRole('region', { name: 'Тревожные знаки' }).getByRole('button').click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toBeVisible()
+  return dialog
+}
+
+// Затемнение карточки — родитель её диалога
+const cardOverlay = (page: Page) => page.getByTestId('card-overlay')
+
+test.describe('узкий экран, 390×844: карточка, свитки, баннеры', () => {
+  test.use({ viewport: NARROW })
+
+  test('карточка портала по ширине окна: крестик над ней и в окне, способности в окне', async ({
+    page,
+  }) => {
+    const card = await openCriticalCard(page)
+    await expectNoHorizontalOverflow(page)
+    await expectNoHorizontalOverflow(cardOverlay(page))
+    await expectInsideViewport(card)
+
+    const close = page.getByRole('button', { name: 'Закрыть карточку' })
+    const closeBox = (await close.boundingBox())!
+    expect(closeBox.width).toBeGreaterThanOrEqual(44)
+    expect(closeBox.height).toBeGreaterThanOrEqual(44)
+    expect(closeBox.y).toBeGreaterThanOrEqual(0)
+    // Над правым верхним углом карточки, а не слева от неё
+    const heading = (await card.getByRole('heading', { level: 2 }).first().boundingBox())!
+    expect(closeBox.y + closeBox.height).toBeLessThanOrEqual(heading.y)
+
+    const abilities = card.getByRole('group', { name: 'Способности' })
+    await expectInsideViewport(abilities)
+    for (const button of await abilities.getByRole('button').all()) {
+      await expectNoHorizontalOverflow(button)
+    }
+
+    await close.click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+  })
+
+  test('свиток «Закрыть последний портал» помещается в окне', async ({ page }) => {
+    const card = await openCriticalCard(page)
+    await card
+      .getByRole('group', { name: 'Способности' })
+      .getByRole('button', { name: 'Закрыть', exact: true })
+      .click()
+    const scroll = page.getByRole('dialog', { name: 'ЗАКРЫТЬ ПОСЛЕДНИЙ ПОРТАЛ?' })
+    await expect(scroll).toBeVisible()
+    await expectNoHorizontalOverflow(page)
+    await expectInsideViewport(page.getByTestId('scroll-backdrop'))
+    // Столбец свитка — 100vw − 32 px
+    expect((await scroll.boundingBox())!.width).toBeCloseTo(NARROW.width - 32, 0)
+  })
+
+  test('свиток «Под вопросом» помещается в окне', async ({ page }) => {
+    const card = await openCriticalCard(page)
+    await card
+      .getByRole('group', { name: 'Способности' })
+      .getByRole('button', { name: 'Под вопросом' })
+      .click()
+    await expect(page.getByRole('dialog', { name: 'ПОМЕТИТЬ «ПОД ВОПРОСОМ»' })).toBeVisible()
+    await expectNoHorizontalOverflow(page)
+    await expectInsideViewport(page.getByTestId('scroll-backdrop'))
+  })
+
+  test('свиток печати помещается в окне', async ({ page }) => {
+    await page.goto('/?seed=3&test=1')
+    await page.getByRole('button', { name: 'Запечатать лабораторию' }).click()
+    await expect(page.getByRole('dialog', { name: 'ЗАПЕЧАТАТЬ ЛАБОРАТОРИЮ?' })).toBeVisible()
+    await expectNoHorizontalOverflow(page)
+    await expectInsideViewport(page.getByTestId('scroll-backdrop'))
+  })
+
+  test('баннеры отказа во всю ширину у верха окна, крестик «скрыть» 44×44', async ({ page }) => {
+    // Без въезда справа: меряем баннеры на месте
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    const card = await openCriticalCard(page)
+    const abilities = card.getByRole('group', { name: 'Способности' })
+    await abilities.getByRole('button', { name: 'Отправить наблюдателя' }).focus()
+    await page.keyboard.press('Enter')
+    await abilities.getByRole('button', { name: 'Отозвать наблюдателей' }).focus()
+    await page.keyboard.press('Enter')
+    const banners = page.getByRole('alert')
+    await expect(banners).toHaveCount(2)
+    const boxes = await Promise.all(
+      (await banners.all()).map(async (b) => (await b.boundingBox())!),
+    )
+    expect(boxes[0]!.y).toBeCloseTo(8, 0)
+    for (const box of boxes) {
+      expect(box.x).toBeCloseTo(8, 0)
+      expect(box.width).toBeCloseTo(NARROW.width - 16, 0)
+    }
+    for (const banner of await banners.all()) {
+      await expectNoHorizontalOverflow(banner)
+      const hide = (await banner.getByRole('button', { name: 'Скрыть уведомление' }).boundingBox())!
+      expect(hide.width).toBeGreaterThanOrEqual(44)
+      expect(hide.height).toBeGreaterThanOrEqual(44)
+      expect(hide.x + hide.width).toBeLessThanOrEqual(NARROW.width)
+    }
+  })
+})
+
+// Четыре портала и 400 тиков: в атласе четыре мира, в журнале два разворота
+async function playedLab(page: Page): Promise<void> {
+  await page.goto('/?seed=3&test=1')
+  await openPortals(page, 4)
+  await page.evaluate((n) => (globalThis as LabGlobal).__lab!.advance(n), 400)
+}
+
+// Рамки по порядку: каждая следующая не выше конца предыдущей
+async function expectColumn(items: Locator): Promise<void> {
+  const boxes = await items.evaluateAll((els) =>
+    els.map((el) => {
+      const r = el.getBoundingClientRect()
+      return { top: r.top, bottom: r.bottom }
+    }),
+  )
+  expect(boxes.length).toBeGreaterThan(1)
+  for (let i = 1; i < boxes.length; i++) {
+    expect(boxes[i]!.top, `${i + 1}-й ниже ${i}-го`).toBeGreaterThanOrEqual(boxes[i - 1]!.bottom)
+  }
+}
+
+test.describe('узкий экран, 390×844: атлас, страница мира, журнал', () => {
+  test.use({ viewport: NARROW })
+
+  test('атлас: карточки миров столбцом, без горизонтальной прокрутки', async ({ page }) => {
+    await playedLab(page)
+    await page.getByRole('link', { name: 'Атлас миров' }).click()
+    const cards = page.getByRole('main').getByRole('article')
+    await expect(cards).toHaveCount(4)
+    await expectNoHorizontalOverflow(page)
+    await expectNoHorizontalOverflow(page.getByRole('main'))
+    await expectColumn(cards)
+    for (const tab of await page.getByRole('main').getByRole('button').all()) {
+      expect((await tab.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    }
+  })
+
+  test('страница мира: страницы книги и существа столбцом, без горизонтальной прокрутки', async ({
+    page,
+  }) => {
+    await playedLab(page)
+    await page.getByRole('link', { name: 'Атлас миров' }).click()
+    await page.getByRole('link', { name: 'Страница мира →' }).first().click()
+    const creatures = page.getByRole('list', { name: 'Существа мира' })
+    await expect(creatures).toBeVisible()
+    await expectNoHorizontalOverflow(page)
+    await expectNoHorizontalOverflow(page.getByRole('main'))
+    await expectColumn(creatures.getByRole('listitem'))
+    await expectColumn(page.getByRole('main').locator('section'))
+  })
+
+  test('журнал: страницы разворота одна под другой, закладки в окне', async ({ page }) => {
+    await playedLab(page)
+    await page.getByRole('link', { name: 'Книга журнала' }).click()
+    await expect(page.getByRole('list', { name: /^Страница \d+$/ })).toHaveCount(2)
+    await expectNoHorizontalOverflow(page)
+    await expectNoHorizontalOverflow(page.getByRole('main'))
+    await expectColumn(page.getByRole('main').locator('section'))
+    // Список значений закладки раскрывается в окне
+    await page.getByRole('button', { name: /Вид записи/ }).click()
+    await expect(page.getByRole('button', { name: 'отказ' })).toBeVisible()
+    await expectInsideViewport(page.getByRole('main'))
+  })
+})
+
+test('на ширине 1180…1211 и 1440 крестик карточки целиком в окне; на 1440 карточка 300…900', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  const card = await openCriticalCard(page)
+  const close = page.getByRole('button', { name: 'Закрыть карточку' })
+  const cardBox = (await card.boundingBox())!
+  expect(cardBox.x).toBeCloseTo(300, 0)
+  expect(cardBox.x + cardBox.width).toBeCloseTo(900, 0)
+  for (const width of [1440, 1211, 1200, 1195, 1185, 1180, 1000, 901]) {
+    await page.setViewportSize({ width, height: 1000 })
+    const box = (await close.boundingBox())!
+    expect(box.x, `крестик левее окна на ${width}`).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(width)
+  }
+})

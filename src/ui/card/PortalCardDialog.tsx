@@ -9,8 +9,8 @@ import { PortalCard, type CardDelta } from './PortalCard'
 import './card.css'
 
 // Диалог карточки портала поверх экрана (канвас 04-card-critical): затемнение на всё приложение,
-// карточка в 20 px от верха (по горизонтали её ставит .card-overlay); затемнение прокручивается,
-// если карточка выше окна.
+// карточка в 20 px от верха (по горизонтали и на узком экране её ставит .card-overlay); затемнение
+// прокручивается, если карточка выше окна.
 // Симуляция идёт дальше: карточка перечитывает store на каждом изменении.
 
 // Крестик «закрыть карточку» 8×8, как значок отказа в канвасе 24-c-banner
@@ -24,11 +24,10 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       aria-label="Закрыть карточку"
       title="Закрыть карточку (Esc)"
       onClick={onClose}
+      // Место крестика (слева от карточки, на узком экране — над ней) — в классе card-close
+      className="card-close"
       style={{
-        // Слева от карточки: справа сверху встаёт баннер уведомлений
         position: 'absolute',
-        top: 0,
-        right: 'calc(100% + 12px)',
         width: 44,
         height: 44,
         display: 'flex',
@@ -205,9 +204,8 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
     return (
       <Overlay labelledBy={headingId} focusKey={portal} onClose={close}>
         <div
-          className="card-notch"
+          className="card-notch card-frame"
           style={{
-            width: 600,
             padding: '18px 20px',
             background: 'var(--s-sill)',
             boxShadow: 'inset 0 0 0 3px var(--c-edge-soft)',
