@@ -48,7 +48,7 @@ const tabStyle = (on: boolean): CSSProperties => ({
   color: on ? 'var(--c-on-torch)' : 'var(--c-parchment)',
   background: on ? 'var(--c-gold-plate)' : 'var(--c-tab)',
   border: `3px solid ${on ? 'var(--c-tab-on-edge)' : 'var(--c-parchment-edge)'}`,
-  boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.3)',
+  boxShadow: 'inset 0 -3px 0 var(--c-bevel-soft)',
   cursor: 'pointer',
 })
 

@@ -57,10 +57,10 @@
   padding: 22px 26px 20px;
 }
 .world-page--left {
-  box-shadow: inset -10px 0 18px -8px rgba(60, 40, 10, 0.45);
+  box-shadow: inset -10px 0 18px -8px var(--c-page-fold);
 }
 .world-page--right {
-  box-shadow: inset 10px 0 18px -8px rgba(60, 40, 10, 0.45);
+  box-shadow: inset 10px 0 18px -8px var(--c-page-fold);
 }
 .world-spine {
   width: 8px;
@@ -88,11 +88,11 @@
 }
 .journal-page--left {
   padding: 22px 26px 18px 22px;
-  box-shadow: inset -22px 0 26px -16px rgba(60, 40, 10, 0.55);
+  box-shadow: inset -22px 0 26px -16px var(--c-page-fold-deep);
 }
 .journal-page--right {
   padding: 22px 22px 18px 26px;
-  box-shadow: inset 22px 0 26px -16px rgba(60, 40, 10, 0.55);
+  box-shadow: inset 22px 0 26px -16px var(--c-page-fold-deep);
 }
 .journal-spine {
   width: 10px;
@@ -168,10 +168,10 @@
     padding: 18px 14px 16px;
   }
   .world-page--left {
-    box-shadow: inset 0 -10px 18px -8px rgba(60, 40, 10, 0.45);
+    box-shadow: inset 0 -10px 18px -8px var(--c-page-fold);
   }
   .world-page--right {
-    box-shadow: inset 0 10px 18px -8px rgba(60, 40, 10, 0.45);
+    box-shadow: inset 0 10px 18px -8px var(--c-page-fold);
   }
   .world-spine {
     width: auto;
@@ -220,10 +220,10 @@
     padding: 18px 14px 16px;
   }
   .journal-page--left {
-    box-shadow: inset 0 -22px 26px -16px rgba(60, 40, 10, 0.55);
+    box-shadow: inset 0 -22px 26px -16px var(--c-page-fold-deep);
   }
   .journal-page--right {
-    box-shadow: inset 0 22px 26px -16px rgba(60, 40, 10, 0.55);
+    box-shadow: inset 0 22px 26px -16px var(--c-page-fold-deep);
   }
   .journal-spine {
     width: auto;

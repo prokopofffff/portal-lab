@@ -70,7 +70,7 @@ function speedStyle(on: boolean, paused: boolean): CSSProperties {
     color: on ? 'var(--c-on-torch)' : 'var(--c-text-soft)',
     background: on ? (paused ? 'var(--c-pause-on)' : 'var(--c-torch)') : 'var(--c-control)',
     border: `3px solid ${on ? (paused ? 'var(--c-pause-on-edge)' : 'var(--c-torch-light)') : 'var(--c-edge-strong)'}`,
-    boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.35)',
+    boxShadow: 'inset 0 -3px 0 var(--c-bevel)',
     cursor: 'pointer',
     padding: 0,
   }
@@ -350,7 +350,7 @@ function Stat({ label, value, alert }: HudStat) {
         boxSizing: 'border-box',
         background: 'var(--c-well)',
         border: `3px solid ${look.bd}`,
-        boxShadow: 'inset 0 3px 0 rgba(255,255,255,.05)',
+        boxShadow: 'inset 0 3px 0 var(--c-bevel-lit)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',

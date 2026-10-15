@@ -258,6 +258,28 @@ describe('Книга журнала (spec §8, §9)', () => {
       await userEvent.click(screen.getByRole('button', { name: 'действие' }))
       expect(ribbon).toHaveAttribute('aria-expanded', 'false')
     })
+
+    it('раскрытая закладка указывает на свой список; нажатие вне закрывает', async () => {
+      renderJournal(log(3))
+      const ribbon = screen.getByRole('button', { name: /Вид записи/ })
+      expect(ribbon).not.toHaveAttribute('aria-controls')
+
+      await userEvent.click(ribbon)
+      const list = screen.getByRole('group', { name: 'Вид записи' })
+      expect(ribbon).toHaveAttribute('aria-controls', list.id)
+      expect(
+        within(list)
+          .getAllByRole('button')
+          .map((b) => b.textContent),
+      ).toEqual(['все виды', 'действие', 'отказ', 'система'])
+
+      // Нажатие внутри закладки список не закрывает, вне — закрывает
+      await userEvent.click(list)
+      expect(ribbon).toHaveAttribute('aria-expanded', 'true')
+      await userEvent.click(screen.getByRole('heading', { name: 'КНИГА ЖУРНАЛА' }))
+      expect(ribbon).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('group', { name: 'Вид записи' })).not.toBeInTheDocument()
+    })
   })
 
   describe('«письмо» новой записи', () => {

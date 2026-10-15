@@ -28,7 +28,7 @@ export function ScreenFrame({
           backgroundColor: 'var(--c-cellar)',
           backgroundImage:
             'repeating-linear-gradient(0deg,transparent 0 15px,var(--c-cellar-seam) 15px 16px)',
-          boxShadow: 'inset 0 0 140px rgba(0,0,0,.7)',
+          boxShadow: 'inset 0 0 140px var(--c-vignette)',
         } as CSSProperties
       }
     >

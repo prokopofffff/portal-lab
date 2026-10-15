@@ -242,7 +242,7 @@ export function ScrollDialog({
                 color: ok.fg,
                 background: ok.bg,
                 border: `3px solid ${ok.edge}`,
-                boxShadow: 'inset 0 -4px 0 rgba(0, 0, 0, 0.3)',
+                boxShadow: 'inset 0 -4px 0 var(--c-bevel-soft)',
               }}
             >
               {okLabel}
@@ -257,7 +257,7 @@ export function ScrollDialog({
                 color: 'var(--c-ink-body)',
                 background: 'var(--c-parchment-plate)',
                 border: '3px solid var(--c-scroll-edge)',
-                boxShadow: 'inset 0 -4px 0 rgba(0, 0, 0, 0.18)',
+                boxShadow: 'inset 0 -4px 0 var(--c-bevel-faint)',
               }}
             >
               Отмена

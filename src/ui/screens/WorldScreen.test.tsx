@@ -71,10 +71,14 @@ describe('Страница мира (spec §9)', () => {
     expect(screen.getByRole('heading', { level: 1, name: TOPI })).toBeInTheDocument()
     expect(screen.getByText('ПТ-420')).toBeInTheDocument()
     const stats = screen.getByRole('group', { name: 'Сводка мира' })
-    expect(within(stats).getByText('Посещений')).toBeInTheDocument()
-    expect(stats).toHaveTextContent('4')
-    expect(stats).toHaveTextContent('2')
-    expect(stats).toHaveTextContent('мин 131')
+    const pairs = within(stats)
+      .getAllByRole('term')
+      .map((term) => [term.textContent, term.nextElementSibling?.textContent])
+    expect(pairs).toEqual([
+      ['Посещений', '4'],
+      ['Открыто сейчас', '2'],
+      ['Последнее', 'мин 131'],
+    ])
   })
 
   it('существа: изучено из всего, общий прогресс и прогресс следующего существа', () => {

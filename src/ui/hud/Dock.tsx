@@ -69,7 +69,7 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
                 color: on ? 'var(--c-on-torch)' : 'var(--c-text-soft)',
                 background: on ? 'var(--c-torch)' : 'var(--c-control)',
                 border: `3px solid ${on ? 'var(--c-torch-light)' : 'var(--c-edge-strong)'}`,
-                boxShadow: 'inset 0 -4px 0 rgba(0,0,0,.35)',
+                boxShadow: 'inset 0 -4px 0 var(--c-bevel)',
               }}
             >
               <svg
