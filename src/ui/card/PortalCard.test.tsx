@@ -121,6 +121,15 @@ describe('PortalCard: критический портал', () => {
     expect(ability('Отозвать наблюдателей')).toHaveAttribute('data-recommended', 'true')
   })
 
+  it('несколько других порталов в мир — по ссылке на каждый', async () => {
+    const third = portal('ПТ-420-3', TOPI, { arch: 5 })
+    const { onOpenPortal } = renderCard(model([critical, sibling, third], 'ПТ-420-1'))
+    expect(screen.getByText(/ещё 2 открытых портала в этот мир:/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'ПТ-420-3' }))
+    expect(onOpenPortal).toHaveBeenCalledWith('ПТ-420-3')
+    expect(screen.getByRole('button', { name: 'ПТ-420-2' })).toBeInTheDocument()
+  })
+
   it('без наблюдателей — «наблюдателей нет», без соседей — без ссылки', () => {
     renderCard(model([high], 'ББ-310-1'))
     expect(screen.getByText('наблюдателей нет')).toBeInTheDocument()
