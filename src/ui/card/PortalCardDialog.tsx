@@ -68,6 +68,8 @@ function Overlay({
 }) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
+  // Нажатие пришлось на само затемнение (а не на карточку)
+  const pressedOverlay = useRef(false)
   // Последний onClose без переподписки на клавиатуру при каждой перерисовке (тики симуляции)
   const closeRef = useRef(onClose)
   const inertRef = useRef(inert)
@@ -116,8 +118,15 @@ function Overlay({
       data-testid="card-overlay"
       inert={inert}
       className="card-overlay"
+      onMouseDown={(e) => {
+        pressedOverlay.current = e.target === e.currentTarget
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        // Закрываем, только если и нажатие, и отпускание пришлись на затемнение: выделение текста
+        // карточки, отпущенное за её краем, её не закрывает
+        const pressed = pressedOverlay.current
+        pressedOverlay.current = false
+        if (pressed && e.target === e.currentTarget) onClose()
       }}
       style={{
         position: 'fixed',
