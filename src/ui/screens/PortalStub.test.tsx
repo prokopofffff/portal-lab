@@ -15,6 +15,7 @@ describe('заглушка карточки портала', () => {
     const { route } = renderScreen(<PortalStub portal="ПТ-420-1" />, storeWithLab(lab), {
       screen: 'portal',
       portal: 'ПТ-420-1',
+      back: { screen: 'hall' },
     })
 
     expect(screen.getByRole('heading', { name: 'ПТ-420-1' })).toBeInTheDocument()

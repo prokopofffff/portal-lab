@@ -6,23 +6,35 @@ import { JournalScreen } from '../ui/screens/JournalScreen'
 import { PortalStub } from '../ui/screens/PortalStub'
 import { WorldScreen } from '../ui/screens/WorldScreen'
 import { useDispatch, useSpeed } from './hooks'
-import { NavigationProvider, useRoute } from './navigation'
+import { baseRoute, NavigationProvider, useRoute, type BaseRoute, type Route } from './navigation'
 
-// Экран по текущему маршруту
-function Screen() {
-  const route = useRoute()
+// Экран без карточки; focus — портал с рамкой фокуса в зале
+function Base({ route, focus }: { route: BaseRoute; focus?: string }) {
   switch (route.screen) {
     case 'hall':
-      return <HallScreen />
+      return <HallScreen focus={focus} />
     case 'atlas':
       return <AtlasScreen />
     case 'world':
       return <WorldScreen world={route.world} />
-    case 'portal':
-      return <PortalStub portal={route.portal} />
     case 'journal':
       return <JournalScreen />
   }
+}
+
+// Экран по текущему маршруту; карточка портала лежит поверх экрана, из которого её открыли
+function Screen() {
+  const route = useRoute()
+  if (route.screen !== 'portal') return <Base route={route} />
+  return (
+    <div style={{ position: 'relative', flex: '1 1 0', display: 'flex', flexDirection: 'column' }}>
+      <Base route={baseRoute(route)} focus={route.portal} />
+      {/* Заглушка до lab-9dr.6: просто слой поверх экрана */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column' }}>
+        <PortalStub portal={route.portal} />
+      </div>
+    </div>
+  )
 }
 
 // Текст диалога-свитка печати из канваса 15-dialogs
@@ -49,9 +61,9 @@ function Shell() {
   )
 }
 
-export function App() {
+export function App({ initialRoute }: { initialRoute?: Route }) {
   return (
-    <NavigationProvider>
+    <NavigationProvider initialRoute={initialRoute}>
       <Shell />
     </NavigationProvider>
   )

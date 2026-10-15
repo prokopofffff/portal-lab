@@ -39,8 +39,28 @@ const archBox: CSSProperties = { position: 'relative', width: ARCH_W, height: 11
 
 const pixelLabel: CSSProperties = { fontFamily: 'var(--f-pixel)', fontSize: 11 }
 
-function Cell({ dimmed, children }: { dimmed: boolean; children: ReactNode }) {
-  return <div style={{ ...cellStyle, opacity: dimmed ? 0.28 : 1 }}>{children}</div>
+// Рамка фокуса вокруг всей ячейки: пунктир у выбранного портала, у остальных прозрачная (ring в канвасе)
+function Cell({
+  dimmed,
+  focused = false,
+  children,
+}: {
+  dimmed: boolean
+  focused?: boolean
+  children: ReactNode
+}) {
+  return (
+    <div
+      style={{
+        ...cellStyle,
+        opacity: dimmed ? 0.28 : 1,
+        outline: focused ? '3px dashed var(--c-torch-light)' : '3px solid transparent',
+        outlineOffset: -4,
+      }}
+    >
+      {children}
+    </div>
+  )
 }
 
 /** Полоска таблички: подпись, сегменты через 2 px и число справа. */
@@ -359,14 +379,16 @@ function AcceptedFlag() {
 export function PortalArch({
   cell,
   dimmed,
+  focused,
   onOpen,
 }: {
   cell: PortalCell
   dimmed: boolean
+  focused: boolean
   onOpen: () => void
 }) {
   return (
-    <Cell dimmed={dimmed}>
+    <Cell dimmed={dimmed} focused={focused}>
       <div
         aria-hidden="true"
         style={{

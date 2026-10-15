@@ -4,10 +4,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { labWith, logEntry, portal, storeWithLab, world } from '../test/labFixtures'
 import { App } from './App'
 import { LabStoreProvider } from './hooks'
+import type { Route } from './navigation'
 
 const TOPI = 'Пепельные Топи'
 
-function renderApp() {
+function renderApp(initialRoute?: Route) {
   const store = storeWithLab(
     labWith({
       worlds: { [TOPI]: world(TOPI, 'ПТ-420', { studied: 3, visits: 2, lastVisit: 131 }) },
@@ -19,7 +20,7 @@ function renderApp() {
     store,
     ...render(
       <LabStoreProvider store={store}>
-        <App />
+        <App initialRoute={initialRoute} />
       </LabStoreProvider>,
     ),
   }
@@ -81,6 +82,37 @@ describe('App: переходы между экранами', () => {
 
     await userEvent.click(screen.getByRole('link', { name: '← Атлас миров' }))
     expect(screen.getByRole('heading', { name: 'АТЛАС МИРОВ' })).toBeInTheDocument()
+  })
+})
+
+describe('App: карточка портала поверх экрана', () => {
+  const ring = (name: string) =>
+    screen.getByText(name, { selector: 'span' }).closest('main > div > div') as HTMLElement
+
+  it('из зала: зал остаётся под карточкой, у её арки рамка фокуса', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' }))
+
+    expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'ПТ-420-1' })).toBeInTheDocument()
+    expect(ring('ПТ-420-1').style.outline).toBe('3px dashed var(--c-torch-light)')
+  })
+
+  it('маршрут без back: под карточкой зал с рамкой на её портале', () => {
+    renderApp({ screen: 'portal', portal: 'ПТ-420-1' })
+
+    expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+    expect(ring('ПТ-420-1').style.outline).toBe('3px dashed var(--c-torch-light)')
+  })
+
+  it('из мира: под карточкой страница мира, а не зал', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('link', { name: 'Атлас миров' }))
+    await userEvent.click(screen.getByRole('link', { name: /Страница мира/ }))
+    await userEvent.click(screen.getByRole('link', { name: /ПТ-420-1/ }))
+
+    expect(screen.getByRole('heading', { level: 1, name: TOPI })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Лаборатория порталов' })).toBeNull()
   })
 })
 

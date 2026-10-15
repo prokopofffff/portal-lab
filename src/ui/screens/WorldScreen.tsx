@@ -70,7 +70,11 @@ function PortalRow({ portal }: { portal: Portal }) {
   const level = assessment?.level
   return (
     <RouteLink
-      to={{ screen: 'portal', portal: portal.name }}
+      to={{
+        screen: 'portal',
+        portal: portal.name,
+        back: { screen: 'world', world: portal.world },
+      }}
       className="px-notch"
       style={{
         display: 'flex',

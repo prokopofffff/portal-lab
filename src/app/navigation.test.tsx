@@ -1,7 +1,7 @@
 import { act, render, renderHook, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import { NavigationProvider, useNavigate, useRoute, type Route } from './navigation'
+import { baseRoute, NavigationProvider, useNavigate, useRoute, type Route } from './navigation'
 
 function wrapper(initialRoute?: Route) {
   return ({ children }: { children: ReactNode }) => (
@@ -38,6 +38,49 @@ describe('навигация между экранами', () => {
     act(() => screen.getByRole('button').click())
 
     expect(screen.getByRole('button')).toHaveTextContent('portal')
+  })
+
+  it('карточка хранит экран под собой; вложенную карточку в back разворачивает до него', () => {
+    const { result } = renderHook(() => ({ route: useRoute(), navigate: useNavigate() }), {
+      wrapper: wrapper(),
+    })
+    act(() =>
+      result.current.navigate({
+        screen: 'portal',
+        portal: 'ПТ-420-2',
+        back: {
+          screen: 'portal',
+          portal: 'ПТ-420-1',
+          back: { screen: 'world', world: 'Пепельные Топи' },
+        },
+      }),
+    )
+    expect(result.current.route).toEqual({
+      screen: 'portal',
+      portal: 'ПТ-420-2',
+      back: { screen: 'world', world: 'Пепельные Топи' },
+    })
+
+    act(() =>
+      result.current.navigate({
+        screen: 'portal',
+        portal: 'ПТ-420-2',
+        back: { screen: 'portal', portal: 'ПТ-420-1' },
+      }),
+    )
+    expect(result.current.route).toEqual({
+      screen: 'portal',
+      portal: 'ПТ-420-2',
+      back: { screen: 'hall' },
+    })
+  })
+
+  it('baseRoute: без back под карточкой зал, у остальных экранов — он сам', () => {
+    expect(baseRoute({ screen: 'portal', portal: 'ПТ-420-1' })).toEqual({ screen: 'hall' })
+    expect(baseRoute({ screen: 'atlas' })).toEqual({ screen: 'atlas' })
+    expect(
+      baseRoute({ screen: 'portal', portal: 'ПТ-420-1', back: { screen: 'journal' } }),
+    ).toEqual({ screen: 'journal' })
   })
 
   it('navigate не меняет ссылку между перерисовками', () => {

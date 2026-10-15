@@ -157,8 +157,11 @@ function useDepartures(lab: Lab): [Departure[], (name: string) => void] {
   return [leaving, finish]
 }
 
-/** Зал лаборатории (spec §9, канвас 00–03-hall): 12 арок — лимит открытых порталов. */
-export function HallScreen() {
+/**
+ * Зал лаборатории (spec §9, канвас 00–03-hall): 12 арок — лимит открытых порталов.
+ * focus — портал, чья карточка открыта: его арка обведена пунктиром.
+ */
+export function HallScreen({ focus }: { focus?: string }) {
   const lab = useLabSelector((state) => state.lab)
   const [speed] = useSpeed()
   const dispatch = useDispatch()
@@ -267,7 +270,10 @@ export function HallScreen() {
                 key={cell.name}
                 cell={cell}
                 dimmed={onlyQuestioned && !cell.questioned}
-                onOpen={() => navigate({ screen: 'portal', portal: cell.name })}
+                focused={cell.name === focus}
+                onOpen={() =>
+                  navigate({ screen: 'portal', portal: cell.name, back: { screen: 'hall' } })
+                }
               />
             )
           }

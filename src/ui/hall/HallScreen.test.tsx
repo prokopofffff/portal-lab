@@ -131,7 +131,22 @@ describe('Зал: обычная работа', () => {
   it('клик по порталу открывает его карточку', async () => {
     const { route } = renderHall()
     await userEvent.click(screen.getByRole('button', { name: 'Открыть карточку портала ББ-310-1' }))
-    expect(route()).toEqual({ screen: 'portal', portal: 'ББ-310-1' })
+    expect(route()).toEqual({ screen: 'portal', portal: 'ББ-310-1', back: { screen: 'hall' } })
+  })
+
+  it('рамка фокуса: пунктир только у ячейки выбранного портала', () => {
+    const store = storeWithLab(labWith({ worlds, portals: work }))
+    renderScreen(<HallScreen focus="ШЗ-793-1" />, store)
+
+    expect(plateOf('ШЗ-793-1').style.outline).toBe('3px dashed var(--c-torch-light)')
+    expect(plateOf('ПТ-420-1').style.outline).toBe('3px solid transparent')
+    expect(plateOf('ББ-310-1').style.outline).toBe('3px solid transparent')
+  })
+
+  it('без focus рамки нет ни у кого', () => {
+    renderHall()
+
+    expect(plateOf('ПТ-420-1').style.outline).toBe('3px solid transparent')
   })
 
   it('фильтр «Под вопросом» приглушает остальные арки, в том числе пустые', async () => {
