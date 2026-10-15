@@ -15,9 +15,10 @@
   .scroll-backdrop {
     padding: 24px 16px;
   }
+  /* Ширина от столбца затемнения (его отступы по 16 px), а не от 100vw: полоса прокрутки окна не режет её */
   .scroll-dialog {
-    width: min(420px, 100vw - 32px);
-    max-width: none;
+    width: 100%;
+    max-width: 420px;
   }
 }
 

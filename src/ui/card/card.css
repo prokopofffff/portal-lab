@@ -135,8 +135,13 @@
     padding: 60px 8px 20px;
     scroll-padding-top: 60px;
   }
+  /* Ширина от столбца затемнения, а не от 100vw: классическая полоса прокрутки окна не режет её */
+  .card-dialog {
+    width: 100%;
+    max-width: 600px;
+  }
   .card-frame {
-    width: min(600px, 100vw - 16px);
+    width: 100%;
   }
   .card-close {
     top: auto;

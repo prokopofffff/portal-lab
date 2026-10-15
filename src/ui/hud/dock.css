@@ -42,7 +42,6 @@
 @media (max-width: 900px) {
   .dock {
     height: auto;
-    justify-content: stretch;
     gap: 8px;
     padding: 4px 12px;
   }
