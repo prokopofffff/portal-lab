@@ -25,6 +25,8 @@ interface KindLook {
   dark: string
   ic: string
   title: string
+  // заголовок для области озвучивания: обычным регистром, прописные читалки порой читают по буквам
+  spoken: string
   // значок 8×8 (icon канваса)
   icon: string
 }
@@ -40,26 +42,31 @@ const KINDS: Record<BannerKind, KindLook> = {
   refuse: {
     ...color('refuse'),
     title: 'ОТКАЗ',
+    spoken: 'Отказ',
     icon: 'M0,0h2v2h-2z M6,0h2v2h-2z M2,2h2v2h-2z M4,2h2v2h-2z M2,4h2v2h-2z M4,4h2v2h-2z M0,6h2v2h-2z M6,6h2v2h-2z',
   },
   collapse: {
     ...color('collapse'),
     title: 'ПОРТАЛ СХЛОПНУЛСЯ',
+    spoken: 'Портал схлопнулся',
     icon: 'M2,0h4v1h-4z M1,1h1v1h-1z M6,1h1v1h-1z M0,2h1v4h-1z M7,2h1v4h-1z M1,6h1v1h-1z M6,6h1v1h-1z M2,7h4v1h-4z M3,3h2v2h-2z',
   },
   lost: {
     ...color('lost'),
     title: 'НАБЛЮДАТЕЛИ ПОТЕРЯНЫ',
+    spoken: 'Наблюдатели потеряны',
     icon: 'M2,0h4v1h-4z M1,1h6v7h-6z M3,2h2v1h-2z M2,3h4v1h-4z M3,4h2v3h-2z',
   },
   studied: {
     ...color('studied'),
     title: 'МИР ИЗУЧЕН',
+    spoken: 'Мир изучен',
     icon: 'M3,0h2v1h-2z M3,1h2v2h-2z M0,3h8v1h-8z M1,4h6v1h-6z M2,5h4v1h-4z M1,6h2v2h-2z M5,6h2v2h-2z',
   },
   hired: {
     ...color('hired'),
     title: 'НАЁМ ЗАВЕРШЁН',
+    spoken: 'Наём завершён',
     icon: 'M2,0h4v1h-4z M1,1h6v1h-6z M1,2h1v3h-1z M6,2h1v3h-1z M1,5h6v1h-6z M0,6h8v2h-8z',
   },
 }
@@ -440,7 +447,10 @@ export function NotificationStack({ cardOpen = false }: { cardOpen?: boolean }) 
         {notifications
           .filter((n) => n.kind !== 'refuse')
           .map((n) => (
-            <p key={n.id}>{n.text}</p>
+            // Вид баннера словами: без него «ПТ-420-1 (Пепельные Топи)» не говорит, что случилось
+            <p key={n.id}>
+              {KINDS[n.kind].spoken}. {n.text}
+            </p>
           ))}
       </div>
       <div

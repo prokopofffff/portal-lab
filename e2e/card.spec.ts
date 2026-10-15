@@ -227,3 +227,16 @@ test('«Под вопросом»: заметка в свитке, протяж�
   await expect(card).toHaveCount(0)
   await expect(page.getByLabel('Под вопросом', { exact: true })).toHaveCount(1)
 })
+
+test('на десктопе карточка открывается в 20 px от верха, затемнение не прокручено', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 800 })
+  const name = await criticalPortal(page)
+  await page.getByRole('button', { name: `Открыть карточку портала ${name}` }).click()
+  const card = page.getByRole('dialog', { name })
+  await expect(card).toBeFocused()
+  // Как в кадре 04-card-critical (top: 20px): фокус на диалоге выше окна не прокручивает затемнение
+  expect(await page.getByTestId('card-overlay').evaluate((el) => el.scrollTop)).toBe(0)
+  expect((await card.boundingBox())!.y).toBeCloseTo(20, 0)
+})
