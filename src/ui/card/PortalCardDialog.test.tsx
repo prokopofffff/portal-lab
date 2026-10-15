@@ -1,4 +1,4 @@
-import { act, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Route } from '../../app/navigation'
@@ -65,6 +65,22 @@ describe('PortalCardDialog: диалог', () => {
     expect(route().screen).toBe('portal')
 
     await userEvent.click(screen.getByTestId('card-overlay'))
+    expect(route()).toEqual(back)
+  })
+
+  it('выделение, начатое в карточке и отпущенное на затемнении, не закрывает', () => {
+    const { route } = renderDialog('ПТ-420-1')
+    const overlay = screen.getByTestId('card-overlay')
+    // Браузер отдаёт click общему предку нажатия и отпускания — здесь это затемнение
+    fireEvent.mouseDown(screen.getByRole('heading', { name: 'ПТ-420-1' }))
+    fireEvent.mouseUp(overlay)
+    fireEvent.click(overlay)
+    expect(route().screen).toBe('portal')
+
+    // Следующее нажатие прямо на затемнении снова закрывает
+    fireEvent.mouseDown(overlay)
+    fireEvent.mouseUp(overlay)
+    fireEvent.click(overlay)
     expect(route()).toEqual(back)
   })
 

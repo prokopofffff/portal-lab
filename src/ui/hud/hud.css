@@ -28,6 +28,8 @@
   padding: 0 20px;
 }
 .hud-clock {
+  /* Время растёт до пяти цифр — часы не сжимаются, а раздвигают остальное */
+  flex: none;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -42,18 +44,81 @@
   align-items: flex-start;
   gap: 8px;
 }
+.hud-slot {
+  width: 64px;
+}
+.hud-lost {
+  margin-left: 4px;
+}
+.hud-hire {
+  margin-left: 4px;
+  padding: 0 12px;
+  gap: 8px;
+}
 .hud-spacer {
   flex: 1 1 0;
   min-width: 0;
 }
+/* Сетка счётчиков 420 px, колонки поровну; когда места мало, сжимается, но не уже содержимого
+   колонок: подписи и числа не переносятся и не вылезают за рамку */
 .hud-stats {
+  margin: 0;
   width: 420px;
+  grid-template-columns: repeat(3, minmax(max-content, 1fr));
+  gap: 6px;
 }
 .hud-stat {
   height: 46px;
+  padding: 4px 8px;
 }
-.hud-hire {
-  margin-left: 4px;
+
+/* Десктоп уже канваса (1280–1439 px): содержимое HUD при значениях канваса занимает до ~1420 px.
+   Ужимаем отступы; слоты (подписи в них впритык), спрайты, шрифты и высота те же. На 1280 px
+   помещается четырёхзначное время при обычных счётчиках. Если не поместилось (уже или числа
+   больше), счётчики уходят второй строкой к правому краю, а не в горизонтальную прокрутку */
+@media (min-width: 901px) and (max-width: 1439px) {
+  .hud {
+    flex-wrap: wrap;
+    align-content: center;
+    height: auto;
+    min-height: 112px;
+    gap: 8px 6px;
+    padding: 8px 12px;
+  }
+  .hud-clock {
+    gap: 8px;
+  }
+  .hud-speed-btn {
+    width: 40px;
+  }
+  .hud-slots {
+    gap: 6px;
+  }
+  .hud-lost {
+    margin-left: 0;
+  }
+  .hud-hire {
+    margin-left: 0;
+    padding: 0 8px;
+    gap: 6px;
+  }
+  /* Свободное место сначала сетке счётчиков (до 420 px), остаток — отступу слева от неё */
+  .hud-spacer {
+    flex-grow: 0;
+  }
+  /* Строку переносят по базовому размеру: база — по содержимому колонок (1fr уравнял бы их по
+     самой широкой), дальше сетка растёт до 420 px */
+  .hud-stats {
+    grid-template-columns: repeat(3, auto);
+    flex: 1 1 auto;
+    width: auto;
+    max-width: 420px;
+    margin-left: auto;
+    gap: 4px;
+  }
+  .hud-stat {
+    padding: 4px 5px;
+  }
 }
 
 /* Узкий экран (брейкпоинт всех узких раскладок): HUD переносится строками. 1) время и скорость,
@@ -82,6 +147,10 @@
     flex: 1 1 100%;
     width: auto;
     min-width: 0;
+  }
+  /* Колонки поровну на всю ширину, длинная подпись переносится в две строки */
+  .hud-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .hud-slots {
     flex-wrap: wrap;

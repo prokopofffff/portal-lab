@@ -164,13 +164,8 @@ function Slot({ kind, progress }: { kind: SlotKind; progress: number }) {
     <div
       role="img"
       aria-label={SLOT_TEXT[kind].aria}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        width: 64,
-      }}
+      className="hud-slot"
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}
     >
       <div
         style={{
@@ -267,14 +262,8 @@ function Lost({ lost }: { lost: number }) {
     <div
       role="img"
       aria-label={`Потеряно наблюдателей: ${lost}`}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        width: 64,
-        marginLeft: 4,
-      }}
+      className="hud-slot hud-lost"
+      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 44 }}>
         <svg
@@ -318,7 +307,6 @@ function HireButton({ rejection }: { rejection: string | null }) {
       style={{
         alignSelf: 'flex-start',
         height: 44,
-        padding: '0 12px',
         boxSizing: 'border-box',
         fontFamily: 'var(--f-ui)',
         fontWeight: 600,
@@ -330,7 +318,6 @@ function HireButton({ rejection }: { rejection: string | null }) {
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
         opacity: rejection !== null ? 0.5 : 1,
       }}
     >
@@ -361,7 +348,6 @@ function Stat({ label, value, alert }: HudStat) {
       className="hud-stat"
       style={{
         boxSizing: 'border-box',
-        padding: '4px 8px',
         background: 'var(--c-well)',
         border: `3px solid ${look.bd}`,
         boxShadow: 'inset 0 3px 0 rgba(255,255,255,.05)',
@@ -429,15 +415,7 @@ export function Hud() {
         </div>
       </div>
       <div className="hud-spacer" />
-      <dl
-        className="hud-stats"
-        style={{
-          margin: 0,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3,minmax(0,1fr))',
-          gap: 6,
-        }}
-      >
+      <dl className="hud-stats" style={{ display: 'grid' }}>
         {hudStats(summary).map((s) => (
           <Stat key={s.label} {...s} />
         ))}
