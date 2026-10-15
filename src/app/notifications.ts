@@ -1,6 +1,6 @@
 // Очередь уведомлений-баннеров (канвас 16-banners, 24-c-banner): отказы команд и события тика.
 import type { TickEvent } from '../domain'
-import { observersNoun } from '../domain/plural'
+import { creaturesNoun, observersNoun } from '../domain/plural'
 
 export type NotificationKind = 'refuse' | 'collapse' | 'lost' | 'studied' | 'hired'
 
@@ -30,7 +30,8 @@ function fromEvent(event: TickEvent): Omit<Notification, 'id'> | null {
     case 'worldStudied':
       return {
         kind: 'studied',
-        text: `${event.world} изучен полностью — ${event.creatures} из ${event.creatures} существ`,
+        // «Мир» впереди, чтобы «изучен» согласовывалось с ним, а не с названием («Янтарный Сад», «Пепельные Пустоши»)
+        text: `Мир ${event.world} изучен полностью — ${event.creatures} из ${event.creatures} ${creaturesNoun(event.creatures)}`,
       }
     case 'hireCompleted':
       return { kind: 'hired', text: 'Новый наблюдатель прибыл в лабораторию и свободен' }

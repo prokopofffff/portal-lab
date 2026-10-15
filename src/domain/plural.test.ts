@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { observersNoun } from './plural'
+import { creaturesNoun, observersNoun } from './plural'
 
 describe('observersNoun: склонение «наблюдатель» по числу', () => {
   it.each([
@@ -15,5 +15,21 @@ describe('observersNoun: склонение «наблюдатель» по чи
     [25, 'наблюдателей'],
   ])('%i → «%s»', (n, noun) => {
     expect(observersNoun(n)).toBe(noun)
+  })
+})
+
+describe('creaturesNoun: склонение «существо» по числу', () => {
+  it.each([
+    [1, 'существо'],
+    [2, 'существа'],
+    [4, 'существа'],
+    [5, 'существ'],
+    [11, 'существ'],
+    [12, 'существ'],
+    [21, 'существо'],
+    [22, 'существа'],
+    [25, 'существ'],
+  ])('%i → «%s»', (n, noun) => {
+    expect(creaturesNoun(n)).toBe(noun)
   })
 })

@@ -27,15 +27,22 @@ describe('notificationsFromTick: события тика в уведомлени
     expect(notificationsFromTick(events)).toEqual([{ kind: 'lost', text }])
   })
 
-  it('worldStudied — studied', () => {
-    const events: TickEvent[] = [
-      { type: 'worldStudied', world: 'Янтарный Сад', creatures: 7, returned: 1 },
-    ]
+  it.each([
+    [1, 'Мир Пепельные Пустоши изучен полностью — 1 из 1 существо'],
+    [2, 'Мир Пепельные Пустоши изучен полностью — 2 из 2 существа'],
+    [5, 'Мир Пепельные Пустоши изучен полностью — 5 из 5 существ'],
+    [11, 'Мир Пепельные Пустоши изучен полностью — 11 из 11 существ'],
+    [21, 'Мир Пепельные Пустоши изучен полностью — 21 из 21 существо'],
+  ])(
+    'worldStudied при %i существах — studied с «Мир» впереди и согласованным существительным',
+    (creatures, text) => {
+      const events: TickEvent[] = [
+        { type: 'worldStudied', world: 'Пепельные Пустоши', creatures, returned: 1 },
+      ]
 
-    expect(notificationsFromTick(events)).toEqual([
-      { kind: 'studied', text: 'Янтарный Сад изучен полностью — 7 из 7 существ' },
-    ])
-  })
+      expect(notificationsFromTick(events)).toEqual([{ kind: 'studied', text }])
+    },
+  )
 
   it('hireCompleted — hired', () => {
     expect(notificationsFromTick([{ type: 'hireCompleted' }])).toEqual([
