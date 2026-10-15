@@ -80,6 +80,12 @@ describe('ScrollDialog: кнопки и фон', () => {
     fireEvent.click(backdrop)
     expect(onCancel).not.toHaveBeenCalled()
 
+    // Нажатие на затемнении, отпущенное на свитке, тоже не отменяет
+    fireEvent.mouseDown(backdrop)
+    fireEvent.mouseUp(screen.getByRole('dialog'))
+    fireEvent.click(backdrop)
+    expect(onCancel).not.toHaveBeenCalled()
+
     // Следующее нажатие прямо на затемнении снова отменяет
     fireEvent.mouseDown(backdrop)
     fireEvent.mouseUp(backdrop)
@@ -129,6 +135,31 @@ describe('ScrollDialog: клавиатура и фокус', () => {
     expect(field).toHaveFocus()
     await userEvent.tab({ shift: true }) // с поля (первого) назад — на «Отмена»
     expect(cancel).toHaveFocus()
+  })
+
+  it('фокус вне свитка (баннер над ним, body): Tab и Shift+Tab возвращают его в свиток', async () => {
+    renderScroll()
+    // Кнопки после свитка в порядке обхода: без ловушки Tab с первой ушёл бы на вторую
+    render(
+      <>
+        <button>Баннер</button>
+        <button>Закрыть баннер</button>
+      </>,
+    )
+    const ok = screen.getByRole('button', { name: 'Запечатать' })
+    const cancel = screen.getByRole('button', { name: 'Отмена' })
+
+    screen.getByRole('button', { name: 'Баннер' }).focus()
+    await userEvent.tab()
+    expect(ok).toHaveFocus()
+
+    screen.getByRole('button', { name: 'Закрыть баннер' }).focus()
+    await userEvent.tab({ shift: true })
+    expect(cancel).toHaveFocus()
+
+    ;(document.activeElement as HTMLElement).blur()
+    await userEvent.tab()
+    expect(ok).toHaveFocus()
   })
 
   it('Esc — отмена', async () => {

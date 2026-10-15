@@ -4,7 +4,6 @@ import {
   useLayoutEffect,
   useRef,
   type CSSProperties,
-  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
   type RefObject,
 } from 'react'
@@ -95,8 +94,9 @@ export function ScrollDialog({
   const dialogRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const initialRef = useRef(initialFocus)
-  // Нажатие мыши пришлось прямо на затемнение (а не на свиток)
+  // Нажатие и отпускание мыши пришлись прямо на затемнение (а не на свиток)
   const pressedBackdrop = useRef(false)
+  const releasedBackdrop = useRef(false)
   // Последний onCancel без переподписки на клавиатуру при каждой перерисовке
   const cancelHandler = useRef(onCancel)
   useEffect(() => {
@@ -119,35 +119,38 @@ export function ScrollDialog({
     }
   }, [])
 
-  // Esc ловим на document в фазе перехвата: сработает и когда фокус на body, и раньше слушателя
-  // карточки портала (он на document в фазе всплытия и пропускает defaultPrevented)
+  // Клавиши ловим на document в фазе перехвата: сработают, где бы ни был фокус (на body после клика
+  // по затемнению, на баннере над свитком), и раньше слушателя карточки портала (он на document
+  // в фазе всплытия и пропускает defaultPrevented)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      e.preventDefault()
-      e.stopPropagation()
-      cancelHandler.current()
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        e.stopPropagation()
+        cancelHandler.current()
+      } else if (e.key === 'Tab') trapTab(e)
+    }
+    // Ловушка фокуса: Tab с последнего элемента идёт на первый, Shift+Tab с первого — на последний;
+    // фокус вне свитка Tab возвращает в него
+    const trapTab = (e: KeyboardEvent) => {
+      const dialog = dialogRef.current
+      const items = Array.from(dialog?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])
+      const first = items[0]
+      const last = items.at(-1)
+      if (!first || !last) return
+      const active = document.activeElement
+      const outside = !dialog?.contains(active)
+      if (e.shiftKey && (active === first || outside)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && (active === last || outside)) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKey, true)
     return () => document.removeEventListener('keydown', onKey, true)
   }, [])
-
-  // Ловушка фокуса: Tab с последнего элемента идёт на первый, Shift+Tab с первого — на последний
-  const trapTab = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab') return
-    const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])
-    const first = items[0]
-    const last = items.at(-1)
-    if (!first || !last) return
-    const active = document.activeElement
-    if (e.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && (active === last || !dialogRef.current?.contains(active))) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
 
   const ok = okColors[okTone]
   return createPortal(
@@ -157,12 +160,17 @@ export function ScrollDialog({
       onMouseDown={(e) => {
         pressedBackdrop.current = e.target === e.currentTarget
       }}
+      onMouseUp={(e) => {
+        releasedBackdrop.current = e.target === e.currentTarget
+      }}
       onClick={(e) => {
-        // Отмена, только если и нажатие, и отпускание пришлись на затемнение: выделение текста
-        // заметки, отпущенное за краем свитка, её не теряет
-        const pressed = pressedBackdrop.current
+        // Отмена, только если и нажатие, и отпускание пришлись на затемнение. Браузер отдаёт click
+        // общему предку нажатия и отпускания, поэтому его цель — затемнение и тогда, когда
+        // выделение заметки отпущено за краем свитка или нажатие на затемнении отпущено на свитке
+        const clicked = pressedBackdrop.current && releasedBackdrop.current
         pressedBackdrop.current = false
-        if (pressed && e.target === e.currentTarget) onCancel()
+        releasedBackdrop.current = false
+        if (clicked && e.target === e.currentTarget) onCancel()
       }}
       style={{
         position: 'fixed',
@@ -180,7 +188,6 @@ export function ScrollDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={textId}
-        onKeyDown={trapTab}
         style={{
           margin: 'auto',
           display: 'flex',
