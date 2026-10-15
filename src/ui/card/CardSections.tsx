@@ -274,6 +274,8 @@ export function History({ history }: { history: CardHistoryEntry[] }) {
         <button
           type="button"
           className="card-link"
+          // Имя постоянное, состояние объявляет aria-expanded (в тексте оно повторилось бы)
+          aria-label="свиток истории"
           aria-expanded={expanded}
           aria-controls={listId}
           onClick={() => setExpanded((v) => !v)}

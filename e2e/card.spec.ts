@@ -101,6 +101,36 @@ test('с клавиатуры: фокус в карточке, под ней н�
   await expect(note).toBeFocused()
 })
 
+test('подсказка отказа от наведения: курсор переходит на неё, Esc прячет без закрытия карточки', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  const name = await criticalPortal(page)
+  await page.getByRole('button', { name: `Открыть карточку портала ${name}` }).click()
+  const dialog = page.getByRole('dialog', { name })
+  const send = dialog
+    .getByRole('group', { name: 'Способности' })
+    .getByRole('button', { name: 'Отправить наблюдателя' })
+  await expect(send).toHaveAttribute('aria-disabled', 'true')
+  const tip = page.getByRole('tooltip')
+
+  // Курсор с кнопки вверх на подсказку, через зазор между ними: подсказка не пропадает (WCAG 1.4.13)
+  const button = (await send.boundingBox())!
+  await page.mouse.move(button.x + button.width / 2, button.y + button.height / 2)
+  await expect(tip).toBeVisible()
+  const box = (await tip.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 10 })
+  await expect(tip).toBeVisible()
+
+  // Фокус на диалоге, не на кнопке: Esc прячет подсказку, карточка остаётся; следующий — закрывает
+  await expect(dialog).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(tip).toHaveCount(0)
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toHaveCount(0)
+})
+
 test('крестик и клик по затемнению закрывают карточку', async ({ page }) => {
   const name = await criticalPortal(page)
   const arch = page.getByRole('button', { name: `Открыть карточку портала ${name}` })

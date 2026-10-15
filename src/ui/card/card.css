@@ -52,6 +52,17 @@
   outline-offset: 2px;
 }
 
+/* Мостик через 10 px зазора (и 3 px рамки) между подсказкой отказа и кнопкой: курсор идёт с кнопки
+   на подсказку, не покидая слот */
+.card-ability-tip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 13px;
+}
+
 /* Ширина карточки (и заглушки «не найден»): 600 px, как в канвасе */
 .card-frame {
   width: 600px;
