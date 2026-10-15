@@ -1,6 +1,12 @@
 // Двенадцать арок зала из лаборатории (docs/spec.md §9): что стоит в каждой арке и что написано на табличке
-import { assessRisk, CONFIG, type Lab, type Portal, type RiskLevel } from '../../domain'
-import { worldStats } from '../screens/worldStats'
+import {
+  assessRisk,
+  CONFIG,
+  worldStats,
+  type Lab,
+  type Portal,
+  type RiskLevel,
+} from '../../domain'
 
 export const ARCH_COUNT = CONFIG.maxOpenPortals
 

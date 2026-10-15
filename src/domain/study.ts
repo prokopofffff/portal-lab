@@ -1,5 +1,6 @@
-// Числа мира для атласа и страницы мира: считаются из порталов, в мире не хранятся (docs/spec.md §9)
-import { CONFIG, type Lab, type Portal, type World } from '../../domain'
+// Изучение мира в числах (docs/spec.md §4, §9): считается из порталов, в мире не хранится.
+import { CONFIG } from './config'
+import type { Lab, Portal, World } from './lab'
 
 export interface WorldStats {
   // Открытых порталов в мир
@@ -14,6 +15,12 @@ export interface WorldStats {
   nextBarPct: number
 }
 
+// Прогресс изучения существа порталом, %. Потолок 99: на 100 существо уже изучено
+// и прогресс переходит на следующее
+export function creaturePct(studyProgress: number): number {
+  return Math.min(99, Math.round((studyProgress / CONFIG.study.observerTicksPerCreature) * 100))
+}
+
 // Порталы в мир: открытые и архив закрытых и схлопнувшихся, в порядке открытия
 export function worldPortals(lab: Lab, worldName: string): Portal[] {
   return lab.portals.filter((p) => p.world === worldName)
@@ -24,9 +31,7 @@ export function worldStats(lab: Lab, world: World): WorldStats {
   const full = world.creatures > 0 && world.studied >= world.creatures
   const donePct = world.creatures > 0 ? Math.round((world.studied / world.creatures) * 100) : 0
   const best = open.reduce((max, p) => Math.max(max, p.studyProgress), 0)
-  const nextPct = full
-    ? 0
-    : Math.min(99, Math.round((best / CONFIG.study.observerTicksPerCreature) * 100))
+  const nextPct = full ? 0 : creaturePct(best)
   const nextBarPct = world.creatures > 0 && !full ? nextPct / world.creatures : 0
   return { open: open.length, full, donePct, nextPct, nextBarPct }
 }

@@ -1,11 +1,10 @@
 import { useState, type CSSProperties } from 'react'
 import { useLabSelector } from '../../app/hooks'
-import type { World } from '../../domain'
+import { worldStats, type World, type WorldStats } from '../../domain'
 import { Creatures } from '../sprites'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
 import { WorldProgress } from './WorldProgress'
-import { worldStats, type WorldStats } from './worldStats'
 import './screens.css'
 
 // Иконка атласа 9×9 из канваса; у пустого атласа она приглушена

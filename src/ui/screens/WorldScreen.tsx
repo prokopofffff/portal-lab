@@ -4,10 +4,13 @@ import {
   assessRisk,
   creatureName,
   filterLog,
+  worldPortals,
+  worldStats,
   type Lab,
   type LogEntry,
   type Portal,
   type World,
+  type WorldStats,
 } from '../../domain'
 import { creatureColors, risk, sprite } from '../theme/tokens'
 import { Creatures, Portal as PortalSprite, Rune } from '../sprites'
@@ -15,7 +18,6 @@ import { CREATURE_BODIES, UNKNOWN_CREATURE } from '../sprites/creatureGlyphs'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
 import { WorldProgress } from './WorldProgress'
-import { worldPortals, worldStats, type WorldStats } from './worldStats'
 import './screens.css'
 
 // Стрелка «изучение общее» 8×8 из канваса
