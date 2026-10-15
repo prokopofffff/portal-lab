@@ -24,7 +24,14 @@ const lab = labWith({
     }),
     portal('ПТ-420-2', TOPI, { arch: 1 }),
     portal('ПТ-420-3', TOPI, { status: 'closed', arch: 2 }),
-    portal('ПТ-420-4', TOPI, { status: 'collapsed', arch: 3 }),
+    // Схлопнулся на критическом: стабильность и время на нуле
+    portal('ПТ-420-4', TOPI, {
+      status: 'collapsed',
+      arch: 3,
+      energy: 77,
+      stability: 0,
+      timeLeft: 0,
+    }),
     portal('ББ-310-1', 'Багровая Бездна', { arch: 4 }),
   ],
   log: [
@@ -137,19 +144,31 @@ describe('Страница мира (spec §9)', () => {
     expect(calm).toHaveTextContent('НИЗКИЙ · 20')
   })
 
-  it('архив: закрытый и схлопнувшийся портал без риска и без времени', () => {
+  it('архив: штамп своего статуса и последний риск, без времени (кадр 08)', () => {
     renderWorld()
 
     const closed = row('ПТ-420-3')
     expect(closed).toHaveTextContent('Закрыт')
-    expect(closed).toHaveTextContent('ЗАКРЫТ / СХЛОПНУЛСЯ')
+    expect(closed).not.toHaveTextContent('СХЛОПНУЛСЯ')
     expect(closed).not.toHaveTextContent('схлопнется через')
     expect(within(closed).getByRole('img', { name: 'Портал погас' })).toBeInTheDocument()
-    expect(closed).not.toHaveTextContent(/·\s*\d+/)
+    expect(within(closed).getByText('ЗАКРЫТ')).toHaveAttribute('aria-hidden', 'true')
+    expect(within(closed).getByText('Последний риск: Низкий · 20')).toBeInTheDocument()
 
     const collapsed = row('ПТ-420-4')
     expect(collapsed).toHaveTextContent('Схлопнулся')
+    expect(within(collapsed).getByText('СХЛОПНУЛСЯ')).toHaveAttribute('aria-hidden', 'true')
+    expect(within(collapsed).getByText('Последний риск: Критический · 93')).toBeInTheDocument()
     expect(collapsed).not.toHaveTextContent('КРИТИЧЕСКИЙ')
+  })
+
+  it('плашка открытого: слово, «·» и балл — отдельные элементы, как в кадре 12', () => {
+    renderWorld()
+
+    const word = within(row('ПТ-420-1')).getByText('КРИТИЧЕСКИЙ')
+    const plate = word.parentElement!
+    expect(plate).toHaveStyle({ display: 'flex', gap: '8px' })
+    expect([...plate.children].map((c) => c.textContent)).toEqual(['', 'КРИТИЧЕСКИЙ', '·', '91'])
   })
 
   it('открытые порталы идут раньше архива', () => {
@@ -164,9 +183,7 @@ describe('Страница мира (spec §9)', () => {
   it('изучение общее: плашка, когда в мир открыто несколько порталов', () => {
     renderWorld()
 
-    expect(
-      screen.getByText('Изучение общее для обоих открытых порталов: 3 из 9'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Изучение общее для обоих порталов: 3 из 9')).toBeInTheDocument()
   })
 
   it('плашки нет, если открыт один портал', () => {
@@ -202,10 +219,12 @@ describe('Страница мира (spec §9)', () => {
     })
   })
 
-  it('пустая история мира не ломает страницу', () => {
+  it('пустая история мира: подпись вместо пустого списка', () => {
     renderScreen(<WorldScreen world="Багровая Бездна" />, storeWithLab({ ...lab, log: [] }), route)
 
-    expect(screen.getByRole('list', { name: 'История мира' })).toBeEmptyDOMElement()
+    expect(screen.getByText('ИСТОРИЯ МИРА')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'История мира' })).not.toBeInTheDocument()
+    expect(screen.getByText('В журнале нет записей об этом мире')).toBeInTheDocument()
   })
 
   it('строка портала ведёт в карточку портала', async () => {
