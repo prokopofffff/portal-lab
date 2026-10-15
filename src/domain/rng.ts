@@ -12,7 +12,13 @@ export interface Rng {
   state(): number
 }
 
+const UINT32_MAX = 4294967295
+
+// seed — uint32: |0 молча свёл бы NaN, дробь или переполнение к чужой последовательности
 export function createRng(seed: number): Rng {
+  if (!Number.isInteger(seed) || seed < 0 || seed > UINT32_MAX) {
+    throw new RangeError(`createRng: seed должен быть uint32 (получено ${seed})`)
+  }
   let a = seed | 0
 
   function next(): number {
