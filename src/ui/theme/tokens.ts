@@ -134,6 +134,12 @@ export const colors = {
   onCooldown: '#ffffff',
   archivedPlate: '#2c2a38', // плашка риска и рамка разбора у архивной карточки
   archivedText: '#c9c3d8',
+  // диалог карточки поверх экрана (канвас 04-card-critical): затемнение всего, что под ней
+  overlay: 'rgba(10, 8, 16, 0.8)',
+  // баннер отказа (канвас 24-c-banner, kind refuse): рамка, плашка значка, значок и заголовок
+  bannerRefuse: '#ff4466',
+  bannerRefuseDark: '#4a0f20',
+  bannerRefuseIcon: '#ff8099',
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -315,6 +321,8 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
     bg: colors.acceptedBg,
     min: 4.5,
   },
+  { name: 'баннер: заголовок отказа', fg: colors.bannerRefuseIcon, bg: colors.panel, min: 4.5 },
+  { name: 'баннер: текст', fg: colors.text, bg: colors.panel, min: 4.5 },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,

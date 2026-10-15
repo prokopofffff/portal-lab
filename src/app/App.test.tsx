@@ -77,7 +77,9 @@ describe('App: переходы между экранами', () => {
     await userEvent.click(screen.getByRole('link', { name: /ПТ-420-1/ }))
     expect(screen.getByRole('heading', { name: 'ПТ-420-1' })).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('link', { name: TOPI }))
+    // Мир в карточке — кнопка-ссылка; карточка закрывается, открывается страница мира
+    await userEvent.click(screen.getByRole('button', { name: TOPI }))
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('heading', { level: 1, name: TOPI })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('link', { name: '← Атлас миров' }))
@@ -113,6 +115,76 @@ describe('App: карточка портала поверх экрана', () =>
 
     expect(screen.getByRole('heading', { level: 1, name: TOPI })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Лаборатория порталов' })).toBeNull()
+  })
+})
+
+describe('App: диалог карточки', () => {
+  const arch = () => screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' })
+
+  it('пока карточка открыта, HUD, экран и док инертны; после закрытия — нет', async () => {
+    renderApp()
+    await userEvent.click(arch())
+    const dialog = screen.getByRole('dialog', { name: 'ПТ-420-1' })
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(screen.getByRole('banner').closest('[inert]')).not.toBeNull()
+    expect(arch().closest('[inert]')).not.toBeNull()
+    expect(screen.getByRole('navigation', { name: 'Разделы' }).closest('[inert]')).not.toBeNull()
+    expect(dialog.closest('[inert]')).toBeNull()
+
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.querySelector('[inert]')).toBeNull()
+  })
+
+  it('фокус уходит в диалог и возвращается на открывшую арку', async () => {
+    renderApp()
+    await userEvent.click(arch())
+    expect(screen.getByRole('dialog')).toHaveFocus()
+
+    await userEvent.keyboard('{Escape}')
+    expect(arch()).toHaveFocus()
+  })
+
+  it('открывшего нет: фокус на основную область экрана', async () => {
+    renderApp({ screen: 'portal', portal: 'ПТ-420-1' })
+    await userEvent.click(screen.getByRole('button', { name: 'Закрыть карточку' }))
+    expect(screen.getByRole('main')).toHaveFocus()
+  })
+
+  it('крестик и клик по затемнению возвращают на экран под карточкой', async () => {
+    renderApp()
+    await userEvent.click(arch())
+    await userEvent.click(screen.getByRole('button', { name: 'Закрыть карточку' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    await userEvent.click(arch())
+    await userEvent.click(screen.getByTestId('card-overlay'))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+  })
+})
+
+describe('App: баннер отказа', () => {
+  it('отказ из HUD («Нанять» во время найма) показывает баннер «ОТКАЗ»', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('button', { name: /^Нанять/ }))
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: /^Нанять/ }))
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('ОТКАЗ')
+    expect(alert).toHaveTextContent(/Наём уже идёт/)
+  })
+
+  it('отказ из карточки: баннер поверх диалога, не внутри инертной части', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' }))
+    // Стабильность 80 из фикстуры: стабилизировать можно, второй раз — кулдаун
+    await userEvent.click(screen.getByRole('button', { name: 'Стабилизировать' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Стабилизировать' }))
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent(/Кулдаун стабилизации/)
+    expect(alert.closest('[inert]')).toBeNull()
   })
 })
 

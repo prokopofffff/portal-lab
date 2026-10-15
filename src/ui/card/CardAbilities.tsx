@@ -74,6 +74,8 @@ function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => vo
             lineHeight: '18px',
             textAlign: 'center',
             zIndex: 3,
+            // Подсказка висит над соседней способностью: клик проходит сквозь неё к кнопке
+            pointerEvents: 'none',
           }}
         >
           {reason}
@@ -92,7 +94,11 @@ function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => vo
           setDismissed(false)
         }}
         onKeyDown={(e) => {
-          if (e.key === 'Escape' && reason) setDismissed(true)
+          // Esc сначала прячет подсказку отказа; следующий Esc уже закрывает карточку
+          if (e.key === 'Escape' && reason && (hover || focus) && !dismissed) {
+            e.preventDefault()
+            setDismissed(true)
+          }
         }}
         style={{
           width: '100%',

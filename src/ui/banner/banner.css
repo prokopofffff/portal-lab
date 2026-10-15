@@ -1,0 +1,50 @@
+/* Баннер уведомления (канвас 24-c-banner). Цвета — из токенов через CSS-переменные applyTheme. */
+
+/* Скошенные пиксельные углы рамки и панели (.nc канваса, 4 px) */
+.banner-notch {
+  clip-path: polygon(
+    0 4px,
+    4px 4px,
+    4px 0,
+    calc(100% - 4px) 0,
+    calc(100% - 4px) 4px,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    4px calc(100% - 4px),
+    0 calc(100% - 4px)
+  );
+}
+
+/* Въезд справа ступенями (bnIn канваса) */
+@keyframes bnIn {
+  0% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.banner {
+  animation: bnIn 0.5s steps(5) 1;
+}
+
+/* Кнопка «скрыть»: без рамки, контур фокуса — общий :focus-visible */
+.banner-close {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}
