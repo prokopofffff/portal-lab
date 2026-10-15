@@ -18,6 +18,20 @@
   );
 }
 
+/* Стопка баннеров (канвас 16-banners): столбец с зазором 12 px в правом верхнем углу, выше карточки
+   портала (z-index 20) и диалогов-свитков. Положение и ширина тут, а не в инлайн-стилях: на узкой
+   ширине их переопределяет media query */
+.banner-stack {
+  position: fixed;
+  top: 24px;
+  right: 20px;
+  z-index: 30;
+  width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Въезд справа ступенями (bnIn канваса) */
 @keyframes bnIn {
   0% {
@@ -31,6 +45,7 @@
 }
 
 .banner {
+  width: 480px;
   animation: bnIn 0.5s steps(5) 1;
 }
 

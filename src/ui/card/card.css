@@ -51,3 +51,18 @@
   outline: 3px solid var(--c-torch-light);
   outline-offset: 2px;
 }
+
+/* Расположение карточки в затемнении: по центру, 20 px от верха. На ширине от 1180 px — как в кадре
+   05-card-rejection: правый край карточки в 540 px от правого края окна (на 1440 карточка 300…900),
+   справа остаётся полоса для баннеров уведомлений (940…1420), и они не закрывают способности. Уже —
+   по центру (узкую ширину делает lab-9dr.10) */
+.card-overlay {
+  justify-content: center;
+  padding: 20px 0;
+}
+@media (min-width: 1180px) {
+  .card-overlay {
+    justify-content: flex-end;
+    padding-right: 540px;
+  }
+}

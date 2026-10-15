@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
-import { RejectionBanner } from '../ui/banner/Banner'
+import { NotificationStack } from '../ui/banner/Banner'
 import { PortalCardDialog } from '../ui/card/PortalCardDialog'
 import { Dock } from '../ui/hud/Dock'
 import { Hud } from '../ui/hud/Hud'
@@ -88,7 +88,7 @@ function Shell() {
         <Dock onSeal={seal} />
       </div>
       {card !== null && <PortalCardDialog portal={card} back={under} />}
-      <RejectionBanner />
+      <NotificationStack />
     </div>
   )
 }

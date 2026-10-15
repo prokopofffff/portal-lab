@@ -44,8 +44,9 @@ test('схлопнувшийся портал гаснет, и арка снов
   await page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' }).click()
   await advance(page, 400)
 
-  await expect(page.getByText('СХЛОПНУЛСЯ')).toBeVisible()
+  // Плашка на арке; баннер «ПОРТАЛ СХЛОПНУЛСЯ» с ней не путаем (exact)
+  await expect(page.getByText('СХЛОПНУЛСЯ', { exact: true })).toBeVisible()
   // Анимация идёт и на паузе (тестовый режим стартует на паузе) и кончается сама
   await expect(page.getByRole('button', { name: /^Арка \d+ пуста/ })).toHaveCount(12)
-  await expect(page.getByText('СХЛОПНУЛСЯ')).toHaveCount(0)
+  await expect(page.getByText('СХЛОПНУЛСЯ', { exact: true })).toHaveCount(0)
 })

@@ -1,12 +1,13 @@
 import { useCallback, useEffect } from 'react'
 import { useLabStore, useNotifications } from '../../app/hooks'
+import type { Notification } from '../../app/notifications'
 import './banner.css'
 
 // Баннер уведомления (канвас 24-c-banner): рамка цвета вида, плашка со значком 8×8, заголовок и текст.
 // Размеры, шрифты, отступы и въезд bnIn — дословно из исходника кадра; цвета — CSS-переменные токенов.
 
-/** Вид баннера. Пока только отказ; остальные виды канваса добавит lab-9dr.7. */
-export type BannerKind = 'refuse'
+/** Вид баннера: совпадает с видом уведомления в очереди (kind канваса). */
+export type BannerKind = 'refuse' | 'collapse' | 'lost' | 'studied' | 'hired'
 
 interface KindLook {
   // рамка, плашка значка, значок и заголовок
@@ -18,13 +19,38 @@ interface KindLook {
   icon: string
 }
 
+// Цвета вида — токены bannerRefuse… (в канвасе c / dark / ic)
+const color = (kind: string) => ({
+  c: `var(--c-banner-${kind})`,
+  dark: `var(--c-banner-${kind}-dark)`,
+  ic: `var(--c-banner-${kind}-icon)`,
+})
+
 const KINDS: Record<BannerKind, KindLook> = {
   refuse: {
-    c: 'var(--c-banner-refuse)',
-    dark: 'var(--c-banner-refuse-dark)',
-    ic: 'var(--c-banner-refuse-icon)',
+    ...color('refuse'),
     title: 'ОТКАЗ',
     icon: 'M0,0h2v2h-2z M6,0h2v2h-2z M2,2h2v2h-2z M4,2h2v2h-2z M2,4h2v2h-2z M4,4h2v2h-2z M0,6h2v2h-2z M6,6h2v2h-2z',
+  },
+  collapse: {
+    ...color('collapse'),
+    title: 'ПОРТАЛ СХЛОПНУЛСЯ',
+    icon: 'M2,0h4v1h-4z M1,1h1v1h-1z M6,1h1v1h-1z M0,2h1v4h-1z M7,2h1v4h-1z M1,6h1v1h-1z M6,6h1v1h-1z M2,7h4v1h-4z M3,3h2v2h-2z',
+  },
+  lost: {
+    ...color('lost'),
+    title: 'НАБЛЮДАТЕЛИ ПОТЕРЯНЫ',
+    icon: 'M2,0h4v1h-4z M1,1h6v7h-6z M3,2h2v1h-2z M2,3h4v1h-4z M3,4h2v3h-2z',
+  },
+  studied: {
+    ...color('studied'),
+    title: 'МИР ИЗУЧЕН',
+    icon: 'M3,0h2v1h-2z M3,1h2v2h-2z M0,3h8v1h-8z M1,4h6v1h-6z M2,5h4v1h-4z M1,6h2v2h-2z M5,6h2v2h-2z',
+  },
+  hired: {
+    ...color('hired'),
+    title: 'НАЁМ ЗАВЕРШЁН',
+    icon: 'M2,0h4v1h-4z M1,1h6v1h-6z M1,2h1v3h-1z M6,2h1v3h-1z M1,5h6v1h-6z M0,6h8v2h-8z',
   },
 }
 
@@ -43,7 +69,8 @@ export interface BannerProps {
 }
 
 /**
- * Баннер уведомления; role="alert" — текст зачитывается сразу. Таймер автоскрытия идёт с монтирования:
+ * Баннер уведомления. Отказ — role="alert": текст зачитывается сразу. Системные виды — role="status"
+ * (вежливо): на ×20 они частые и не должны перебивать. Таймер автоскрытия идёт с монтирования:
  * чтобы новое уведомление получило свои 6 с и заново въехало, его рендерят с новым key.
  */
 export function Banner({ kind, text, onDismiss }: BannerProps) {
@@ -55,7 +82,11 @@ export function Banner({ kind, text, onDismiss }: BannerProps) {
   }, [onDismiss])
 
   return (
-    <div role="alert" className="banner" style={{ width: 480, fontFamily: 'var(--f-ui)' }}>
+    <div
+      role={kind === 'refuse' ? 'alert' : 'status'}
+      className="banner"
+      style={{ fontFamily: 'var(--f-ui)' }}
+    >
       <div className="banner-notch" style={{ background: k.c, padding: 4 }}>
         <div
           className="banner-notch"
@@ -152,23 +183,27 @@ export function Banner({ kind, text, onDismiss }: BannerProps) {
   )
 }
 
-/**
- * Последний отказ из очереди уведомлений баннером в правом верхнем углу, поверх всего — и экрана,
- * и карточки портала: отказы из HUD («Нанять») и из карточки показываются одинаково.
- */
-export function RejectionBanner() {
-  const refusal = useNotifications().findLast((n) => n.kind === 'refuse')
+// Запись очереди со своим стабильным onDismiss: перерисовка стопки не сбрасывает её таймер
+function StackItem({ notification }: { notification: Notification }) {
   const store = useLabStore()
-  // Скрытие снимает все отказы очереди, как прежний одиночный слот; ссылка стабильна — таймер Banner не сбрасывается
-  const onDismiss = useCallback(() => {
-    for (const n of store.getState().notifications) {
-      if (n.kind === 'refuse') store.dismissNotification(n.id)
-    }
-  }, [store])
-  if (!refusal) return null
+  const { id, kind, text } = notification
+  const onDismiss = useCallback(() => store.dismissNotification(id), [store, id])
+  return <Banner kind={kind} text={text} onDismiss={onDismiss} />
+}
+
+/**
+ * Очередь уведомлений баннерами в правом верхнем углу, поверх всего — и экрана, и карточки портала.
+ * Порядок прихода сверху вниз (канвас 16-banners); каждый баннер скрывается сам и кнопкой, свои 6 с
+ * он отсчитывает с монтирования. Положение и ширина — в классе banner-stack.
+ */
+export function NotificationStack() {
+  const notifications = useNotifications()
+  if (notifications.length === 0) return null
   return (
-    <div style={{ position: 'fixed', top: 24, right: 20, zIndex: 30 }}>
-      <Banner key={refusal.id} kind="refuse" text={refusal.text} onDismiss={onDismiss} />
+    <div className="banner-stack">
+      {notifications.map((n) => (
+        <StackItem key={n.id} notification={n} />
+      ))}
     </div>
   )
 }

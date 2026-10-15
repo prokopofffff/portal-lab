@@ -7,7 +7,8 @@ import { PortalCard, type CardDelta } from './PortalCard'
 import './card.css'
 
 // Диалог карточки портала поверх экрана (канвас 04-card-critical): затемнение на всё приложение,
-// карточка по центру в 20 px от верха; затемнение прокручивается, если карточка выше окна.
+// карточка в 20 px от верха (по горизонтали её ставит .card-overlay); затемнение прокручивается,
+// если карточка выше окна.
 // Симуляция идёт дальше: карточка перечитывает store на каждом изменении.
 
 /** Вопрос перед закрытием последнего портала в мир с неизученными (spec §5). */
@@ -108,6 +109,7 @@ function Overlay({
     <div
       ref={overlayRef}
       data-testid="card-overlay"
+      className="card-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -118,9 +120,7 @@ function Overlay({
         overflowY: 'auto',
         overscrollBehavior: 'contain',
         display: 'flex',
-        justifyContent: 'center',
         alignItems: 'flex-start',
-        padding: '20px 0',
         background: 'var(--c-overlay)',
       }}
     >
