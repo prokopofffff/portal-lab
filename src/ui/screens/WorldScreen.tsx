@@ -10,7 +10,7 @@ import {
   type World,
 } from '../../domain'
 import { creatureColors, risk, sprite } from '../theme/tokens'
-import { Creatures, Portal as PortalSprite, RiskTag, Rune } from '../sprites'
+import { Creatures, Portal as PortalSprite, Rune } from '../sprites'
 import { CREATURE_BODIES, UNKNOWN_CREATURE } from '../sprites/creatureGlyphs'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
@@ -65,9 +65,68 @@ function statusText(portal: Portal): string {
   return `${open} · схлопнется через ${portal.timeLeft} мин`
 }
 
+// Плашка риска строки: у открытого «руна СЛОВО · балл» отдельными элементами с gap 8 (кадр 12),
+// у архивного — последний риск выцветшей карты (кадр 08)
+function RiskPlate({ portal }: { portal: Portal }) {
+  const { level, score } = assessRisk(portal)
+  const open = portal.status === 'open'
+  return (
+    <span
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        alignSelf: 'flex-start',
+        background: open ? `var(--risk-${level}-plate)` : 'var(--c-archived-plate)',
+        color: open ? `var(--risk-${level}-on)` : 'var(--c-archived-text)',
+        padding: '3px 12px 3px 8px',
+        fontSize: 15,
+        fontWeight: 600,
+      }}
+    >
+      <span aria-hidden="true" style={{ display: 'flex' }}>
+        <Rune level={open ? level : 'archived'} size={14} />
+      </span>
+      {open ? (
+        // Пробелы между элементами флекс не рисует, но они остаются в тексте строки
+        <>
+          <span>{risk[level].label.toUpperCase()}</span> <span aria-hidden="true">·</span>{' '}
+          <span>{score}</span>
+        </>
+      ) : (
+        `Последний риск: ${risk[level].label} · ${score}`
+      )}
+    </span>
+  )
+}
+
+// Штамп статуса поверх погасшего портала, как на выцветшей карте (кадр 08), под размер строки
+function ArchiveStamp({ status }: { status: Portal['status'] }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '52%',
+        transform: 'translate(-50%,-50%) rotate(-8deg)',
+        fontFamily: 'var(--f-pixel)',
+        fontSize: 8,
+        lineHeight: '8px',
+        color: 'var(--c-stamp)',
+        border: '3px double var(--c-stamp)',
+        padding: '4px 3px',
+        background: 'color-mix(in srgb, var(--c-night) 55%, transparent)',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {status === 'closed' ? 'ЗАКРЫТ' : 'СХЛОПНУЛСЯ'}
+    </span>
+  )
+}
+
 function PortalRow({ portal }: { portal: Portal }) {
-  const assessment = portal.status === 'open' ? assessRisk(portal) : null
-  const level = assessment?.level
+  const level = portal.status === 'open' ? assessRisk(portal).level : null
   return (
     <RouteLink
       to={{
@@ -106,39 +165,20 @@ function PortalRow({ portal }: { portal: Portal }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            position: 'relative',
             background: 'var(--c-row-stage)',
             overflow: 'hidden',
           }}
         >
           <PortalSprite look={level ?? 'archived'} observers={portal.observers} width={62} />
+          {portal.status !== 'open' && <ArchiveStamp status={portal.status} />}
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 7, minWidth: 0 }}>
           <span style={{ fontFamily: 'var(--f-pixel)', fontSize: 14, color: 'var(--c-row-title)' }}>
             {portal.name}
           </span>
           <span style={{ fontSize: 15, color: 'var(--c-row-text)' }}>{statusText(portal)}</span>
-          {assessment && level ? (
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                alignSelf: 'flex-start',
-                background: `var(--risk-${level}-plate)`,
-                color: `var(--risk-${level}-on)`,
-                padding: '3px 12px 3px 8px',
-                fontSize: 15,
-                fontWeight: 600,
-              }}
-            >
-              <Rune level={level} size={14} />
-              {risk[level].label.toUpperCase()} · {assessment.score}
-            </span>
-          ) : (
-            <span style={{ alignSelf: 'flex-start' }}>
-              <RiskTag look="archived" />
-            </span>
-          )}
+          <RiskPlate portal={portal} />
         </span>
       </span>
     </RouteLink>
@@ -408,26 +448,41 @@ function RightPage({ lab, world, stats }: { lab: Lab; world: World; stats: World
           >
             <path d={SHARED_ICON} fill="var(--c-ink-label)" />
           </svg>
-          Изучение общее для {stats.open === 2 ? 'обоих' : 'всех'} открытых порталов:{' '}
-          {world.studied} из {world.creatures}
+          Изучение общее для {stats.open === 2 ? 'обоих' : 'всех'} порталов: {world.studied} из{' '}
+          {world.creatures}
         </div>
       )}
       <h2 style={{ ...pageLabel, margin: '4px 0 0', fontWeight: 400 }}>ИСТОРИЯ МИРА</h2>
-      <ul
-        aria-label="История мира"
-        style={{
-          margin: 0,
-          padding: 0,
-          listStyle: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 7,
-        }}
-      >
-        {history.map((entry, i) => (
-          <HistoryItem key={i} entry={entry} />
-        ))}
-      </ul>
+      {history.length > 0 ? (
+        <ul
+          aria-label="История мира"
+          style={{
+            margin: 0,
+            padding: 0,
+            listStyle: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 7,
+          }}
+        >
+          {history.map((entry, i) => (
+            <HistoryItem key={i} entry={entry} />
+          ))}
+        </ul>
+      ) : (
+        <p
+          style={{
+            margin: 0,
+            fontFamily: 'var(--f-prose)',
+            fontSize: 17,
+            lineHeight: '21px',
+            fontStyle: 'italic',
+            color: 'var(--c-ink-soft)',
+          }}
+        >
+          В журнале нет записей об этом мире
+        </p>
+      )}
     </section>
   )
 }
