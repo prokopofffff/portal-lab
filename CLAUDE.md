@@ -53,12 +53,18 @@ bd close <id>         # Complete work
 
 ## Build & Test
 
-_Add your build and test commands here_
+Package manager is **pnpm** (version pinned in `packageManager` in `package.json`; run `corepack enable` once). Do not use npm/npx — there is no `package-lock.json`.
 
 ```bash
-# Example:
-# npm install
-# npm test
+pnpm install          # CI uses: pnpm install --frozen-lockfile
+pnpm dev              # Vite dev server
+pnpm typecheck        # tsc -b
+pnpm lint             # oxlint
+pnpm format:check     # prettier
+pnpm test             # Vitest
+pnpm build            # tsc -b && vite build → dist/
+pnpm exec playwright install chromium   # once
+pnpm e2e              # Playwright (builds and serves via vite preview)
 ```
 
 ## Architecture Overview
