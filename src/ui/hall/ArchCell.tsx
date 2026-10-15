@@ -30,23 +30,29 @@ const bareButton: CSSProperties = {
 const pixelLabel: CSSProperties = { fontFamily: 'var(--f-pixel)', fontSize: 11 }
 
 // Рамка фокуса вокруг всей ячейки: пунктир у выбранного портала, у остальных прозрачная (ring в канвасе).
-// empty — пустая арка: на узкой ширине она низкая строка, а не карточка
+// empty — пустая арка: на узкой ширине она низкая строка, а не карточка.
+// onClick — нажимается вся ячейка, а не только арка: кнопка арки своего onClick не держит, её клик
+// (и Enter или пробел на ней) всплывает сюда
 function Cell({
   dimmed,
   focused = false,
   empty = false,
+  onClick,
   children,
 }: {
   dimmed: boolean
   focused?: boolean
   empty?: boolean
+  onClick?: () => void
   children: ReactNode
 }) {
   return (
     <div
       className={empty ? 'hall-cell hall-cell--empty' : 'hall-cell'}
+      onClick={onClick}
       style={{
         position: 'relative',
+        cursor: onClick ? 'pointer' : undefined,
         opacity: dimmed ? 0.28 : 1,
         outline: focused ? '3px dashed var(--c-torch-light)' : '3px solid transparent',
         outlineOffset: -4,
@@ -362,7 +368,7 @@ function AcceptedFlag() {
   )
 }
 
-/** Арка с открытым порталом: ореол, наблюдатели слева, пометки справа, табличка снизу. */
+/** Арка с открытым порталом: ореол, наблюдатели слева, пометки справа, табличка снизу; нажимается вся ячейка. */
 export function PortalArch({
   cell,
   dimmed,
@@ -375,7 +381,7 @@ export function PortalArch({
   onOpen: () => void
 }) {
   return (
-    <Cell dimmed={dimmed} focused={focused}>
+    <Cell dimmed={dimmed} focused={focused} onClick={onOpen}>
       <div
         aria-hidden="true"
         className="hall-glow"
@@ -393,7 +399,6 @@ export function PortalArch({
         <button
           type="button"
           aria-label={`Открыть карточку портала ${cell.name}`}
-          onClick={onOpen}
           style={{ ...bareButton, position: 'absolute', left: 0, top: 0 }}
         >
           <Portal look={cell.level} observers={cell.observers} width={ARCH_W} />
@@ -427,7 +432,7 @@ export function PortalArch({
   )
 }
 
-/** Пустая арка: тлеют руны, клик открывает портал. У первой арки пустого зала — подсказка. */
+/** Пустая арка: тлеют руны, клик по ячейке открывает портал. У первой арки пустого зала — подсказка. */
 export function EmptyArch({
   arch,
   invite,
@@ -443,12 +448,11 @@ export function EmptyArch({
   const hint = invite ? 'нажмите — откроется портал' : 'пуста'
   const text = invite ? 'var(--c-torch-light)' : 'var(--c-text-dim)'
   return (
-    <Cell dimmed={dimmed} empty>
+    <Cell dimmed={dimmed} empty onClick={onOpenPortal}>
       <button
         type="button"
         className="hall-empty-arch"
         aria-label={`Открыть портал в арке ${arch + 1}`}
-        onClick={onOpenPortal}
         style={bareButton}
       >
         <Portal look="empty" width={ARCH_W} />
