@@ -152,6 +152,17 @@ export const colors = {
   bannerHired: '#5fcf9a',
   bannerHiredDark: '#0f3a2c',
   bannerHiredIcon: '#a8f5c8',
+  // диалоги-свитки (канвас 15-dialogs): валики, края, заголовки по тону, опасная кнопка
+  scrollRollLight: '#f3e6c4',
+  scrollRollMid: '#cdb98a',
+  scrollEdge: '#8d7a52', // низ валика и рамка кнопки «Отмена»
+  scrollRollShadow: '#4a3a22',
+  scrollTitleHigh: '#8a2a0a',
+  scrollTitleMedium: '#5a4208',
+  scrollTitleCritical: '#8a1020',
+  dangerBg: '#a8243c',
+  dangerEdge: '#ff6a85',
+  onDanger: '#fff1f3',
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -344,6 +355,27 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'баннер: заголовок изучения', fg: colors.bannerStudiedIcon, bg: colors.panel, min: 4.5 },
   { name: 'баннер: заголовок найма', fg: colors.bannerHiredIcon, bg: colors.panel, min: 4.5 },
   { name: 'баннер: текст', fg: colors.text, bg: colors.panel, min: 4.5 },
+  {
+    name: 'свиток: заголовок «высокий»',
+    fg: colors.scrollTitleHigh,
+    bg: colors.parchment,
+    min: 4.5,
+  },
+  {
+    name: 'свиток: заголовок «средний»',
+    fg: colors.scrollTitleMedium,
+    bg: colors.parchment,
+    min: 4.5,
+  },
+  {
+    name: 'свиток: заголовок «критический»',
+    fg: colors.scrollTitleCritical,
+    bg: colors.parchment,
+    min: 4.5,
+  },
+  { name: 'свиток: опасная кнопка', fg: colors.onDanger, bg: colors.dangerBg, min: 4.5 },
+  { name: 'свиток: кнопка-метка', fg: colors.onTorch, bg: colors.torch, min: 4.5 },
+  { name: 'свиток: кнопка «Отмена»', fg: colors.inkBody, bg: colors.parchmentPlate, min: 4.5 },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,

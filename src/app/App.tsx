@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { NotificationStack } from '../ui/banner/Banner'
 import { PortalCardDialog } from '../ui/card/PortalCardDialog'
+import { ScrollDialog } from '../ui/dialog/ScrollDialog'
 import { Dock } from '../ui/hud/Dock'
 import { Hud } from '../ui/hud/Hud'
 import { HallScreen } from '../ui/hall/HallScreen'
@@ -60,34 +61,44 @@ function useCardFocusReturn(open: boolean): void {
   }, [open])
 }
 
-// Текст диалога-свитка печати из канваса 15-dialogs
-const SEAL_QUESTION =
-  'Запечатать лабораторию? Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.'
-
 // HUD сверху, экран посередине, док снизу; на паузе корень замораживает спрайты.
-// Карточка портала — диалог поверх всего: экран под ней виден сквозь затемнение, но инертен.
+// Карточка портала и свиток печати — диалоги поверх всего: экран под ними виден сквозь затемнение,
+// но инертен.
 function Shell() {
   const [speed] = useSpeed()
   const dispatch = useDispatch()
   const route = useRoute()
   const card = route.screen === 'portal' ? route.portal : null
   useCardFocusReturn(card !== null)
-  // Подтверждение печати (spec §5, §9): window.confirm до диалога-свитка lab-9dr.7
-  const seal = () => {
-    if (window.confirm(SEAL_QUESTION)) dispatch({ type: 'sealLab' })
-  }
+  // Подтверждение печати (spec §5, §9): свиток из канваса 15-dialogs
+  const [sealing, setSealing] = useState(false)
   const under = baseRoute(route)
   return (
     <div
       className={speed === 0 ? 'is-paused' : undefined}
       style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}
     >
-      <div inert={card !== null} style={{ display: 'contents' }}>
+      <div inert={card !== null || sealing} style={{ display: 'contents' }}>
         <Hud />
         <Screen route={under} focus={card ?? undefined} />
-        <Dock onSeal={seal} />
+        <Dock onSeal={() => setSealing(true)} />
       </div>
       {card !== null && <PortalCardDialog portal={card} back={under} />}
+      {sealing && (
+        <ScrollDialog
+          rune="critical"
+          tone="critical"
+          title="ЗАПЕЧАТАТЬ ЛАБОРАТОРИЮ?"
+          text="Все порталы, миры и записи книги будут стёрты. Вернуть их не получится."
+          okLabel="Запечатать"
+          okTone="danger"
+          onOk={() => {
+            setSealing(false)
+            dispatch({ type: 'sealLab' })
+          }}
+          onCancel={() => setSealing(false)}
+        />
+      )}
       <NotificationStack cardOpen={card !== null} />
     </div>
   )
