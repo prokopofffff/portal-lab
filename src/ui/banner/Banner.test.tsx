@@ -4,7 +4,13 @@ import { LabStoreProvider } from '../../app/hooks'
 import type { Notification, NotificationKind } from '../../app/notifications'
 import { createLabStore, type LabStore } from '../../app/store'
 import { labWith, portal, storeWithLab, world } from '../../test/labFixtures'
-import { Banner, BANNER_TIMEOUT, NotificationStack } from './Banner'
+import {
+  Banner,
+  BANNER_LEAVE,
+  BANNER_RESUME_MIN,
+  BANNER_TIMEOUT,
+  NotificationStack,
+} from './Banner'
 
 const TOPI = 'Пепельные Топи'
 // Критический портал: отправить наблюдателя и принять как есть нельзя
@@ -19,7 +25,20 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.restoreAllMocks()
 })
+
+// В jsdom :focus-visible не срабатывает никогда: подменяем — фокус «с клавиатуры» или «от щелчка»
+function focusVisible(keyboard: boolean) {
+  const matches = Element.prototype.matches
+  return vi.spyOn(Element.prototype, 'matches').mockImplementation(function (
+    this: Element,
+    selector: string,
+  ) {
+    if (selector === ':focus-visible') return keyboard && this === document.activeElement
+    return matches.call(this, selector)
+  })
+}
 
 // Заголовок и имя CSS-переменной токена каждого вида (канвас 24-c-banner)
 const LOOKS: [NotificationKind, string, string][] = [
@@ -75,6 +94,73 @@ describe('Banner', () => {
     act(() => vi.advanceTimersByTime(1))
     expect(onDismiss).toHaveBeenCalledOnce()
     expect(BANNER_TIMEOUT).toBe(6000)
+  })
+
+  it('пока курсор над баннером, таймер стоит; после ухода идёт остаток', () => {
+    const onDismiss = vi.fn()
+    render(<Banner kind="refuse" text="Нельзя" onDismiss={onDismiss} />)
+    const banner = screen.getByRole('alert')
+    act(() => vi.advanceTimersByTime(1000))
+    fireEvent.mouseEnter(banner)
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT * 3))
+    expect(onDismiss).not.toHaveBeenCalled()
+    fireEvent.mouseLeave(banner)
+    // Прошла 1 с из 6: осталось 5, а не новые 6
+    act(() => vi.advanceTimersByTime(5000 - 1))
+    expect(onDismiss).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(1))
+    expect(onDismiss).toHaveBeenCalledOnce()
+  })
+
+  it('после паузы у почти истёкшего баннера остаётся не меньше 2 с', () => {
+    const onDismiss = vi.fn()
+    render(<Banner kind="lost" text="Пропали" onDismiss={onDismiss} />)
+    const banner = screen.getByText('НАБЛЮДАТЕЛИ ПОТЕРЯНЫ').closest('.banner') as HTMLElement
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT - 100))
+    fireEvent.mouseEnter(banner)
+    act(() => vi.advanceTimersByTime(500))
+    fireEvent.mouseLeave(banner)
+    act(() => vi.advanceTimersByTime(BANNER_RESUME_MIN - 1))
+    expect(onDismiss).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(1))
+    expect(onDismiss).toHaveBeenCalledOnce()
+    expect(BANNER_RESUME_MIN).toBe(2000)
+  })
+
+  it('фокус с клавиатуры внутри баннера ставит таймер на паузу (WCAG 2.2.1), щелчок мышью — нет', () => {
+    const onDismiss = vi.fn()
+    const keyboard = focusVisible(true)
+    render(<Banner kind="refuse" text="Нельзя" onDismiss={onDismiss} />)
+    const close = screen.getByRole('button', { name: 'Скрыть уведомление' })
+    act(() => vi.advanceTimersByTime(2000))
+    act(() => close.focus())
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT * 2))
+    expect(onDismiss).not.toHaveBeenCalled()
+    act(() => close.blur())
+    act(() => vi.advanceTimersByTime(4000 - 1))
+    expect(onDismiss).not.toHaveBeenCalled()
+    act(() => vi.advanceTimersByTime(1))
+    expect(onDismiss).toHaveBeenCalledOnce()
+
+    // Фокус от щелчка (без :focus-visible) таймер не держит
+    keyboard.mockRestore()
+    focusVisible(false)
+    const other = vi.fn()
+    cleanup()
+    render(<Banner kind="refuse" text="Нельзя" onDismiss={other} />)
+    act(() => screen.getByRole('button', { name: 'Скрыть уведомление' }).focus())
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT))
+    expect(other).toHaveBeenCalledOnce()
+  })
+
+  it('paused снаружи держит таймер так же, как курсор', () => {
+    const onDismiss = vi.fn()
+    const { rerender } = render(<Banner kind="hired" text="Нанят" onDismiss={onDismiss} paused />)
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT * 2))
+    expect(onDismiss).not.toHaveBeenCalled()
+    rerender(<Banner kind="hired" text="Нанят" onDismiss={onDismiss} />)
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT))
+    expect(onDismiss).toHaveBeenCalledOnce()
   })
 
   it('размонтирование снимает таймер', () => {
@@ -156,16 +242,24 @@ describe('NotificationStack', () => {
     expect(screen.getByRole('status')).toBe(region)
     expect(region).toHaveTextContent('ПТ-420-1 сжался')
     const banners = [...container.querySelectorAll('.banner')]
-    expect(banners.map((b) => b.getAttribute('role'))).toEqual(['alert', null])
+    // Новейший первым
+    expect(banners.map((b) => b.getAttribute('role'))).toEqual([null, 'alert'])
   })
 
-  it('все записи очереди по порядку прихода: новейшая внизу', () => {
+  it('все записи очереди колодой: новейшая первой и поверх остальных', () => {
     const { container } = renderStack([note(1, 'refuse'), note(2, 'collapse'), note(3, 'hired')])
     const t = titles(container)
     expect(t).toHaveLength(3)
-    expect(t[0]).toContain('ОТКАЗ')
+    expect(t[0]).toContain('НАЁМ ЗАВЕРШЁН')
     expect(t[1]).toContain('ПОРТАЛ СХЛОПНУЛСЯ')
-    expect(t[2]).toContain('НАЁМ ЗАВЕРШЁН')
+    expect(t[2]).toContain('ОТКАЗ')
+    const slots = [...container.querySelectorAll<HTMLElement>('.banner-slot')]
+    const z = slots.map((slot) => Number(slot.style.zIndex))
+    expect(z).toEqual([3, 2, 1])
+    // Под новейшим — уменьшенные и затемнённые корешки
+    expect(slots[0]!.style.transform).toContain('scale(1)')
+    expect(slots[1]!.style.transform).toContain('scale(0.96)')
+    expect(slots[1]!.style.filter).toBe('brightness(0.8)')
     expect(screen.getAllByRole('alert')).toHaveLength(1)
     expect(screen.getAllByRole('status')).toHaveLength(1)
     expect(screen.getByRole('status').children).toHaveLength(2)
@@ -191,6 +285,11 @@ describe('NotificationStack', () => {
     const lost = screen.getByText('НАБЛЮДАТЕЛИ ПОТЕРЯНЫ').closest('.banner') as HTMLElement
     fireEvent.click(within(lost).getByRole('button', { name: 'Скрыть уведомление' }))
     expect(store.getState().notifications.map((n) => n.id)).toEqual([1, 3])
+    // Сначала доигрывает уход: скрыт от читалок и щелчков, затем убирается совсем
+    const slot = lost.closest('.banner-slot') as HTMLElement
+    expect(slot).toHaveClass('banner-slot--leaving')
+    expect(slot).toHaveAttribute('aria-hidden', 'true')
+    act(() => vi.advanceTimersByTime(BANNER_LEAVE))
     expect(screen.queryByText('НАБЛЮДАТЕЛИ ПОТЕРЯНЫ')).toBeNull()
     expect(screen.getByText('МИР ИЗУЧЕН')).toBeInTheDocument()
   })
@@ -205,6 +304,7 @@ describe('NotificationStack', () => {
     expect(store.getState().notifications.map((n) => n.id)).toEqual([2])
     act(() => vi.advanceTimersByTime(1))
     expect(store.getState().notifications).toEqual([])
+    act(() => vi.advanceTimersByTime(BANNER_LEAVE))
     expect(vi.getTimerCount()).toBe(0)
   })
 
@@ -219,6 +319,75 @@ describe('NotificationStack', () => {
     expect(store.getState().notifications.map((n) => n.id)).toContain(1)
     act(() => vi.advanceTimersByTime(1))
     expect(store.getState().notifications.map((n) => n.id)).toEqual([2, 3, 4])
+  })
+
+  it('наведение на колоду раскрывает её и ставит на паузу таймеры всех баннеров', () => {
+    const { store, container, push } = renderStack([note(1, 'refuse')])
+    act(() => vi.advanceTimersByTime(3000))
+    push(note(2, 'lost'))
+    const stack = container.querySelector('.banner-stack') as HTMLElement
+    expect(stack).not.toHaveAttribute('data-open')
+    fireEvent.mouseEnter(stack)
+    expect(stack).toHaveAttribute('data-open')
+    // Раскрытая колода — столбец без масштаба и затемнения
+    for (const slot of container.querySelectorAll<HTMLElement>('.banner-slot')) {
+      expect(slot.style.transform).toContain('scale(1)')
+      expect(slot.style.filter).toBe('')
+    }
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT * 3))
+    expect(store.getState().notifications.map((n) => n.id)).toEqual([1, 2])
+    fireEvent.mouseLeave(stack)
+    expect(stack).not.toHaveAttribute('data-open')
+    // Каждый продолжает со своего остатка: у первого 3 с, у второго 6
+    act(() => vi.advanceTimersByTime(3000))
+    expect(store.getState().notifications.map((n) => n.id)).toEqual([2])
+    act(() => vi.advanceTimersByTime(3000))
+    expect(store.getState().notifications).toEqual([])
+  })
+
+  it('фокус с клавиатуры в колоде держит паузу; «скрыть» переводит фокус на соседа', () => {
+    focusVisible(true)
+    const { store, container } = renderStack([note(1, 'refuse'), note(2, 'lost')])
+    const stack = container.querySelector('.banner-stack') as HTMLElement
+    const [newest] = within(stack).getAllByRole('button', { name: 'Скрыть уведомление' })
+    act(() => newest!.focus())
+    expect(stack).toHaveAttribute('data-open')
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT * 2))
+    expect(store.getState().notifications.map((n) => n.id)).toEqual([1, 2])
+    fireEvent.click(newest!)
+    // Фокус на «скрыть» оставшегося, колода по-прежнему раскрыта и на паузе
+    const rest = screen.getByRole('alert').querySelector('.banner-close')
+    expect(document.activeElement).toBe(rest)
+    expect(stack).toHaveAttribute('data-open')
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT * 2))
+    expect(store.getState().notifications.map((n) => n.id)).toEqual([1])
+    // Последний скрыт — фокус снят, пауза кончилась
+    fireEvent.click(rest!)
+    act(() => vi.advanceTimersByTime(BANNER_LEAVE))
+    expect(stack.contains(document.activeElement)).toBe(false)
+    expect(stack).not.toHaveAttribute('data-open')
+  })
+
+  it('уходящий баннер не держит паузу и не мешает новым', () => {
+    const { store, container, push } = renderStack([note(1, 'refuse')])
+    const stack = container.querySelector('.banner-stack') as HTMLElement
+    fireEvent.mouseEnter(stack)
+    fireEvent.click(screen.getByRole('button', { name: 'Скрыть уведомление' }))
+    act(() => vi.advanceTimersByTime(BANNER_LEAVE))
+    expect(container.querySelector('.banner')).toBeNull()
+    // Курсор остался на месте опустевшей стопки — новый баннер всё равно уходит по таймеру
+    push(note(2, 'hired'))
+    act(() => vi.advanceTimersByTime(BANNER_TIMEOUT))
+    expect(store.getState().notifications).toEqual([])
+  })
+
+  it('при reduced-motion уходящий баннер убирается сразу', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce') }))
+    const { container } = renderStack([note(1, 'refuse')])
+    fireEvent.click(screen.getByRole('button', { name: 'Скрыть уведомление' }))
+    act(() => vi.advanceTimersByTime(0))
+    expect(container.querySelector('.banner')).toBeNull()
+    vi.unstubAllGlobals()
   })
 
   it('отказ из настоящего store: показывается и уходит по таймеру', () => {
