@@ -1,5 +1,5 @@
 /* Раскладка дока (канвас 18-c-dock). Всё, что на узкой ширине меняется, лежит здесь, а не в
-   инлайн-стилях: инлайн перебил бы media query. Значения вне media query — как в канвасе (1440 px) */
+   инлайн-стилях: инлайн перебил бы media query. Значения вне media query — как в канвасе (1440 px, кроме вкладки: 250 → 210 px, подпись 18 → 16 px, чтобы влезла четвёртая — AI Worklog) */
 .dock {
   height: 84px;
   display: flex;
@@ -14,13 +14,14 @@
 .dock-tab {
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 250px;
+  gap: 8px;
+  width: 210px;
   height: 56px;
-  padding: 0 16px;
+  padding: 0 12px;
 }
 .dock-tab-label {
-  font-size: 18px;
+  white-space: nowrap;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.5px;
 }
@@ -36,12 +37,21 @@
   padding: 0 12px;
 }
 
-/* 901…1259 px: по центру вкладкам (774 px) и печати (~200 px у правого края) места не хватает —
-   печать ложилась на «Книгу журнала». Вкладки у левого края, печать в потоке справа */
-@media (min-width: 901px) and (max-width: 1259px) {
+/* 901…1399 px: по центру вкладкам (4 × 210 + 36 = 876 px) и печати (~220 px у правого края) места
+   не хватает — печать ложилась на последнюю вкладку. Вкладки у левого края, печать в потоке справа;
+   у самого узкого края вкладки сжимаются */
+@media (min-width: 901px) and (max-width: 1399px) {
   .dock {
     justify-content: space-between;
     gap: 16px;
+  }
+  .dock-tabs {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .dock-tab {
+    flex: 0 1 210px;
+    min-width: 0;
   }
   .dock-seal {
     position: static;
@@ -50,9 +60,9 @@
   }
 }
 
-/* 901…1039 px: и так не помещается — печать одним значком 44×44, как на узком экране (имя кнопки
+/* 901…1169 px: и так не помещается — печать одним значком 44×44, как на узком экране (имя кнопки
    остаётся в title) */
-@media (min-width: 901px) and (max-width: 1039px) {
+@media (min-width: 901px) and (max-width: 1169px) {
   .dock-seal-btn {
     width: 44px;
     height: 44px;
@@ -64,7 +74,15 @@
   }
 }
 
-/* Узкий экран: один компактный ряд (≤ 76 px, док залипает у нижнего края): три вкладки делят
+/* 901…989 px: вкладки уже подписи — она переносится в две строки внутри 56 px */
+@media (min-width: 901px) and (max-width: 989px) {
+  .dock-tab-label {
+    white-space: normal;
+    line-height: 18px;
+  }
+}
+
+/* Узкий экран: один компактный ряд (≤ 76 px, док залипает у нижнего края): четыре вкладки делят
    ширину поровну (значок над подписью, подпись переносится), в конце ряда «Запечатать лабораторию»
    одним значком 44×44. Цели нажатия не ниже 44 px */
 @media (max-width: 900px) {
@@ -90,6 +108,7 @@
     text-align: center;
   }
   .dock-tab-label {
+    white-space: normal;
     font-size: 12px;
     line-height: 15px;
     letter-spacing: 0;
@@ -107,5 +126,14 @@
   }
   .dock-seal-text {
     display: none;
+  }
+  /* Хвост подписи («лаборатории», «миров», «журнала») скрыт только с экрана: имя ссылки полное */
+  .dock-tab-label-rest {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

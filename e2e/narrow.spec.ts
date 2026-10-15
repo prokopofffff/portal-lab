@@ -70,13 +70,15 @@ test.describe('узкий экран, 390×844: HUD и док', () => {
     await expect(fast).toHaveAttribute('aria-pressed', 'true')
   })
 
-  test('в доке один ряд ≤ 76 px: три вкладки поровну и значок печати 44×44 в конце', async ({
+  test('в доке один ряд ≤ 76 px: четыре вкладки поровну и значок печати 44×44 в конце', async ({
     page,
   }) => {
     await page.goto('/?seed=3&test=1')
     const tabs = page.getByRole('navigation', { name: 'Разделы' }).getByRole('link')
-    await expect(tabs).toHaveCount(3)
-    const boxes = await Promise.all([0, 1, 2].map(async (i) => (await tabs.nth(i).boundingBox())!))
+    await expect(tabs).toHaveCount(4)
+    const boxes = await Promise.all(
+      [0, 1, 2, 3].map(async (i) => (await tabs.nth(i).boundingBox())!),
+    )
     for (const b of boxes) {
       expect(b.height).toBeGreaterThanOrEqual(44)
       expect(Math.abs(b.width - boxes[0]!.width)).toBeLessThan(1)
@@ -87,7 +89,7 @@ test.describe('узкий экран, 390×844: HUD и док', () => {
     expect(sealBox.width).toBeGreaterThanOrEqual(44)
     expect(sealBox.height).toBeGreaterThanOrEqual(44)
     // В том же ряду, правее последней вкладки, и целиком в окне
-    expect(sealBox.x).toBeGreaterThanOrEqual(boxes[2]!.x + boxes[2]!.width)
+    expect(sealBox.x).toBeGreaterThanOrEqual(boxes[3]!.x + boxes[3]!.width)
     expect(sealBox.y).toBeLessThan(boxes[0]!.y + boxes[0]!.height)
     expect(sealBox.x + sealBox.width).toBeLessThanOrEqual(NARROW.width)
     expect((await dock(page).boundingBox())!.height).toBeLessThanOrEqual(76)

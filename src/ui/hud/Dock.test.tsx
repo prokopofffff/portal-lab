@@ -6,7 +6,7 @@ import { labWith, storeWithLab } from '../../test/labFixtures'
 import { renderScreen } from '../../test/renderScreen'
 import { Dock } from './Dock'
 
-const TABS = ['Зал лаборатории', 'Атлас миров', 'Книга журнала']
+const TABS = ['Зал лаборатории', 'Атлас миров', 'Книга журнала', 'AI Worklog']
 
 function renderDock(route?: Route, onSeal = () => {}) {
   return renderScreen(<Dock onSeal={onSeal} />, storeWithLab(labWith({ worlds: {} })), route)
@@ -19,7 +19,7 @@ const current = () =>
     .map((link) => link.textContent)
 
 describe('док', () => {
-  it('три раздела в навигации «Разделы»', () => {
+  it('четыре раздела в навигации «Разделы»', () => {
     renderDock()
     const nav = screen.getByRole('navigation', { name: 'Разделы' })
     expect(
@@ -41,6 +41,8 @@ describe('док', () => {
     [{ screen: 'atlas' }, 'Атлас миров'],
     [{ screen: 'world', world: 'Пепельные Топи' }, 'Атлас миров'],
     [{ screen: 'journal' }, 'Книга журнала'],
+    [{ screen: 'worklog' }, 'AI Worklog'],
+    [{ screen: 'portal', portal: 'ПТ-420-1', back: { screen: 'worklog' } }, 'AI Worklog'],
   ])('маршрут %j — активна вкладка «%s»', (route, tab) => {
     renderDock(route)
     expect(current()).toEqual([tab])
@@ -54,6 +56,10 @@ describe('док', () => {
 
     await userEvent.click(screen.getByRole('link', { name: 'Книга журнала' }))
     expect(route()).toEqual({ screen: 'journal' })
+
+    await userEvent.click(screen.getByRole('link', { name: 'AI Worklog' }))
+    expect(route()).toEqual({ screen: 'worklog' })
+    expect(current()).toEqual(['AI Worklog'])
 
     await userEvent.click(screen.getByRole('link', { name: 'Зал лаборатории' }))
     expect(route()).toEqual({ screen: 'hall' })

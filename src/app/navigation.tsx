@@ -8,6 +8,7 @@ export type Route =
   | { screen: 'atlas' }
   | { screen: 'world'; world: string }
   | { screen: 'journal' }
+  | { screen: 'worklog' }
   | { screen: 'portal'; portal: string; back?: Route }
 
 // Маршрут без карточки портала: что лежит под карточкой

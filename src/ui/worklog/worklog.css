@@ -1,0 +1,40 @@
+/* AI Worklog: экрана нет в канвасе — собран из карточек атласа. Сводка в три столбца, этап — строка
+   «название | человек | AI | промпты», разделы внизу в два столбца */
+.worklog-summary {
+  grid-template-columns: 1.4fr 1fr 1fr;
+}
+.worklog-stage {
+  grid-template-columns: 190px repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.worklog-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.worklog-wide {
+  grid-column: 1 / -1;
+}
+
+/* До 1259 px сводка в два столбца: инструменты на всю ширину сверху */
+@media (max-width: 1259px) {
+  .worklog-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .worklog-summary > :first-child {
+    grid-column: 1 / -1;
+  }
+  .worklog-stage {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .worklog-stage > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Узкий экран: всё в один столбец */
+@media (max-width: 900px) {
+  .worklog-summary,
+  .worklog-stage,
+  .worklog-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
