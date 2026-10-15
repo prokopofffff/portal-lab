@@ -6,8 +6,9 @@ import type { Departure, PortalCell } from './hallCells'
 
 // Арка и табличка под ней (канвас 00-hall, ячейка сетки 6×2). Размеры и шрифты — из исходника кадра.
 
+// Ширина таблички (208), колонки и отступы ячейки — в hall.css: на узкой ширине ячейка
+// становится карточкой в две колонки
 const ARCH_W = 100
-const PLATE_W = 208
 
 // Сила ореола за аркой по уровню риска (glow в renderVals канваса)
 const glowStrength: Record<RiskLevel, string> = {
@@ -15,15 +16,6 @@ const glowStrength: Record<RiskLevel, string> = {
   medium: '18%',
   high: '26%',
   critical: '40%',
-}
-
-const cellStyle: CSSProperties = {
-  position: 'relative',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: 6,
-  paddingTop: 2,
 }
 
 const bareButton: CSSProperties = {
@@ -39,20 +31,24 @@ const archBox: CSSProperties = { position: 'relative', width: ARCH_W, height: 11
 
 const pixelLabel: CSSProperties = { fontFamily: 'var(--f-pixel)', fontSize: 11 }
 
-// Рамка фокуса вокруг всей ячейки: пунктир у выбранного портала, у остальных прозрачная (ring в канвасе)
+// Рамка фокуса вокруг всей ячейки: пунктир у выбранного портала, у остальных прозрачная (ring в канвасе).
+// empty — пустая арка: на узкой ширине она низкая строка, а не карточка
 function Cell({
   dimmed,
   focused = false,
+  empty = false,
   children,
 }: {
   dimmed: boolean
   focused?: boolean
+  empty?: boolean
   children: ReactNode
 }) {
   return (
     <div
+      className={empty ? 'hall-cell hall-cell--empty' : 'hall-cell'}
       style={{
-        ...cellStyle,
+        position: 'relative',
         opacity: dimmed ? 0.28 : 1,
         outline: focused ? '3px dashed var(--c-torch-light)' : '3px solid transparent',
         outlineOffset: -4,
@@ -137,11 +133,10 @@ function Plate({
   const band = open ? risk[cell.level] : risk.archived
   return (
     <div
-      className={open ? 'hall-notch' : 'hall-notch hall-leave-plate'}
+      className={open ? 'hall-notch hall-plate' : 'hall-notch hall-plate hall-leave-plate'}
       onAnimationEnd={onAnimationEnd}
       style={{
         position: 'relative',
-        width: PLATE_W,
         boxSizing: 'border-box',
         background: 'var(--s-sill)',
         borderTop: `5px solid ${band.c}`,
@@ -150,7 +145,6 @@ function Plate({
         display: 'flex',
         flexDirection: 'column',
         gap: 5,
-        marginTop: 10,
       }}
     >
       <div
@@ -391,10 +385,9 @@ export function PortalArch({
     <Cell dimmed={dimmed} focused={focused}>
       <div
         aria-hidden="true"
+        className="hall-glow"
         style={{
           position: 'absolute',
-          top: -10,
-          left: '50%',
           width: 230,
           height: 230,
           marginLeft: -115,
@@ -412,10 +405,9 @@ export function PortalArch({
           <Portal look={cell.level} observers={cell.observers} width={ARCH_W} />
         </button>
         <div
+          className="hall-observers"
           style={{
             position: 'absolute',
-            right: 'calc(100% + 6px)',
-            top: 8,
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
@@ -425,10 +417,9 @@ export function PortalArch({
           {cell.observers > 0 && <ObserversBadge count={cell.observers} />}
         </div>
         <div
+          className="hall-flags"
           style={{
             position: 'absolute',
-            left: 'calc(100% + 12px)',
-            top: 8,
             display: 'flex',
             flexDirection: 'column',
             gap: 6,
@@ -460,32 +451,29 @@ export function EmptyArch({
   const hint = invite ? 'нажмите — откроется портал' : 'пуста'
   const text = invite ? 'var(--c-torch-light)' : 'var(--c-text-dim)'
   return (
-    <Cell dimmed={dimmed}>
+    <Cell dimmed={dimmed} empty>
       <button
         type="button"
+        className="hall-empty-arch"
         aria-label={`Арка ${arch + 1} пуста — открыть портал`}
         onClick={onOpenPortal}
-        style={{ ...bareButton, position: 'relative' }}
+        style={bareButton}
       >
         <Portal look="empty" width={ARCH_W} />
       </button>
       <div
         aria-hidden="true"
+        className={invite ? 'hall-empty-plate hall-empty-plate--invite' : 'hall-empty-plate'}
         style={{
-          marginTop: 10,
-          width: PLATE_W,
           boxSizing: 'border-box',
-          padding: '10px 12px',
           border: `2px dashed ${invite ? 'var(--c-torch)' : 'var(--c-edge-soft)'}`,
           display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          alignItems: 'center',
-          textAlign: 'center',
         }}
       >
         <span style={{ ...pixelLabel, color: text }}>{label}</span>
-        <span style={{ fontSize: 14, color: text }}>{hint}</span>
+        <span className="hall-empty-hint" style={{ fontSize: 14, color: text }}>
+          {hint}
+        </span>
       </div>
     </Cell>
   )

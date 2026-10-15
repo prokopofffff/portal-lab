@@ -177,15 +177,12 @@ export function HallScreen({ focus }: { focus?: string }) {
 
   return (
     <main
+      className="hall"
       style={{
-        // Как кадр 00-hall (1000 px − HUD 112 − док 84): зал делит высоту экрана, а не растёт по
-        // содержимому; ниже 804 px не сжимается — экран прокручивается
-        flex: '1 1 0',
-        minHeight: 804,
+        // Высота и поля зала — в hall.css: на узкой ширине они другие
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        padding: '10px 28px 12px',
         boxSizing: 'border-box',
         backgroundColor: 'var(--c-stone)',
         backgroundImage:
@@ -196,17 +193,9 @@ export function HallScreen({ focus }: { focus?: string }) {
     >
       <h1 className="hall-sr">Лаборатория порталов</h1>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 16,
-          height: 22,
-          marginBottom: 6,
-        }}
-      >
+      <div className="hall-head">
         <span
+          className="hall-head-title"
           style={{
             fontFamily: 'var(--f-pixel)',
             fontSize: 11,
@@ -216,7 +205,7 @@ export function HallScreen({ focus }: { focus?: string }) {
         >
           ТРЕВОЖНЫЕ ЗНАКИ
         </span>
-        <div role="status" style={{ display: 'flex', gap: 12 }}>
+        <div role="status" className="hall-status">
           {open >= ARCH_COUNT && <FullBanner />}
           {paused && <PausedBanner />}
         </div>
@@ -227,10 +216,8 @@ export function HallScreen({ focus }: { focus?: string }) {
       {open > 0 && <AlarmNotes />}
       {open === 0 && (
         <div
-          className="hall-notch"
+          className="hall-notch hall-slot hall-invite"
           style={{
-            height: 90,
-            marginBottom: 8,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -239,10 +226,10 @@ export function HallScreen({ focus }: { focus?: string }) {
           }}
         >
           <p
+            className="hall-invite-text"
             style={{
               margin: 0,
               fontWeight: 600,
-              fontSize: 26,
               color: 'var(--c-torch-light)',
             }}
           >
@@ -252,15 +239,8 @@ export function HallScreen({ focus }: { focus?: string }) {
       )}
 
       <div
-        style={{
-          position: 'relative',
-          flex: '1 1 0',
-          minHeight: 0,
-          display: 'grid',
-          gridTemplateColumns: `repeat(${ARCH_COUNT / 2}, minmax(0, 1fr))`,
-          gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
-          gap: '4px 0',
-        }}
+        className="hall-arches"
+        style={{ position: 'relative', '--hall-cols': ARCH_COUNT / 2 } as CSSProperties}
       >
         {TORCHES.map(([left, top]) => (
           <Torch key={`${left},${top}`} left={left} top={top} />

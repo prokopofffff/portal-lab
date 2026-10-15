@@ -184,3 +184,221 @@
 .hall-leave-plate {
   animation: hall-fade-out 1.4s forwards;
 }
+
+/* Раскладка зала. Всё, что на узкой ширине меняется, лежит здесь, а не в инлайн-стилях: инлайн
+   перебил бы media query. Значения вне media query — как в канвасе (1440 px) */
+.hall {
+  /* Как кадр 00-hall (1000 px − HUD 112 − док 84): зал делит высоту экрана, а не растёт по
+     содержимому; ниже 804 px не сжимается — экран прокручивается */
+  flex: 1 1 0;
+  min-height: 804px;
+  padding: 10px 28px 12px;
+}
+.hall-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 22px;
+  margin-bottom: 6px;
+}
+.hall-status {
+  display: flex;
+  gap: 12px;
+}
+/* Слот записок (и приглашения пустого зала): высота зала не прыгает, что бы в нём ни стояло */
+.hall-slot {
+  height: 90px;
+  margin-bottom: 8px;
+}
+.hall-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.hall-invite-text {
+  font-size: 26px;
+}
+/* Сетка 6×2; число колонок приходит из ARCH_COUNT через --hall-cols */
+.hall-arches {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--hall-cols), minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 4px 0;
+}
+.hall-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+}
+.hall-glow {
+  top: -10px;
+  left: 50%;
+}
+.hall-observers {
+  right: calc(100% + 6px);
+  top: 8px;
+}
+.hall-flags {
+  left: calc(100% + 12px);
+  top: 8px;
+}
+.hall-plate {
+  width: 208px;
+  margin-top: 10px;
+}
+.hall-empty-arch {
+  position: relative;
+}
+.hall-empty-plate {
+  margin-top: 10px;
+  width: 208px;
+  padding: 10px 12px;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+/* Узкий экран: зал — вертикальный список карточек в порядке арок (номера и порядок те же, spec §9).
+   Занятая арка — карточка в две колонки: слева арка с порталом (колонка 112 px), под ней
+   наблюдатели и пометки; справа табличка на всю оставшуюся ширину. Пустая арка — строка 56 px:
+   арка вдвое меньше (2 px на пиксель спрайта) и «АРКА N · пуста»; нажимается вся строка.
+   Высота зала — по содержимому; факелы убраны */
+@media (max-width: 900px) {
+  .hall {
+    flex: 1 0 auto;
+    min-height: 0;
+    padding: 10px 12px 12px;
+  }
+  .hall-head {
+    flex-wrap: wrap;
+    gap: 0 16px;
+    height: auto;
+    margin-bottom: 8px;
+  }
+  .hall-head-title {
+    white-space: nowrap;
+  }
+  .hall-toggle {
+    order: 1;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  /* Плашки «Пауза», «Все арки заняты» — своей строкой на всю ширину, текст переносится */
+  .hall-status {
+    order: 2;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+  .hall-status:not(:empty) {
+    margin-bottom: 4px;
+  }
+  .hall-slot {
+    height: auto;
+  }
+  .hall-notes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .hall-invite {
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .hall-invite-text {
+    font-size: 18px;
+    text-wrap: balance;
+  }
+  .hall-quiet {
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .hall-arches {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 8px;
+  }
+  .hall-flame {
+    display: none;
+  }
+  .hall-cell {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    column-gap: 10px;
+    align-items: start;
+    justify-items: center;
+    padding: 6px;
+  }
+  .hall-cell > :last-child {
+    justify-self: stretch;
+  }
+  .hall-glow {
+    left: 62px;
+  }
+  /* Наблюдатели и пометки — под аркой: слева от неё нет места, справа табличка */
+  .hall-observers {
+    right: auto;
+    left: 0;
+    top: calc(100% + 6px);
+  }
+  .hall-flags {
+    left: auto;
+    right: 0;
+    top: calc(100% + 6px);
+  }
+  .hall-plate {
+    width: auto;
+    margin-top: 0;
+  }
+  .hall-cell--empty {
+    align-items: center;
+    padding: 0 6px;
+  }
+  /* Кнопка не держит позицию: её ::after растягивается на всю строку */
+  .hall-empty-arch {
+    position: static;
+  }
+  /* Арка 24×28 ровно вдвое: 48×56 (масштабируем сам спрайт, не кнопку — иначе ужмётся и фокус) */
+  .hall-empty-arch > * {
+    zoom: 0.48;
+  }
+  /* Вся строка — цель нажатия; фокус рисуется по строке */
+  .hall-empty-arch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .hall-empty-arch:focus-visible {
+    outline: none;
+  }
+  .hall-empty-arch:focus-visible::after {
+    outline: 3px solid var(--c-torch-light);
+    outline-offset: -3px;
+  }
+  .hall-empty-plate {
+    margin-top: 0;
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    text-align: left;
+  }
+  .hall-empty-hint::before {
+    content: '· ';
+  }
+  /* Подсказка первой арки длинная: своей строкой под номером, без точки */
+  .hall-empty-plate--invite {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hall-empty-plate--invite .hall-empty-hint::before {
+    content: none;
+  }
+}
