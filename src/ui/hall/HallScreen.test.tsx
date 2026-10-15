@@ -99,6 +99,14 @@ describe('Зал: пустая лаборатория', () => {
     ).toBeInTheDocument()
     expect(emptyArches()).toHaveLength(11)
   })
+
+  it('клик по подсказке «нажмите — откроется портал» открывает ровно один портал', async () => {
+    const { store } = renderHall(labWith({ worlds: {} }))
+    await userEvent.click(screen.getByText('нажмите — откроется портал'))
+
+    expect(store.getState().lab.portals).toHaveLength(1)
+    expect(emptyArches()).toHaveLength(11)
+  })
 })
 
 describe('Зал: обычная работа', () => {
@@ -155,6 +163,14 @@ describe('Зал: обычная работа', () => {
     const { route } = renderHall()
     await userEvent.click(screen.getByRole('button', { name: 'Открыть карточку портала ББ-310-1' }))
     expect(route()).toEqual({ screen: 'portal', portal: 'ББ-310-1', back: { screen: 'hall' } })
+  })
+
+  it('клик по табличке тоже открывает карточку, и только один раз', async () => {
+    const { store, route } = renderHall()
+    const before = store.getState().lab.portals.length
+    await userEvent.click(within(plateOf('ББ-310-1')).getByText(BEZ))
+    expect(route()).toEqual({ screen: 'portal', portal: 'ББ-310-1', back: { screen: 'hall' } })
+    expect(store.getState().lab.portals).toHaveLength(before)
   })
 
   it('рамка фокуса: пунктир только у ячейки выбранного портала', () => {

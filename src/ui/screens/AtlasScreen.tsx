@@ -59,7 +59,7 @@ function WorldCard({ world, stats }: Entry) {
   return (
     <article
       aria-labelledby={titleId}
-      className="px-notch"
+      className="px-notch atlas-card"
       style={{
         background: stats.full ? 'var(--s-studied-gold)' : 'var(--c-parchment-edge)',
         padding: 6,
@@ -170,8 +170,10 @@ function WorldCard({ world, stats }: Entry) {
             Последнее: <b style={statValue}>мин {world.lastVisit}</b>
           </span>
         </div>
+        {/* Ссылка растянута на всю карточку (atlas-card-link): нажимается карточка целиком */}
         <RouteLink
           to={{ screen: 'world', world: world.name }}
+          className="atlas-card-link"
           style={{
             marginTop: 'auto',
             fontSize: 16,

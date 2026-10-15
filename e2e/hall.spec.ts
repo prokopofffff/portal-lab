@@ -52,3 +52,28 @@ test('схлопнувшийся портал гаснет, и арка снов
   await expect(page.getByRole('button', { name: /^Открыть портал в арке \d+$/ })).toHaveCount(12)
   await expect(page.getByText('СХЛОПНУЛСЯ', { exact: true })).toHaveCount(0)
 })
+
+test('нажимается вся ячейка арки и вся карточка мира, а не только арка и ссылка', async ({
+  page,
+}) => {
+  await page.goto(`/?seed=${SEED}&test=1`)
+  // Подсказка под пустой аркой открывает портал
+  await page.getByText('нажмите — откроется портал').click()
+  const opened = page.getByRole('button', { name: /^Открыть карточку портала/ })
+  await expect(opened).toHaveCount(1)
+  const name = (await opened.getAttribute('aria-label'))!.replace('Открыть карточку портала ', '')
+
+  // Табличка под порталом открывает карточку
+  await page.getByText('изучено существ', { exact: true }).click()
+  await expect(page.getByRole('heading', { name })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('heading', { name })).toHaveCount(0)
+
+  // Клик в середину карточки мира (не по ссылке внизу) ведёт на страницу мира: поверх карточки
+  // лежит растянутая ссылка
+  await page.getByRole('link', { name: 'Атлас миров' }).click()
+  const card = page.getByRole('main').getByRole('article')
+  const world = (await card.getByRole('heading').textContent())!
+  await card.click()
+  await expect(page.getByRole('heading', { name: world, level: 1 })).toBeVisible()
+})
