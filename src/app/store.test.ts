@@ -3,7 +3,7 @@ import { assessRisk, createLab } from '../domain'
 import { labWith, portal, storeWithLab, world } from '../test/labFixtures'
 import { MAX_NOTIFICATIONS } from './notifications'
 import { loadGame, STORAGE_KEY } from './persistence'
-import { createLabStore, shallowEqual, SPEEDS } from './store'
+import { createLabStore, shallowEqual, SPEEDS, type Speed } from './store'
 
 const NOW = Date.UTC(2026, 9, 14, 12, 0, 0)
 
@@ -91,6 +91,15 @@ describe('store лаборатории (spec §1, §5, §8)', () => {
     store.setSpeed(0)
     expect(store.getState().speed).toBe(0)
     expect(notified).toBe(2)
+  })
+
+  it('setSpeed не принимает скорость вне SPEEDS', () => {
+    const store = newStore()
+    const state = store.getState()
+    for (const speed of [2, -1, Number.NaN, Infinity]) {
+      expect(() => store.setSpeed(speed as Speed)).toThrow(RangeError)
+    }
+    expect(store.getState()).toBe(state)
   })
 
   it('скорость не сохраняется: новая игра над тем же хранилищем идёт на ×1', () => {

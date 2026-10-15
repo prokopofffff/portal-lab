@@ -240,7 +240,7 @@ describe('NotificationStack', () => {
     // Область смонтирована до текста: читалка успевает её отслеживать
     push(note(2, 'collapse', 'ПТ-420-1 сжался'))
     expect(screen.getByRole('status')).toBe(region)
-    expect(region).toHaveTextContent('ПТ-420-1 сжался')
+    expect(region).toHaveTextContent(/^Портал схлопнулся\. ПТ-420-1 сжался$/)
     const banners = [...container.querySelectorAll('.banner')]
     // Новейший первым
     expect(banners.map((b) => b.getAttribute('role'))).toEqual([null, 'alert'])

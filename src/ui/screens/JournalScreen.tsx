@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useLabSelector } from '../../app/hooks'
 import { filterLog, type LogEntry, type LogKind } from '../../domain'
+import { Ribbon, type Choice } from './JournalRibbon'
 import './screens.css'
 
 // Записей на странице и страниц на развороте (канвас 14)
@@ -47,7 +48,7 @@ const ruledPage: CSSProperties = {
   backgroundColor: 'var(--c-parchment)',
   backgroundImage:
     'repeating-linear-gradient(0deg,transparent 0 35px,var(--c-parchment-line) 35px 36px)',
-  display: 'flex',
+  // display — в классе journal-page: пустую страницу на узком экране прячет media query
   flexDirection: 'column',
 }
 
@@ -175,10 +176,12 @@ function Page({
   children?: ReactNode
 }) {
   const left = side === 'left'
+  const blank = !left && entries.length === 0 && !children
   return (
     <section
-      // Отступы и тень у корешка — в классах journal-page: на узком экране страницы друг под другом
-      className={`journal-page journal-page--${side}`}
+      // Отступы и тень у корешка — в классах journal-page: на узком экране страницы друг под другом,
+      // и пустая страница (journal-page--blank) там не показывается
+      className={`journal-page journal-page--${side}${blank ? ' journal-page--blank' : ''}`}
       style={ruledPage}
     >
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0' }}>
@@ -291,141 +294,8 @@ function Legend() {
   )
 }
 
-interface Choice {
-  value: string | undefined
-  label: string
-}
-
-// Закладка-фильтр: лента с названием и текущим значением, по нажатию — список значений
-function Ribbon({
-  label,
-  allLabel,
-  background,
-  choices,
-  selected,
-  onSelect,
-}: {
-  label: string
-  allLabel: string
-  background: string
-  choices: Choice[]
-  selected: string | undefined
-  onSelect: (value: string | undefined) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const root = useRef<HTMLDivElement>(null)
-
-  // Список закрывается по Escape и по нажатию вне закладки
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false)
-    }
-    const onPointer = (e: MouseEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('keydown', onKey)
-    document.addEventListener('mousedown', onPointer)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('mousedown', onPointer)
-    }
-  }, [open])
-
-  const all: Choice = { value: undefined, label: allLabel }
-  const current = choices.find((c) => c.value === selected) ?? all
-  // Отступление от кадра 14: там у закладки нет активного вида, и фильтр видно только по третьей
-  // строке. Закладка с выбранным значением выдвинута и со светлой каймой (класс journal-tab--active)
-  const active = selected !== undefined
-  return (
-    <div ref={root} className="journal-ribbon">
-      <button
-        type="button"
-        className={active ? 'journal-tab journal-tab--active' : 'journal-tab'}
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        style={{
-          width: '100%',
-          boxSizing: 'border-box',
-          padding: '6px 14px 18px',
-          textAlign: 'left',
-          fontFamily: 'var(--f-ui)',
-          fontSize: 15,
-          fontWeight: 600,
-          lineHeight: '17px',
-          color: 'var(--c-on-ribbon)',
-          background,
-          border: 0,
-          cursor: 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start',
-          gap: 2,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 12,
-            fontWeight: 400,
-            letterSpacing: '.5px',
-            color: 'var(--c-ribbon-label)',
-          }}
-        >
-          закладка
-        </span>
-        <span>{label}</span>
-        <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--c-ribbon-label)' }}>
-          {current.label}
-        </span>
-      </button>
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            zIndex: 5,
-            width: 240,
-            maxHeight: 320,
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--c-tab)',
-            border: '3px solid var(--c-parchment-edge)',
-          }}
-        >
-          {[all, ...choices].map((choice) => (
-            <button
-              key={choice.value ?? ''}
-              type="button"
-              aria-pressed={choice.value === selected}
-              onClick={() => {
-                onSelect(choice.value)
-                setOpen(false)
-              }}
-              style={{
-                padding: '9px 14px',
-                textAlign: 'left',
-                fontFamily: 'var(--f-ui)',
-                fontSize: 15,
-                fontWeight: choice.value === selected ? 600 : 400,
-                color: 'var(--c-parchment)',
-                background: choice.value === selected ? 'var(--c-parchment-edge)' : 'transparent',
-                border: 0,
-                cursor: 'pointer',
-              }}
-            >
-              {choice.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // Различные значения поля в порядке первого появления; выбранное остаётся в списке, даже если записи вытеснены
-function distinct(log: LogEntry[], field: 'portal' | 'world', selected?: string): Choice[] {
+function distinct(log: LogEntry[], field: 'portal' | 'world', selected?: string): Choice<string>[] {
   const seen = new Set<string>()
   for (const entry of log) {
     const value = entry[field]
@@ -475,33 +345,6 @@ export function JournalScreen() {
     }
   }
 
-  const ribbons = [
-    {
-      label: 'Вид записи',
-      allLabel: 'все виды',
-      background: 'var(--c-ribbon-rejection)',
-      choices: KIND_ORDER.map((k) => ({ value: k as string, label: KINDS[k].label })),
-      selected: kind,
-      onSelect: pick((value: string | undefined) => setKind(value as LogKind | undefined)),
-    },
-    {
-      label: 'Портал',
-      allLabel: 'любой',
-      background: 'var(--c-ribbon-portal)',
-      choices: distinct(log, 'portal', portal),
-      selected: portal,
-      onSelect: pick(setPortal),
-    },
-    {
-      label: 'Мир',
-      allLabel: 'любой',
-      background: 'var(--c-ribbon-world)',
-      choices: distinct(log, 'world', world),
-      selected: world,
-      onSelect: pick(setWorld),
-    },
-  ]
-
   return (
     <main
       // Отступы и направление (книга, справа закладки) — в классе journal: на узком экране
@@ -514,7 +357,7 @@ export function JournalScreen() {
         backgroundColor: 'var(--c-desk)',
         backgroundImage:
           'repeating-linear-gradient(90deg,transparent 0 79px,var(--c-desk-seam-v) 79px 80px),repeating-linear-gradient(0deg,transparent 0 23px,var(--c-desk-seam-h) 23px 24px)',
-        boxShadow: 'inset 0 0 160px rgba(0,0,0,.75)',
+        boxShadow: 'inset 0 0 160px var(--c-vignette-desk)',
       }}
     >
       <div
@@ -639,9 +482,30 @@ export function JournalScreen() {
           gap: 12,
         }}
       >
-        {ribbons.map((ribbon) => (
-          <Ribbon key={ribbon.label} {...ribbon} />
-        ))}
+        <Ribbon
+          label="Вид записи"
+          allLabel="все виды"
+          background="var(--c-ribbon-rejection)"
+          choices={KIND_ORDER.map((k) => ({ value: k, label: KINDS[k].label }))}
+          selected={kind}
+          onSelect={pick(setKind)}
+        />
+        <Ribbon
+          label="Портал"
+          allLabel="любой"
+          background="var(--c-ribbon-portal)"
+          choices={distinct(log, 'portal', portal)}
+          selected={portal}
+          onSelect={pick(setPortal)}
+        />
+        <Ribbon
+          label="Мир"
+          allLabel="любой"
+          background="var(--c-ribbon-world)"
+          choices={distinct(log, 'world', world)}
+          selected={world}
+          onSelect={pick(setWorld)}
+        />
       </div>
     </main>
   )

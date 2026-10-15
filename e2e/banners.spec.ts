@@ -47,6 +47,33 @@ test('на 1440×1000 баннер отказа не закрывает спос
   expect(b.x + b.width).toBeCloseTo(1420, 0)
 })
 
+test('на 901…1211 px карточка у левого края, баннер в полосе справа и не задевает способности', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.setViewportSize({ width: 1211, height: 900 })
+  const dialog = await openCriticalCard(page)
+  const abilities = dialog.getByRole('group', { name: 'Способности' })
+  await abilities.getByRole('button', { name: 'Отправить наблюдателя' }).focus()
+  await page.keyboard.press('Enter')
+  const banner = page.getByRole('alert')
+  await expect(banner).toContainText('ОТКАЗ')
+
+  for (const width of [1211, 1100, 1080, 1000, 901]) {
+    await page.setViewportSize({ width, height: 900 })
+    const a = (await abilities.boundingBox())!
+    const b = (await banner.boundingBox())!
+    // По горизонтали не пересекаются: способности не попадут под баннер при любой прокрутке
+    expect(b.x, `баннер на ${width} налезает на способности`).toBeGreaterThanOrEqual(a.x + a.width)
+    expect(b.x + b.width).toBeCloseTo(width - 20, 0)
+    expect(b.width).toBeGreaterThanOrEqual(340)
+    const card = (await dialog.boundingBox())!
+    expect(card.x).toBeCloseTo(64, 0)
+    // 600 px, пока хватает места; уже — перестроенная карточка
+    expect(card.width).toBeCloseTo(width >= 1080 ? 600 : width - 464, 0)
+  }
+})
+
 test('без карточки стопка баннеров под HUD: top 128, правый край 1412 (кадр 16-banners)', async ({
   page,
 }) => {

@@ -57,10 +57,10 @@
   padding: 22px 26px 20px;
 }
 .world-page--left {
-  box-shadow: inset -10px 0 18px -8px rgba(60, 40, 10, 0.45);
+  box-shadow: inset -10px 0 18px -8px var(--c-page-fold);
 }
 .world-page--right {
-  box-shadow: inset 10px 0 18px -8px rgba(60, 40, 10, 0.45);
+  box-shadow: inset 10px 0 18px -8px var(--c-page-fold);
 }
 .world-spine {
   width: 8px;
@@ -86,13 +86,16 @@
 .journal-book {
   min-height: 640px;
 }
+.journal-page {
+  display: flex;
+}
 .journal-page--left {
   padding: 22px 26px 18px 22px;
-  box-shadow: inset -22px 0 26px -16px rgba(60, 40, 10, 0.55);
+  box-shadow: inset -22px 0 26px -16px var(--c-page-fold-deep);
 }
 .journal-page--right {
   padding: 22px 22px 18px 26px;
-  box-shadow: inset 22px 0 26px -16px rgba(60, 40, 10, 0.55);
+  box-shadow: inset 22px 0 26px -16px var(--c-page-fold-deep);
 }
 .journal-spine {
   width: 10px;
@@ -168,10 +171,10 @@
     padding: 18px 14px 16px;
   }
   .world-page--left {
-    box-shadow: inset 0 -10px 18px -8px rgba(60, 40, 10, 0.45);
+    box-shadow: inset 0 -10px 18px -8px var(--c-page-fold);
   }
   .world-page--right {
-    box-shadow: inset 0 10px 18px -8px rgba(60, 40, 10, 0.45);
+    box-shadow: inset 0 10px 18px -8px var(--c-page-fold);
   }
   .world-spine {
     width: auto;
@@ -190,16 +193,16 @@
     order: 1;
     flex-basis: 100%;
   }
+  /* Существа — в два столбца плитками, как на развороте: столбцом в одну плитку 12 существ
+     растягивались на несколько экранов */
   .world-creatures {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-auto-rows: auto;
     gap: 8px;
   }
   .world-creature {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 14px;
-    padding: 4px 14px 4px 10px;
+    padding: 8px 6px;
+    text-align: center;
   }
 
   .journal {
@@ -219,11 +222,17 @@
   .journal-page--right {
     padding: 18px 14px 16px;
   }
+  /* Страницы друг под другом: пустая правая страница последнего разворота — лишний экран чистого
+     пергамента под записями. Прячем её вместе с корешком */
+  .journal-page--blank,
+  .journal-spine:has(+ .journal-page--blank) {
+    display: none;
+  }
   .journal-page--left {
-    box-shadow: inset 0 -22px 26px -16px rgba(60, 40, 10, 0.55);
+    box-shadow: inset 0 -22px 26px -16px var(--c-page-fold-deep);
   }
   .journal-page--right {
-    box-shadow: inset 0 22px 26px -16px rgba(60, 40, 10, 0.55);
+    box-shadow: inset 0 22px 26px -16px var(--c-page-fold-deep);
   }
   .journal-spine {
     width: auto;

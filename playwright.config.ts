@@ -12,7 +12,19 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /scrollbars\.spec/ },
+    // Headless Chromium прячет полосы прокрутки (--hide-scrollbars), и переполнение от классической
+    // полосы (15 px, как в Windows и Linux) не видно. Этот проект их показывает
+    {
+      name: 'chromium-scrollbars',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] },
+      },
+      testMatch: /scrollbars\.spec/,
+    },
+  ],
   webServer: {
     command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,

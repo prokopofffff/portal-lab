@@ -241,6 +241,7 @@ describe('portalCard: совет', () => {
     )
     expect(m.advice).toMatchObject({ action: 'stabilize', label: 'Стабилизировать' })
     expect(m.advice?.text).toBe('Стабилизировать — риск высокий — стабилизация снизит его')
+    expect(m.advice?.tail).toBe(' — риск высокий — стабилизация снизит его')
   })
 
   it('подписи всех действий; keepOpen — «Оставить открытым»', () => {

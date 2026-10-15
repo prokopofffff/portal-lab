@@ -233,9 +233,8 @@ export function Advice({ advice }: { advice: CardAdvice }) {
             textWrap: 'pretty',
           }}
         >
-          {/* text = «<действие> — <причина>»: действие выделяем, остальное как есть */}
           <b>{advice.label}</b>
-          {advice.text.slice(advice.label.length)}
+          {advice.tail}
         </p>
       </div>
     </section>

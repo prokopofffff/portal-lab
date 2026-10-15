@@ -1,4 +1,4 @@
-import type { WorldStats } from './worldStats'
+import type { WorldStats } from '../../domain'
 
 /** Полоска изучения мира: изученные существа и, лиловым, доля следующего. */
 export function WorldProgress({

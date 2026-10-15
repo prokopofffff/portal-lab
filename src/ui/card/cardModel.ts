@@ -3,10 +3,13 @@
 import {
   assessRisk,
   CONFIG,
+  creaturePct,
   execute,
   filterLog,
   recommend,
   RISK_LEVEL_LABELS,
+  worldPortals,
+  worldStats,
   type Command,
   type LogEntry,
   type LogKind,
@@ -15,9 +18,9 @@ import {
   type Recommendation,
   type Rng,
   type Lab,
+  type RiskAssessment,
   type RiskLevel,
 } from '../../domain'
-import { worldPortals, worldStats } from '../screens/worldStats'
 
 /** Метрика портала: округлённое значение и ширина полоски, %. */
 export interface CardMetric {
@@ -53,6 +56,8 @@ export interface CardAdvice {
   reason: string
   // Строка карточки: «<Действие> — <причина с маленькой буквы>»
   text: string
+  // Хвост строки после названия действия: « — <причина с маленькой буквы>»
+  tail: string
 }
 
 export type AbilityCommand =
@@ -162,24 +167,20 @@ function largestRemainder(values: number[], total: number): number[] {
   return floors
 }
 
-function riskParts(portal: Portal): { parts: RiskPart[]; score: number } {
-  const { parts, score } = assessRisk(portal)
+function riskParts({ parts, score }: RiskAssessment): RiskPart[] {
   const [instability, energy, urgency] = largestRemainder(
     [parts.instability, parts.energy, parts.urgency],
     score,
   ) as [number, number, number]
-  return {
-    score,
-    parts: [
-      { label: 'нестабильность', value: instability },
-      { label: 'энергия', value: energy },
-      { label: 'срочность', value: urgency },
-    ],
-  }
+  return [
+    { label: 'нестабильность', value: instability },
+    { label: 'энергия', value: energy },
+    { label: 'срочность', value: urgency },
+  ]
 }
 
-function hardRuleText(portal: Portal): string | null {
-  if (portal.status !== 'open' || !assessRisk(portal).hardRule) return null
+function hardRuleText(portal: Portal, risk: RiskAssessment): string | null {
+  if (portal.status !== 'open' || !risk.hardRule) return null
   const { maxTimeLeft, maxStability } = CONFIG.risk.hardRule
   return portal.timeLeft <= maxTimeLeft
     ? `время ≤ ${maxTimeLeft} → критический`
@@ -190,7 +191,6 @@ function studyOf(lab: Lab, portal: Portal): CardStudy {
   const world = lab.worlds[portal.world]!
   const stats = worldStats(lab, world)
   const fullyStudied = stats.full || world.creatures === 0
-  const { observerTicksPerCreature } = CONFIG.study
   return {
     studied: world.studied,
     creatures: world.creatures,
@@ -198,10 +198,7 @@ function studyOf(lab: Lab, portal: Portal): CardStudy {
     current:
       portal.status !== 'open' || fullyStudied
         ? null
-        : {
-            number: world.studied + 1,
-            pct: Math.min(99, Math.round((portal.studyProgress / observerTicksPerCreature) * 100)),
-          },
+        : { number: world.studied + 1, pct: creaturePct(portal.studyProgress) },
     observers: portal.observers,
     maxObservers: CONFIG.maxObserversPerPortal,
     others: worldPortals(lab, portal.world)
@@ -214,12 +211,8 @@ function adviceOf(lab: Lab, name: string): CardAdvice | null {
   const rec = recommend(lab, name)
   if (!rec) return null
   const label = ADVICE_LABELS[rec.action]
-  return {
-    action: rec.action,
-    label,
-    reason: rec.reason,
-    text: `${label} — ${lowerFirst(rec.reason)}`,
-  }
+  const tail = ` — ${lowerFirst(rec.reason)}`
+  return { action: rec.action, label, reason: rec.reason, text: label + tail, tail }
 }
 
 function abilitiesOf(lab: Lab, portal: Portal, advice: CardAdvice | null): CardAbility[] {
@@ -295,8 +288,8 @@ export function portalCard(lab: Lab, name: string): PortalCardModel | null {
   const portal = lab.portals.find((p) => p.name === name)
   if (!portal) return null
 
-  const { parts, score } = riskParts(portal)
-  const level = assessRisk(portal).level
+  const risk = assessRisk(portal)
+  const { level, score } = risk
   const label = upperFirst(RISK_LEVEL_LABELS[level])
   const archived = portal.status !== 'open'
   const advice = adviceOf(lab, name)
@@ -317,8 +310,8 @@ export function portalCard(lab: Lab, name: string): PortalCardModel | null {
         pct: Math.min(100, Math.round((portal.timeLeft / CONFIG.spawn.timeLeft.max) * 100)),
       },
     },
-    parts,
-    hardRule: hardRuleText(portal),
+    parts: riskParts(risk),
+    hardRule: hardRuleText(portal, risk),
     study: studyOf(lab, portal),
     advice,
     abilities: abilitiesOf(lab, portal, advice),

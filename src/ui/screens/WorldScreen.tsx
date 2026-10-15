@@ -4,10 +4,13 @@ import {
   assessRisk,
   creatureName,
   filterLog,
+  worldPortals,
+  worldStats,
   type Lab,
   type LogEntry,
   type Portal,
   type World,
+  type WorldStats,
 } from '../../domain'
 import { creatureColors, risk, sprite } from '../theme/tokens'
 import { Creatures, Portal as PortalSprite, Rune } from '../sprites'
@@ -15,7 +18,6 @@ import { CREATURE_BODIES, UNKNOWN_CREATURE } from '../sprites/creatureGlyphs'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
 import { WorldProgress } from './WorldProgress'
-import { worldPortals, worldStats, type WorldStats } from './worldStats'
 import './screens.css'
 
 // Стрелка «изучение общее» 8×8 из канваса
@@ -259,25 +261,32 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
             {world.name}
           </h1>
         </div>
-        <div
+        {/* Подпись и число — пара dt/dd, чтобы чтец и тесты не путали, какое число к чему */}
+        <dl
           role="group"
           aria-label="Сводка мира"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, auto)',
-            gap: '4px 22px',
+            display: 'flex',
+            gap: 22,
+            margin: 0,
             fontSize: 16,
             color: 'var(--c-ink-body)',
             textAlign: 'right',
           }}
         >
-          <span>Посещений</span>
-          <span>Открыто сейчас</span>
-          <span>Последнее</span>
-          <b style={statNumber}>{world.visits}</b>
-          <b style={statNumber}>{stats.open}</b>
-          <b style={statNumber}>мин {world.lastVisit}</b>
-        </div>
+          {(
+            [
+              ['Посещений', world.visits],
+              ['Открыто сейчас', stats.open],
+              ['Последнее', `мин ${world.lastVisit}`],
+            ] as const
+          ).map(([term, value]) => (
+            <div key={term} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <dt>{term}</dt>
+              <dd style={{ ...statNumber, margin: 0 }}>{value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
       <div
         className="world-wrap"

@@ -141,6 +141,19 @@ describe('Книга журнала (spec §8, §9)', () => {
       expect(texts(left(3))).toEqual(numbers(15, 20))
     })
 
+    it('пустая правая страница помечена journal-page--blank (на узком экране её не видно)', () => {
+      const page = (n: number) => left(n).closest('section')!
+      const { unmount } = renderJournal(log(20))
+      expect(page(3)).not.toHaveClass('journal-page--blank')
+      expect(page(4)).toHaveClass('journal-page--blank')
+      unmount()
+
+      // В пустой книге на правой странице подсказка — она не пустая
+      renderJournal([])
+      expect(page(1)).not.toHaveClass('journal-page--blank')
+      expect(page(2)).not.toHaveClass('journal-page--blank')
+    })
+
     it('ровно разворот записей — один разворот, листать некуда', () => {
       renderJournal(log(14))
 
@@ -257,6 +270,28 @@ describe('Книга журнала (spec §8, §9)', () => {
       await userEvent.click(ribbon)
       await userEvent.click(screen.getByRole('button', { name: 'действие' }))
       expect(ribbon).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('раскрытая закладка указывает на свой список; нажатие вне закрывает', async () => {
+      renderJournal(log(3))
+      const ribbon = screen.getByRole('button', { name: /Вид записи/ })
+      expect(ribbon).not.toHaveAttribute('aria-controls')
+
+      await userEvent.click(ribbon)
+      const list = screen.getByRole('group', { name: 'Вид записи' })
+      expect(ribbon).toHaveAttribute('aria-controls', list.id)
+      expect(
+        within(list)
+          .getAllByRole('button')
+          .map((b) => b.textContent),
+      ).toEqual(['все виды', 'действие', 'отказ', 'система'])
+
+      // Нажатие внутри закладки список не закрывает, вне — закрывает
+      await userEvent.click(list)
+      expect(ribbon).toHaveAttribute('aria-expanded', 'true')
+      await userEvent.click(screen.getByRole('heading', { name: 'КНИГА ЖУРНАЛА' }))
+      expect(ribbon).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('group', { name: 'Вид записи' })).not.toBeInTheDocument()
     })
   })
 

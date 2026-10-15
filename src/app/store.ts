@@ -99,6 +99,10 @@ export function createLabStore(options: {
     },
     // Скорость вне сохранения: только уведомление, без записи в хранилище
     setSpeed(speed) {
+      // Тип не спасает от вызова из JS или с числом из вычислений: чужая скорость сломала бы цикл тиков
+      if (!SPEEDS.includes(speed)) {
+        throw new RangeError(`Скорость ${speed} не из ${SPEEDS.join(', ')}`)
+      }
       if (state.speed === speed) return
       state = { ...state, speed }
       notify()

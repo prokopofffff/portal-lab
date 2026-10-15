@@ -187,7 +187,7 @@ export function HallScreen({ focus }: { focus?: string }) {
         backgroundColor: 'var(--c-stone)',
         backgroundImage:
           'repeating-linear-gradient(0deg,transparent 0 31px,var(--c-stone-seam) 31px 32px),repeating-linear-gradient(90deg,transparent 0 63px,var(--c-stone-seam) 63px 64px)',
-        boxShadow: 'inset 0 0 140px rgba(0,0,0,.65)',
+        boxShadow: 'inset 0 0 140px var(--c-vignette-hall)',
         filter: paused ? 'brightness(.55) saturate(.6)' : 'none',
       }}
     >

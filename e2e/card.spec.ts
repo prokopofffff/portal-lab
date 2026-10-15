@@ -114,7 +114,9 @@ test('подсказка отказа от наведения: курсор пе
   await expect(send).toHaveAttribute('aria-disabled', 'true')
   const tip = page.getByRole('tooltip')
 
-  // Курсор с кнопки вверх на подсказку, через зазор между ними: подсказка не пропадает (WCAG 1.4.13)
+  // Курсор с кнопки вверх на подсказку, через зазор между ними: подсказка не пропадает (WCAG 1.4.13).
+  // Карточка открывается в 20 px от верха, и кнопка у нижнего края окна — сначала прокручиваем к ней
+  await send.scrollIntoViewIfNeeded()
   const button = (await send.boundingBox())!
   await page.mouse.move(button.x + button.width / 2, button.y + button.height / 2)
   await expect(tip).toBeVisible()
@@ -178,4 +180,65 @@ test('закрытие последнего портала: свиток, «От
   await page.keyboard.press('Escape')
   await page.getByRole('link', { name: 'Книга журнала' }).click()
   await expect(page.getByText(/^Закрытие .* отменено$/)).toBeAttached()
+})
+
+test('«Под вопросом»: заметка в свитке, протяжки мышью его не отменяют, пометка на карте и в зале', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  const name = await criticalPortal(page)
+  await page.getByRole('button', { name: `Открыть карточку портала ${name}` }).click()
+  const card = page.getByRole('dialog', { name })
+  await card
+    .getByRole('group', { name: 'Способности' })
+    .getByRole('button', { name: 'Под вопросом' })
+    .click()
+
+  const scroll = page.getByRole('dialog', { name: 'ПОМЕТИТЬ «ПОД ВОПРОСОМ»' })
+  const field = scroll.getByRole('textbox', { name: /Заметка/ })
+  await expect(field).toBeFocused()
+  await field.fill('Руны мерцают не в такт')
+
+  // Нажатие на затемнении, отпущенное на свитке, и выделение заметки, отпущенное на затемнении, —
+  // не клик по затемнению: свиток и заметка остаются
+  const box = (await scroll.boundingBox())!
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+  await page.mouse.move(10, 10)
+  await page.mouse.down()
+  await page.mouse.move(centre.x, centre.y, { steps: 5 })
+  await page.mouse.up()
+  await expect(scroll).toBeVisible()
+
+  const fieldBox = (await field.boundingBox())!
+  await page.mouse.move(fieldBox.x + 10, fieldBox.y + fieldBox.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(10, 10, { steps: 5 })
+  await page.mouse.up()
+  await expect(scroll).toBeVisible()
+  await expect(field).toHaveValue('Руны мерцают не в такт')
+
+  await scroll.getByRole('button', { name: 'Пометить' }).click()
+  await expect(scroll).toHaveCount(0)
+  await expect(card.getByText('ПОД ВОПРОСОМ', { exact: true })).toBeVisible()
+  await expect(card.getByText('Руны мерцают не в такт', { exact: true })).toBeVisible()
+  // Заметка попала и в историю портала
+  await expect(card.getByText(/пометка «Под вопросом» — Руны мерцают не в такт$/)).toBeAttached()
+
+  // В зале у арки значок пометки
+  await page.keyboard.press('Escape')
+  await expect(card).toHaveCount(0)
+  await expect(page.getByLabel('Под вопросом', { exact: true })).toHaveCount(1)
+})
+
+test('на десктопе карточка открывается в 20 px от верха, затемнение не прокручено', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 800 })
+  const name = await criticalPortal(page)
+  await page.getByRole('button', { name: `Открыть карточку портала ${name}` }).click()
+  const card = page.getByRole('dialog', { name })
+  await expect(card).toBeFocused()
+  // Как в кадре 04-card-critical (top: 20px): фокус на диалоге выше окна не прокручивает затемнение
+  expect(await page.getByTestId('card-overlay').evaluate((el) => el.scrollTop)).toBe(0)
+  expect((await card.boundingBox())!.y).toBeCloseTo(20, 0)
 })

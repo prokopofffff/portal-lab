@@ -158,9 +158,11 @@ function Scene({ model }: { model: PortalCardModel }) {
             position: 'absolute',
             left: '50%',
             top: '50%',
+            // Не шире сцены: на узкой карточке рядом с полосой прокрутки сцена уже 300 px
             width: 300,
+            maxWidth: '100%',
             height: 300,
-            margin: '-150px 0 0 -150px',
+            transform: 'translate(-50%, -50%)',
             background: `radial-gradient(closest-side, color-mix(in srgb, var(--risk-${level}-c) ${glowStrength[level]}, transparent), transparent)`,
           }}
         />

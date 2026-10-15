@@ -1,11 +1,10 @@
 import { useState, type CSSProperties } from 'react'
 import { useLabSelector } from '../../app/hooks'
-import type { World } from '../../domain'
+import { worldStats, type World, type WorldStats } from '../../domain'
 import { Creatures } from '../sprites'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
 import { WorldProgress } from './WorldProgress'
-import { worldStats, type WorldStats } from './worldStats'
 import './screens.css'
 
 // Иконка атласа 9×9 из канваса; у пустого атласа она приглушена
@@ -49,7 +48,7 @@ const tabStyle = (on: boolean): CSSProperties => ({
   color: on ? 'var(--c-on-torch)' : 'var(--c-parchment)',
   background: on ? 'var(--c-gold-plate)' : 'var(--c-tab)',
   border: `3px solid ${on ? 'var(--c-tab-on-edge)' : 'var(--c-parchment-edge)'}`,
-  boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.3)',
+  boxShadow: 'inset 0 -3px 0 var(--c-bevel-soft)',
   cursor: 'pointer',
 })
 

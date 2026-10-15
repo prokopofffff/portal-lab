@@ -39,3 +39,21 @@ for (const width of [1280, 1366, 1440]) {
     expect(boxes.at(-1)!.right).toBeLessThanOrEqual(width - 12)
   })
 }
+
+test('док на 901…1440 px: печать не налезает на вкладки, «Книга журнала» нажимается', async ({
+  page,
+}) => {
+  await page.goto('/?seed=3&test=1')
+  const tabs = page.getByRole('navigation', { name: 'Разделы' })
+  const seal = page.getByRole('button', { name: 'Запечатать лабораторию' })
+  for (const width of [1440, 1280, 1259, 1211, 1100, 1040, 1039, 1000, 901]) {
+    await page.setViewportSize({ width, height: 800 })
+    const t = (await tabs.boundingBox())!
+    const s = (await seal.boundingBox())!
+    expect(s.x, `печать на ${width} налезает на вкладки`).toBeGreaterThanOrEqual(t.x + t.width)
+    expect(s.x + s.width).toBeLessThanOrEqual(width)
+    expect(s.height).toBeGreaterThanOrEqual(36)
+  }
+  await page.getByRole('link', { name: 'Книга журнала' }).click()
+  await expect(page.getByRole('heading', { name: 'КНИГА ЖУРНАЛА' })).toBeVisible()
+})
