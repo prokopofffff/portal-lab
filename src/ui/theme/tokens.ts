@@ -112,6 +112,28 @@ export const colors = {
   sharedWorldBg: '#241d3d',
   sharedWorldEdge: '#6d5ac8',
   studyNext: '#6a55a0',
+  // карточка портала (канвас 23-c-portal-card): сцена, записка, печать, способности, перезарядка
+  textFaint: '#a79bb8', // время в истории, системные записи, подписи наблюдателей
+  sceneGrid: '#17131f',
+  sceneFloor: '#201b2b',
+  stamp: '#d9a0a8',
+  stickyNote: '#f0dc8a',
+  stickyNoteShade: '#c9b25a',
+  stickyNoteInk: '#3a2a0a',
+  hardRuleBg: '#3a0c18',
+  tipText: '#ffd0d8',
+  ability: '#2a2438',
+  abilityEdge: '#6a5f80',
+  abilityOff: '#1a1722', // недоступная способность и плашка статуса архивного портала
+  abilityOffIcon: '#8a7fa6',
+  abilityRec: '#4a3510',
+  abilityRecText: '#fff1c9',
+  abilityShade: 'rgba(0, 0, 0, 0.35)',
+  cooldownShade: 'rgba(10, 8, 16, 0.78)',
+  cooldownLit: 'rgba(255, 255, 255, 0.14)',
+  onCooldown: '#ffffff',
+  archivedPlate: '#2c2a38', // плашка риска и рамка разбора у архивной карточки
+  archivedText: '#c9c3d8',
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -270,6 +292,27 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
     name: 'значок наблюдателей у арки',
     fg: colors.observerOnSiteText,
     bg: colors.observerOnSiteBg,
+    min: 4.5,
+  },
+  { name: 'карточка: время в истории', fg: colors.textFaint, bg: colors.rowStage, min: 4.5 },
+  { name: 'карточка: подпись метрики', fg: colors.textSoft, bg: sprite.sill, min: 4.5 },
+  { name: 'карточка: печать архива', fg: colors.stamp, bg: colors.rowStage, min: 4.5 },
+  { name: 'карточка: записка', fg: colors.stickyNoteInk, bg: colors.stickyNote, min: 4.5 },
+  { name: 'карточка: жёсткое правило', fg: risk.critical.onPlate, bg: colors.hardRuleBg, min: 4.5 },
+  { name: 'карточка: подсказка отказа', fg: colors.tipText, bg: colors.well, min: 4.5 },
+  { name: 'карточка: способность', fg: colors.text, bg: colors.ability, min: 4.5 },
+  {
+    name: 'карточка: рекомендованная способность',
+    fg: colors.abilityRecText,
+    bg: colors.abilityRec,
+    min: 4.5,
+  },
+  { name: 'карточка: статус архива', fg: colors.archivedText, bg: colors.abilityOff, min: 4.5 },
+  { name: 'карточка: риск архива', fg: colors.archivedText, bg: colors.archivedPlate, min: 4.5 },
+  {
+    name: 'карточка: снижение риска',
+    fg: colors.observerOnSiteText,
+    bg: colors.acceptedBg,
     min: 4.5,
   },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
