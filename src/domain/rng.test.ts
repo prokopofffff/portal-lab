@@ -33,6 +33,18 @@ describe('createRng', () => {
     for (let i = 0; i < 50; i++) expect(resumed.next()).toBe(rng.next())
   })
 
+  // lab-cl5.13: |0 молча свёл бы такой seed к другой последовательности
+  it.each([Number.NaN, 1.5, -1, 2 ** 32, Number.POSITIVE_INFINITY])(
+    'бросает RangeError на seed %d вне uint32',
+    (seed) => {
+      expect(() => createRng(seed)).toThrow(RangeError)
+    },
+  )
+
+  it.each([0, 2 ** 32 - 1])('принимает граничный seed %d', (seed) => {
+    expect(createRng(seed).state()).toBe(seed)
+  })
+
   describe('int', () => {
     it('остаётся в диапазоне и достигает обеих границ', () => {
       const rng = createRng(3)
