@@ -49,6 +49,8 @@ export const colors = {
   parchmentPlate: '#d6c392',
   parchmentSpine: '#3a2a18',
   parchmentIcon: '#a89468',
+  pin: '#b3243c', // кнопка-булавка записки в зале
+  pinShade: '#6e1424',
   inkBody: '#3a2a1a',
   inkSoft: '#5a4a34',
   inkLabel: '#6e4a1a',

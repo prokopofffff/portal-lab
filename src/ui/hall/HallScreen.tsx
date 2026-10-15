@@ -2,6 +2,7 @@ import { useCallback, useState, type CSSProperties } from 'react'
 import { useDispatch, useLabSelector, useSpeed } from '../../app/hooks'
 import { useNavigate } from '../../app/navigation'
 import type { Lab } from '../../domain'
+import { AlarmNotes } from './AlarmNotes'
 import { EmptyArch, LeavingArch, PortalArch } from './ArchCell'
 import { ARCH_COUNT, departures, hallCells, type Departure } from './hallCells'
 import './hall.css'
@@ -222,7 +223,8 @@ export function HallScreen({ focus }: { focus?: string }) {
         <QuestionedToggle on={onlyQuestioned} onChange={setOnlyQuestioned} />
       </div>
 
-      {/* Записки «Тревожных знаков» — lab-9dr.5; пока порталов нет, здесь приглашение */}
+      {/* Записки «Тревожных знаков»; пока порталов нет, здесь приглашение */}
+      {open > 0 && <AlarmNotes />}
       {open === 0 && (
         <div
           className="hall-notch"

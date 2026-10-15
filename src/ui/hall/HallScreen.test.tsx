@@ -54,10 +54,33 @@ const plateOf = (name: string) => cellOf(screen.getByText(name))
 const animationEnd = (el: Element) =>
   fireEvent(el, new Event('webkitAnimationEnd', { bubbles: true }))
 
+describe('Зал: тревожные знаки', () => {
+  it('записки стоят над арками, а клик по записке открывает карточку с возвратом в зал', async () => {
+    const { route } = renderHall()
+    const alarms = screen.getByRole('region', { name: 'Тревожные знаки' })
+    // Принятый «ШЗ-793-1» в списке внимания не участвует
+    expect(within(alarms).getAllByRole('button')).toHaveLength(2)
+    await userEvent.click(within(alarms).getByRole('button', { name: /ПТ-420-1/ }))
+    expect(route()).toEqual({ screen: 'portal', portal: 'ПТ-420-1', back: { screen: 'hall' } })
+  })
+
+  it('все порталы приняты: слот остаётся, внутри тихая панель', () => {
+    renderHall(
+      labWith({ worlds, portals: work.map((p) => ({ ...p, acceptedAt: 'low' as const })) }),
+    )
+    expect(screen.getByRole('region', { name: 'Тревожные знаки' })).toHaveTextContent(
+      'Тревожных знаков нет — все открытые порталы приняты как есть',
+    )
+    expect(screen.queryByText('Порталов нет — активируйте первую арку')).not.toBeInTheDocument()
+  })
+})
+
 describe('Зал: пустая лаборатория', () => {
   it('12 пустых арок, приглашение и подсказка у первой арки', () => {
     renderHall(labWith({ worlds: {} }))
     expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+    // Записок нет, пока нет открытых порталов — вместо них приглашение
+    expect(screen.queryByRole('region', { name: 'Тревожные знаки' })).not.toBeInTheDocument()
     expect(screen.getByText('Порталов нет — активируйте первую арку')).toBeInTheDocument()
     expect(emptyArches()).toHaveLength(12)
     expect(screen.getByText('АРКА 1').nextSibling).toHaveTextContent('нажмите — откроется портал')

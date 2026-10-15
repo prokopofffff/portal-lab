@@ -18,6 +18,12 @@
   );
 }
 
+/* Записка «Тревожных знаков»: clip-path срезал бы внешний контур фокуса — рисуем его внутри */
+.hall-note:focus-visible {
+  outline: 3px solid var(--c-ink-title);
+  outline-offset: -7px;
+}
+
 .hall-sr {
   position: absolute;
   width: 1px;
