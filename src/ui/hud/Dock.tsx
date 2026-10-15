@@ -1,5 +1,6 @@
-import { useRoute, type Route } from '../../app/navigation'
+import { baseRoute, useRoute, type BaseRoute, type Route } from '../../app/navigation'
 import { RouteLink } from '../screens/RouteLink'
+import './dock.css'
 
 type Tab = 'hall' | 'atlas' | 'book'
 
@@ -25,10 +26,9 @@ const TABS: readonly { tab: Tab; label: string; to: Route; d: string }[] = [
   },
 ]
 
-// Карточка портала открывается из зала, страница мира — из атласа
-const TAB_OF: Record<Route['screen'], Tab> = {
+// Страница мира — из атласа; карточка портала подсвечивает вкладку экрана под ней
+const TAB_OF: Record<BaseRoute['screen'], Tab> = {
   hall: 'hall',
-  portal: 'hall',
   atlas: 'atlas',
   world: 'atlas',
   journal: 'book',
@@ -36,18 +36,14 @@ const TAB_OF: Record<Route['screen'], Tab> = {
 
 /** Нижняя панель входа (канвас 18-c-dock): разделы и печать лаборатории. */
 export function Dock({ onSeal }: { onSeal: () => void }) {
-  const active = TAB_OF[useRoute().screen]
+  const active = TAB_OF[baseRoute(useRoute()).screen]
   return (
     <div
+      className="dock"
       style={{
         flex: 'none',
         width: '100%',
         boxSizing: 'border-box',
-        height: 84,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 24px',
         background: 'var(--c-panel)',
         borderTop: '4px solid var(--c-edge)',
         boxShadow: 'inset 0 4px 0 var(--c-well)',
@@ -58,7 +54,7 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
         zIndex: 10,
       }}
     >
-      <nav aria-label="Разделы" style={{ display: 'flex', gap: 12 }}>
+      <nav aria-label="Разделы" className="dock-tabs">
         {TABS.map(({ tab, label, to, d }) => {
           const on = tab === active
           return (
@@ -66,14 +62,9 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
               key={tab}
               to={to}
               current={on}
+              className="dock-tab"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                width: 250,
-                height: 56,
                 boxSizing: 'border-box',
-                padding: '0 16px',
                 textDecoration: 'none',
                 color: on ? 'var(--c-on-torch)' : 'var(--c-text-soft)',
                 background: on ? 'var(--c-torch)' : 'var(--c-control)',
@@ -90,21 +81,22 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
               >
                 <path d={d} fill={on ? 'var(--c-on-torch)' : 'var(--c-torch)'} />
               </svg>
-              <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: 0.5 }}>{label}</span>
+              <span className="dock-tab-label">{label}</span>
             </RouteLink>
           )
         })}
       </nav>
-      <div style={{ position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)' }}>
+      <div className="dock-seal">
         <button
           type="button"
+          className="dock-seal-btn"
+          // Имя задано явно: на узкой ширине подпись скрыта, остаётся один значок
+          aria-label="Запечатать лабораторию"
+          title="Запечатать лабораторию"
           onClick={onSeal}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            height: 36,
-            padding: '0 12px',
             boxSizing: 'border-box',
             fontFamily: 'var(--f-ui)',
             fontSize: 13,
@@ -127,7 +119,7 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
             />
             <path d="M3,4h1v2h-1z" fill="var(--c-panel)" />
           </svg>
-          Запечатать лабораторию
+          <span className="dock-seal-text">Запечатать лабораторию</span>
         </button>
       </div>
     </div>

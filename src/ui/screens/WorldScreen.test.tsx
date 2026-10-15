@@ -77,9 +77,42 @@ describe('Страница мира (spec §9)', () => {
     expect(screen.getByText('Прогресс мира: 33 %')).toBeInTheDocument()
     // Следующее — четвёртое; у лучшего портала 12 из 20 тиков
     expect(screen.getByText('существо №4: 60 %')).toBeInTheDocument()
-    expect(
-      screen.getByRole('img', { name: 'Изучено 3 из 9, следующее изучено на 60 %' }),
-    ).toBeInTheDocument()
+    // Плитки кадра 12: три изученных по имени, изучаемое, остальные неизвестны
+    const tiles = within(screen.getByRole('list', { name: 'Существа мира' })).getAllByRole(
+      'listitem',
+    )
+    expect(tiles.map((t) => t.textContent)).toEqual([
+      'Пепельный слизень',
+      'Рогатый бес',
+      'Серый призрак',
+      'Изучается · 60 %',
+      ...Array(5).fill('???'),
+    ])
+    expect(tiles.map((t) => t.dataset.creature)).toEqual([
+      'known',
+      'known',
+      'known',
+      'study',
+      ...Array(5).fill('unknown'),
+    ])
+  })
+
+  it('существа: без прогресса изучаемой плитки нет; мир без существ — подпись', () => {
+    const { unmount } = renderWorld('Багровая Бездна')
+    const tiles = within(screen.getByRole('list', { name: 'Существа мира' })).getAllByRole(
+      'listitem',
+    )
+    expect(tiles.map((t) => t.dataset.creature)).toEqual(Array(9).fill('unknown'))
+    unmount()
+
+    const EMPTY = 'Безмолвный Курган'
+    const bare = labWith({ worlds: { [EMPTY]: world(EMPTY, 'БК-001', { creatures: 0 }) } })
+    renderScreen(<WorldScreen world={EMPTY} />, storeWithLab(bare), {
+      screen: 'world',
+      world: EMPTY,
+    })
+    expect(screen.getByRole('img', { name: 'Существ нет' })).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Существа мира' })).not.toBeInTheDocument()
   })
 
   it('все порталы мира: открытые с риском, закрытые и схлопнувшиеся в архиве', () => {
@@ -180,7 +213,11 @@ describe('Страница мира (spec §9)', () => {
 
     await userEvent.click(row('ПТ-420-2'))
 
-    expect(current()).toEqual({ screen: 'portal', portal: 'ПТ-420-2' })
+    expect(current()).toEqual({
+      screen: 'portal',
+      portal: 'ПТ-420-2',
+      back: { screen: 'world', world: 'Пепельные Топи' },
+    })
   })
 
   it('архивный портал тоже открывается (только просмотр)', async () => {
@@ -188,7 +225,11 @@ describe('Страница мира (spec §9)', () => {
 
     await userEvent.click(row('ПТ-420-3'))
 
-    expect(current()).toEqual({ screen: 'portal', portal: 'ПТ-420-3' })
+    expect(current()).toEqual({
+      screen: 'portal',
+      portal: 'ПТ-420-3',
+      back: { screen: 'world', world: 'Пепельные Топи' },
+    })
   })
 
   it('«← Атлас миров» возвращает в атлас', async () => {

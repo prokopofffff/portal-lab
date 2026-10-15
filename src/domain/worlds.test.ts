@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { WORLD_NAMES, portalName, worldCode } from './worlds'
+import { WORLD_NAMES, creatureName, portalName, worldCode } from './worlds'
 
 // Примеры из таблицы spec §2.4
 const EXAMPLES = [
@@ -90,5 +90,28 @@ describe('шифры миров', () => {
       Array.from({ length: visits }, (_, i) => portalName(world, i + 1)),
     )
     expect(new Set(names).size).toBe(WORLD_NAMES.length * visits)
+  })
+})
+
+describe('creatureName', () => {
+  it('первые три — как в канвасе «Страница мира»', () => {
+    expect([0, 1, 2].map((i) => creatureName('Пепельные Топи', i))).toEqual([
+      'Пепельный слизень',
+      'Рогатый бес',
+      'Серый призрак',
+    ])
+  })
+
+  it('прилагательное мира — в мужском роде при любом роде мира', () => {
+    expect(creatureName('Ледяная Пещера', 0)).toBe('Ледяной слизень')
+    expect(creatureName('Шепчущее Зеркало', 0)).toBe('Шепчущий слизень')
+    expect(creatureName('Забытый Маяк', 0)).toBe('Забытый слизень')
+  })
+
+  it('в мире до 15 существ имена не повторяются', () => {
+    for (const world of WORLD_NAMES) {
+      const names = Array.from({ length: 15 }, (_, i) => creatureName(world, i))
+      expect(new Set(names).size).toBe(15)
+    }
   })
 })

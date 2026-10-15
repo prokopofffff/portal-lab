@@ -39,8 +39,8 @@ const comparators: Record<SortKey, (a: World, b: World) => number> = {
   last: (a, b) => b.lastVisit - a.lastVisit,
 }
 
+// Высота вкладки (40 px) — в классе atlas-tab: на узком экране она не ниже 44 px
 const tabStyle = (on: boolean): CSSProperties => ({
-  height: 40,
   padding: '0 14px',
   boxSizing: 'border-box',
   fontFamily: 'var(--f-ui)',
@@ -146,9 +146,9 @@ function WorldCard({ world, stats }: Entry) {
           </span>
         </div>
         <div
+          className="atlas-stats"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
             gap: '6px 14px',
             fontSize: 17,
             lineHeight: '20px',
@@ -274,6 +274,7 @@ export function AtlasScreen() {
   return (
     <ScreenFrame>
       <div
+        className="atlas-head"
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -300,8 +301,11 @@ export function AtlasScreen() {
           </h1>
         </div>
         {hasWorlds && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, color: 'var(--c-cellar-label)', marginRight: 6 }}>
+          <div className="atlas-sort" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+              className="atlas-sort-label"
+              style={{ fontSize: 14, color: 'var(--c-cellar-label)', marginRight: 6 }}
+            >
               Сортировка
             </span>
             {TABS.map(([key, label]) => (
@@ -310,6 +314,7 @@ export function AtlasScreen() {
                 type="button"
                 aria-pressed={sort === key}
                 onClick={() => setSort(key)}
+                className="atlas-tab"
                 style={tabStyle(sort === key)}
               >
                 {label}
@@ -320,10 +325,12 @@ export function AtlasScreen() {
       </div>
       {hasWorlds ? (
         <div
+          // Как кадр 11: сетка занимает экран до дока, ряды делят высоту поровну; больше двух
+          // рядов — не уже 300 px, экран прокручивается. Столбцы и ряды — в классе atlas-grid
+          className="atlas-grid"
           style={{
+            flex: '1 1 auto',
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-            gridAutoRows: 'minmax(300px, auto)',
             gap: 22,
           }}
         >

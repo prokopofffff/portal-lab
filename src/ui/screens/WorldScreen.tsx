@@ -2,14 +2,16 @@ import type { CSSProperties } from 'react'
 import { useLabSelector } from '../../app/hooks'
 import {
   assessRisk,
+  creatureName,
   filterLog,
   type Lab,
   type LogEntry,
   type Portal,
   type World,
 } from '../../domain'
-import { risk } from '../theme/tokens'
+import { creatureColors, risk, sprite } from '../theme/tokens'
 import { Creatures, Portal as PortalSprite, RiskTag, Rune } from '../sprites'
+import { CREATURE_BODIES, UNKNOWN_CREATURE } from '../sprites/creatureGlyphs'
 import { RouteLink } from './RouteLink'
 import { ScreenFrame } from './ScreenFrame'
 import { WorldProgress } from './WorldProgress'
@@ -21,13 +23,13 @@ const SHARED_ICON = 'M3,0h2v1h-2z M3,1h2v2h-2z M0,3h8v1h-8z M1,4h6v1h-6z M2,5h4v
 
 const pageLabel: CSSProperties = { fontSize: 14, letterSpacing: 1, color: 'var(--c-ink-label)' }
 
+// Отступы страницы и тень у корешка — в классах world-page (на узком экране страницы друг под другом)
 const page: CSSProperties = {
   flex: '1 1 0',
   minWidth: 0,
   boxSizing: 'border-box',
   background: 'var(--c-parchment)',
   color: 'var(--c-ink-title)',
-  padding: '22px 26px 20px',
   display: 'flex',
   flexDirection: 'column',
   gap: 14,
@@ -37,7 +39,7 @@ const statNumber: CSSProperties = { fontFamily: 'var(--f-ui)', fontSize: 22, fon
 
 function BackLink() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+    <div className="world-back" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
       <RouteLink
         to={{ screen: 'atlas' }}
         style={{
@@ -68,7 +70,11 @@ function PortalRow({ portal }: { portal: Portal }) {
   const level = assessment?.level
   return (
     <RouteLink
-      to={{ screen: 'portal', portal: portal.name }}
+      to={{
+        screen: 'portal',
+        portal: portal.name,
+        back: { screen: 'world', world: portal.world },
+      }}
       className="px-notch"
       style={{
         display: 'flex',
@@ -177,8 +183,9 @@ function HistoryItem({ entry }: { entry: LogEntry }) {
 
 function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
   return (
-    <section style={{ ...page, boxShadow: 'inset -10px 0 18px -8px rgba(60,40,10,.45)' }}>
+    <section className="world-page world-page--left" style={page}>
       <div
+        className="world-head"
         style={{
           display: 'flex',
           alignItems: 'flex-start',
@@ -232,7 +239,10 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
           <b style={statNumber}>мин {world.lastVisit}</b>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+      <div
+        className="world-wrap"
+        style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}
+      >
         <span style={pageLabel}>
           СУЩЕСТВА · ИЗУЧЕНО {world.studied} ИЗ {world.creatures}
         </span>
@@ -247,7 +257,7 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
           неизученные проявятся, когда наблюдатели доберутся до них
         </span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="world-progress" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span style={{ flex: 'none', fontSize: 17, fontWeight: 600 }}>
           Прогресс мира: {stats.donePct} %
         </span>
@@ -258,13 +268,106 @@ function LeftPage({ world, stats }: { world: World; stats: WorldStats }) {
           </span>
         )}
       </div>
-      <Creatures
-        total={world.creatures}
-        studied={world.studied}
-        progress={stats.nextPct}
-        size={72}
-      />
+      <CreatureGrid world={world} nextPct={stats.full ? 0 : stats.nextPct} />
     </section>
+  )
+}
+
+// Клетка существа на странице мира (кадр 12): изученное — по имени, изучаемое проступает снизу
+const tileLook = {
+  known: { bg: sprite.cellBg, edge: sprite.cellEdge, glow: 'none', text: 'var(--c-text)' },
+  study: {
+    bg: sprite.studyBg,
+    edge: sprite.study,
+    glow: `0 0 10px color-mix(in srgb, ${sprite.study} 46.7%, transparent)`,
+    text: sprite.studyBadge,
+  },
+  unknown: {
+    bg: sprite.unknownBg,
+    edge: sprite.unknownEdge,
+    glow: 'none',
+    text: sprite.unknownLabel,
+  },
+} as const
+
+function CreatureGlyph({ d, fill, clip }: { d: string; fill: string; clip?: number }) {
+  return (
+    <svg
+      viewBox="0 0 8 8"
+      width={64}
+      height={64}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      style={
+        clip === undefined
+          ? undefined
+          : { position: 'absolute', left: 0, top: 0, clipPath: `inset(${clip}% 0 0 0)` }
+      }
+    >
+      <path d={d} fill={fill} />
+    </svg>
+  )
+}
+
+/** Существа мира плитками 3 в ряд: имя изученного, «Изучается · N %» и «???» для неизвестных. */
+function CreatureGrid({ world, nextPct }: { world: World; nextPct: number }) {
+  if (world.creatures === 0) return <Creatures total={0} studied={0} />
+  const tiles = Array.from({ length: world.creatures }, (_, i) => {
+    const body = CREATURE_BODIES[i % CREATURE_BODIES.length]!
+    const color = creatureColors[i % creatureColors.length]!
+    if (i < world.studied) return { kind: 'known', body, color, name: creatureName(world.name, i) }
+    if (i === world.studied && nextPct > 0) {
+      return { kind: 'study', body, color, name: `Изучается · ${nextPct} %` }
+    }
+    return { kind: 'unknown', body: UNKNOWN_CREATURE, color: sprite.unknownGlyph, name: '???' }
+  })
+  return (
+    <ul
+      aria-label="Существа мира"
+      // Девять плиток делят страницу поровну, как в канвасе; больше — страница растёт.
+      // Столбцы и ряды сетки, расположение в плитке — в классах world-creatures
+      className="world-creatures"
+      style={{
+        flex: '1 1 0',
+        margin: 0,
+        padding: 0,
+        listStyle: 'none',
+        display: 'grid',
+        gap: 12,
+      }}
+    >
+      {tiles.map((t, i) => {
+        const look = tileLook[t.kind as keyof typeof tileLook]
+        return (
+          <li
+            key={i}
+            data-creature={t.kind}
+            className="world-creature"
+            style={{
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: look.bg,
+              border: `3px solid ${look.edge}`,
+              boxShadow: look.glow,
+            }}
+          >
+            <div style={{ position: 'relative', flex: 'none', width: 64, height: 64 }}>
+              {t.kind === 'study' ? (
+                <>
+                  <CreatureGlyph d={t.body} fill={sprite.studyGhost} />
+                  <CreatureGlyph d={t.body} fill={t.color} clip={100 - nextPct} />
+                </>
+              ) : (
+                <CreatureGlyph d={t.body} fill={t.color} />
+              )}
+            </div>
+            <span style={{ fontSize: 16, fontWeight: 600, color: look.text }}>{t.name}</span>
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 
@@ -277,7 +380,7 @@ function RightPage({ lab, world, stats }: { lab: Lab; world: World; stats: World
   ]
   const history = filterLog(lab.log, { world: world.name })
   return (
-    <section style={{ ...page, boxShadow: 'inset 10px 0 18px -8px rgba(60,40,10,.45)' }}>
+    <section className="world-page world-page--right" style={page}>
       <h2 style={{ ...pageLabel, margin: 0, fontWeight: 400 }}>ПОРТАЛЫ В ЭТОТ МИР</h2>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ordered.map((portal) => (
@@ -339,10 +442,14 @@ export function WorldScreen({ world: worldName }: { world: string }) {
       <BackLink />
       {world ? (
         <div
+          className="world-book"
           style={{ flex: '1 1 0', display: 'flex', boxShadow: '0 0 0 4px var(--c-parchment-edge)' }}
         >
           <LeftPage world={world} stats={worldStats(lab, world)} />
-          <div style={{ flex: 'none', width: 8, background: 'var(--c-parchment-spine)' }} />
+          <div
+            className="world-spine"
+            style={{ flex: 'none', background: 'var(--c-parchment-spine)' }}
+          />
           <RightPage lab={lab} world={world} stats={worldStats(lab, world)} />
         </div>
       ) : (

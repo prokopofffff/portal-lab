@@ -6,7 +6,7 @@ import {
   useDispatch,
   useLabSelector,
   useLabStore,
-  useRejection,
+  useNotifications,
   useSpeed,
 } from './hooks'
 import { createLabStore, shallowEqual, type LabStore } from './store'
@@ -158,24 +158,38 @@ describe('React-хуки store лаборатории', () => {
     expect(screen.getByText('Скорость: 5')).toBeInTheDocument()
   })
 
-  it('useRejection показывает отказ и скрывает его после dismissRejection', () => {
+  it('useNotifications показывает отказы и убирает их после dismissNotification', () => {
     const store = newStore()
-    function RejectionText() {
-      const rejection = useRejection()
-      return <p>{rejection ? `Отказ: ${rejection.text}` : 'Отказа нет'}</p>
+    function Texts() {
+      const notifications = useNotifications()
+      return <p>{notifications.length ? notifications.map((n) => n.text).join('; ') : 'Пусто'}</p>
     }
-    renderWith(store, <RejectionText />)
-    expect(screen.getByText('Отказа нет')).toBeInTheDocument()
+    renderWith(store, <Texts />)
+    expect(screen.getByText('Пусто')).toBeInTheDocument()
 
     act(() => {
       store.dispatch({ type: 'stabilize', portal: 'XX-000-1' })
     })
-    expect(screen.getByText('Отказ: Портал не открыт')).toBeInTheDocument()
+    expect(screen.getByText('Портал не открыт')).toBeInTheDocument()
 
     act(() => {
-      store.dismissRejection()
+      store.dismissNotification(store.getState().notifications[0]!.id)
     })
-    expect(screen.getByText('Отказа нет')).toBeInTheDocument()
+    expect(screen.getByText('Пусто')).toBeInTheDocument()
+  })
+
+  it('useNotifications держит ссылку, пока очередь не менялась', () => {
+    const store = newStore()
+    const { result } = renderHook(() => useNotifications(), {
+      wrapper: ({ children }) => <LabStoreProvider store={store}>{children}</LabStoreProvider>,
+    })
+    const first = result.current
+
+    act(() => {
+      store.advance(1)
+    })
+
+    expect(result.current).toBe(first)
   })
 
   it('useDispatch отправляет команду в store', () => {

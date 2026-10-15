@@ -2,7 +2,8 @@
 // Провайдер и хуки — один модуль по контракту; fast refresh этого файла даёт полную перезагрузку
 /* oxlint-disable react/only-export-components */
 import { createContext, useContext, useRef, useSyncExternalStore, type ReactNode } from 'react'
-import type { LabState, LabStore, Rejection, Speed } from './store'
+import type { Notification } from './notifications'
+import type { LabState, LabStore, Speed } from './store'
 
 const LabStoreContext = createContext<LabStore | null>(null)
 
@@ -47,9 +48,9 @@ export function useDispatch(): LabStore['dispatch'] {
   return useLabStore().dispatch
 }
 
-// Последний отказ команды; null — показывать нечего
-export function useRejection(): Rejection | null {
-  return useLabSelector((state) => state.rejection)
+// Очередь уведомлений, старые первыми; ссылка меняется, только когда очередь изменилась
+export function useNotifications(): Notification[] {
+  return useLabSelector((state) => state.notifications)
 }
 
 // Скорость симуляции и её смена: для кнопок HUD

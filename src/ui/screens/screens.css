@@ -33,3 +33,231 @@
 .journal-tab {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 10px), 0 100%);
 }
+
+/* Погреб атласа и страницы мира: отступы приходят из ScreenFrame переменной --screen-pad */
+.screen-frame {
+  padding: var(--screen-pad);
+}
+
+/* Атлас (кадры 10–11): вкладки сортировки 40 px, карточки миров в три столбца, сводка в два */
+.atlas-tab {
+  height: 40px;
+}
+.atlas-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(300px, 1fr);
+}
+.atlas-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Страница мира (кадр 12): две страницы книги через корешок 8 px, тень у корешка; существа плитками
+   по три */
+.world-page {
+  padding: 22px 26px 20px;
+}
+.world-page--left {
+  box-shadow: inset -10px 0 18px -8px rgba(60, 40, 10, 0.45);
+}
+.world-page--right {
+  box-shadow: inset 10px 0 18px -8px rgba(60, 40, 10, 0.45);
+}
+.world-spine {
+  width: 8px;
+}
+.world-meter {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.world-creatures {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(108px, 1fr);
+}
+.world-creature {
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Книга журнала (кадры 13–14): разворот из двух страниц (7 строк по 80 px и поля), корешок 10 px,
+   справа столбец закладок */
+.journal {
+  padding: 24px 56px 20px;
+}
+.journal-book {
+  min-height: 640px;
+}
+.journal-page--left {
+  padding: 22px 26px 18px 22px;
+  box-shadow: inset -22px 0 26px -16px rgba(60, 40, 10, 0.55);
+}
+.journal-page--right {
+  padding: 22px 22px 18px 26px;
+  box-shadow: inset 22px 0 26px -16px rgba(60, 40, 10, 0.55);
+}
+.journal-spine {
+  width: 10px;
+  background: linear-gradient(
+    90deg,
+    var(--c-book-spine-light),
+    var(--c-book-spine-dark) 50%,
+    var(--c-book-spine-light)
+  );
+}
+.journal-flip-button {
+  padding: 0 18px;
+}
+.journal-ribbons {
+  width: 176px;
+  margin-left: 4px;
+  padding-top: 70px;
+  flex-direction: column;
+}
+.journal-ribbon {
+  position: relative;
+}
+.journal-tab {
+  height: 78px;
+}
+
+/* Узкий экран: всё в один столбец без горизонтальной прокрутки. Атлас — карточки миров друг под
+   другом, вкладки сортировки переносятся и не ниже 44 px. Страница мира — страницы книги друг под
+   другом через горизонтальный корешок, существа списком (значок слева от имени). Журнал — одна
+   страница под другой, закладки строкой под книгой (список значений раскрывается под строкой) */
+@media (max-width: 900px) {
+  .screen-frame {
+    padding: 14px 12px 16px;
+  }
+
+  .atlas-head {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .atlas-sort {
+    flex-wrap: wrap;
+  }
+  .atlas-sort-label {
+    flex-basis: 100%;
+  }
+  .atlas-tab {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 44px;
+  }
+  .atlas-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+    gap: 14px;
+  }
+  .atlas-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .world-back {
+    flex-wrap: wrap;
+    gap: 4px 24px;
+  }
+  .world-book {
+    flex-direction: column;
+  }
+  .world-page {
+    padding: 18px 14px 16px;
+  }
+  .world-page--left {
+    box-shadow: inset 0 -10px 18px -8px rgba(60, 40, 10, 0.45);
+  }
+  .world-page--right {
+    box-shadow: inset 0 10px 18px -8px rgba(60, 40, 10, 0.45);
+  }
+  .world-spine {
+    width: auto;
+    height: 8px;
+  }
+  .world-head,
+  .world-wrap {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+  .world-progress {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .world-progress .world-meter {
+    order: 1;
+    flex-basis: 100%;
+  }
+  .world-creatures {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+    gap: 8px;
+  }
+  .world-creature {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+    padding: 4px 14px 4px 10px;
+  }
+
+  .journal {
+    flex-direction: column;
+    gap: 16px;
+    padding: 14px 12px 16px;
+  }
+  .journal-head {
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+  .journal-book {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .journal-page--left,
+  .journal-page--right {
+    padding: 18px 14px 16px;
+  }
+  .journal-page--left {
+    box-shadow: inset 0 -22px 26px -16px rgba(60, 40, 10, 0.55);
+  }
+  .journal-page--right {
+    box-shadow: inset 0 22px 26px -16px rgba(60, 40, 10, 0.55);
+  }
+  .journal-spine {
+    width: auto;
+    height: 10px;
+    background: linear-gradient(
+      180deg,
+      var(--c-book-spine-light),
+      var(--c-book-spine-dark) 50%,
+      var(--c-book-spine-light)
+    );
+  }
+  .journal-flip {
+    flex-wrap: wrap;
+    gap: 12px 8px;
+  }
+  .journal-flip-button {
+    flex: 1 1 auto;
+    padding: 0 10px;
+  }
+  .journal-legend {
+    order: 1;
+    flex-basis: 100%;
+    justify-content: center;
+  }
+  .journal-ribbons {
+    position: relative;
+    width: auto;
+    margin-left: 0;
+    padding-top: 0;
+    flex-direction: row;
+    gap: 8px;
+  }
+  .journal-ribbon {
+    position: static;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .journal-tab {
+    height: auto;
+    min-height: 78px;
+  }
+}

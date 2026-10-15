@@ -1,13 +1,14 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { labWith, logEntry, portal, storeWithLab, world } from '../test/labFixtures'
 import { App } from './App'
 import { LabStoreProvider } from './hooks'
+import type { Route } from './navigation'
 
 const TOPI = 'Пепельные Топи'
 
-function renderApp() {
+function renderApp(initialRoute?: Route) {
   const store = storeWithLab(
     labWith({
       worlds: { [TOPI]: world(TOPI, 'ПТ-420', { studied: 3, visits: 2, lastVisit: 131 }) },
@@ -19,7 +20,7 @@ function renderApp() {
     store,
     ...render(
       <LabStoreProvider store={store}>
-        <App />
+        <App initialRoute={initialRoute} />
       </LabStoreProvider>,
     ),
   }
@@ -31,44 +32,12 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
   })
 
-  it('«Язык риска»: все виды портала, каждый с плашкой', () => {
-    const { container } = renderApp()
-    for (const look of ['empty', 'low', 'medium', 'high', 'critical', 'archived']) {
-      expect(container.querySelector(`.px-portal[data-look="${look}"]`)).toBeInTheDocument()
-      expect(container.querySelector(`.px-risk-tag[data-look="${look}"]`)).toBeInTheDocument()
-    }
-    expect(screen.getByText('КРИТИЧЕСКИЙ')).toBeInTheDocument()
-    expect(screen.getByText('ЗАКРЫТ / СХЛОПНУЛСЯ')).toBeInTheDocument()
-  })
-
-  it('галерея показывает наблюдателей 1, 2 и 3', () => {
-    renderApp()
-    for (const n of [1, 2, 3]) {
-      const named = screen.getAllByRole('img', { name: new RegExp(`наблюдателей: ${n}$`) })
-      expect(named.length).toBeGreaterThan(0)
-    }
-  })
-
-  it('полоски подписаны снаружи и отдают значение через aria', () => {
-    renderApp()
-    expect(screen.getByRole('meter', { name: 'Энергия' })).toHaveAttribute('aria-valuenow', '82')
-    expect(screen.getByRole('meter', { name: 'Стабильность' })).toHaveAttribute(
-      'aria-valuenow',
-      '14',
-    )
-    expect(screen.getByRole('meter', { name: 'Изучение' })).toHaveAttribute('aria-valuenow', '40')
-    const visibleLabel = screen.getByText('Энергия')
-    expect(visibleLabel).toBeVisible()
-    expect(visibleLabel).toHaveAttribute('aria-hidden', 'true')
-  })
-
-  it('существа: частичное изучение, полный набор и пустой мир', () => {
+  it('зал: открытый портал в своей арке, остальные 11 арок пусты', () => {
     renderApp()
     expect(
-      screen.getByRole('img', { name: 'Изучено 3 из 9, следующее изучено на 40 %' }),
+      screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Изучено 9 из 9' })).toHaveAttribute('data-full', 'true')
-    expect(screen.getByRole('img', { name: 'Существ нет' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Арка \d+ пуста/ })).toHaveLength(11)
   })
 })
 
@@ -108,11 +77,114 @@ describe('App: переходы между экранами', () => {
     await userEvent.click(screen.getByRole('link', { name: /ПТ-420-1/ }))
     expect(screen.getByRole('heading', { name: 'ПТ-420-1' })).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('link', { name: TOPI }))
+    // Мир в карточке — кнопка-ссылка; карточка закрывается, открывается страница мира
+    await userEvent.click(screen.getByRole('button', { name: TOPI }))
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('heading', { level: 1, name: TOPI })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('link', { name: '← Атлас миров' }))
     expect(screen.getByRole('heading', { name: 'АТЛАС МИРОВ' })).toBeInTheDocument()
+  })
+})
+
+describe('App: карточка портала поверх экрана', () => {
+  const ring = (name: string) =>
+    screen.getByText(name, { selector: 'span' }).closest('main > div > div') as HTMLElement
+
+  it('из зала: зал остаётся под карточкой, у её арки рамка фокуса', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' }))
+
+    expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'ПТ-420-1' })).toBeInTheDocument()
+    expect(ring('ПТ-420-1').style.outline).toBe('3px dashed var(--c-torch-light)')
+  })
+
+  it('маршрут без back: под карточкой зал с рамкой на её портале', () => {
+    renderApp({ screen: 'portal', portal: 'ПТ-420-1' })
+
+    expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+    expect(ring('ПТ-420-1').style.outline).toBe('3px dashed var(--c-torch-light)')
+  })
+
+  it('из мира: под карточкой страница мира, а не зал', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('link', { name: 'Атлас миров' }))
+    await userEvent.click(screen.getByRole('link', { name: /Страница мира/ }))
+    await userEvent.click(screen.getByRole('link', { name: /ПТ-420-1/ }))
+
+    expect(screen.getByRole('heading', { level: 1, name: TOPI })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Лаборатория порталов' })).toBeNull()
+  })
+})
+
+describe('App: диалог карточки', () => {
+  const arch = () => screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' })
+
+  it('пока карточка открыта, HUD, экран и док инертны; после закрытия — нет', async () => {
+    renderApp()
+    await userEvent.click(arch())
+    const dialog = screen.getByRole('dialog', { name: 'ПТ-420-1' })
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(screen.getByRole('banner').closest('[inert]')).not.toBeNull()
+    expect(arch().closest('[inert]')).not.toBeNull()
+    expect(screen.getByRole('navigation', { name: 'Разделы' }).closest('[inert]')).not.toBeNull()
+    expect(dialog.closest('[inert]')).toBeNull()
+
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(document.querySelector('[inert]')).toBeNull()
+  })
+
+  it('фокус уходит в диалог и возвращается на открывшую арку', async () => {
+    renderApp()
+    await userEvent.click(arch())
+    expect(screen.getByRole('dialog')).toHaveFocus()
+
+    await userEvent.keyboard('{Escape}')
+    expect(arch()).toHaveFocus()
+  })
+
+  it('открывшего нет: фокус на основную область экрана', async () => {
+    renderApp({ screen: 'portal', portal: 'ПТ-420-1' })
+    await userEvent.click(screen.getByRole('button', { name: 'Закрыть карточку' }))
+    expect(screen.getByRole('main')).toHaveFocus()
+  })
+
+  it('крестик и клик по затемнению возвращают на экран под карточкой', async () => {
+    renderApp()
+    await userEvent.click(arch())
+    await userEvent.click(screen.getByRole('button', { name: 'Закрыть карточку' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    await userEvent.click(arch())
+    await userEvent.click(screen.getByTestId('card-overlay'))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('heading', { name: 'Лаборатория порталов' })).toBeInTheDocument()
+  })
+})
+
+describe('App: баннер отказа', () => {
+  it('отказ из HUD («Нанять» во время найма) показывает баннер «ОТКАЗ»', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('button', { name: /^Нанять/ }))
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: /^Нанять/ }))
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('ОТКАЗ')
+    expect(alert).toHaveTextContent(/Наём уже идёт/)
+  })
+
+  it('отказ из карточки: баннер поверх диалога, не внутри инертной части', async () => {
+    renderApp()
+    await userEvent.click(screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' }))
+    // Стабильность 80 из фикстуры: стабилизировать можно, второй раз — кулдаун
+    await userEvent.click(screen.getByRole('button', { name: 'Стабилизировать' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Стабилизировать' }))
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent(/Кулдаун стабилизации/)
+    expect(alert.closest('[inert]')).toBeNull()
   })
 })
 
@@ -141,25 +213,51 @@ describe('App: HUD, док и пауза', () => {
     expect(root).not.toHaveClass('is-paused')
   })
 
-  it('печать подтверждена: лаборатория начинается заново', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { store } = renderApp()
+  const sealButton = () => screen.getByRole('button', { name: 'Запечатать лабораторию' })
 
-    await userEvent.click(screen.getByRole('button', { name: 'Запечатать лабораторию' }))
-
-    expect(confirm).toHaveBeenCalledWith(
-      'Запечатать лабораторию? Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.',
-    )
-    expect(store.getState().lab.time).toBe(0)
-    expect(store.getState().lab.portals).toEqual([])
-  })
-
-  it('печать отменена: лаборатория не меняется', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('«Запечатать лабораторию» открывает свиток, а не window.confirm; лаборатория пока цела', async () => {
+    const confirm = vi.spyOn(window, 'confirm')
     const { store } = renderApp()
     const before = store.getState().lab
 
-    await userEvent.click(screen.getByRole('button', { name: 'Запечатать лабораторию' }))
+    await userEvent.click(sealButton())
+
+    const dialog = screen.getByRole('dialog', { name: 'ЗАПЕЧАТАТЬ ЛАБОРАТОРИЮ?' })
+    expect(dialog).toHaveAccessibleDescription(
+      'Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.',
+    )
+    expect(confirm).not.toHaveBeenCalled()
+    expect(store.getState().lab).toBe(before)
+    // безопасный выбор в фокусе, а всё за свитком недоступно
+    expect(within(dialog).getByRole('button', { name: 'Отмена' })).toHaveFocus()
+    expect(screen.getByRole('banner').closest('[inert]')).not.toBeNull()
+  })
+
+  it('печать подтверждена: лаборатория начинается заново, свиток закрыт', async () => {
+    const { store } = renderApp()
+
+    await userEvent.click(sealButton())
+    await userEvent.click(screen.getByRole('button', { name: 'Запечатать' }))
+
+    expect(store.getState().lab.time).toBe(0)
+    expect(store.getState().lab.portals).toEqual([])
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('banner').closest('[inert]')).toBeNull()
+  })
+
+  it('печать отменена кнопкой или Esc: лаборатория не меняется, фокус на кнопке дока', async () => {
+    const { store } = renderApp()
+    const before = store.getState().lab
+
+    await userEvent.click(sealButton())
+    await userEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(sealButton()).toHaveFocus()
+
+    await userEvent.click(sealButton())
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(sealButton()).toHaveFocus()
 
     expect(store.getState().lab).toBe(before)
   })

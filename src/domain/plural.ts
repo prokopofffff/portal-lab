@@ -9,3 +9,13 @@ export function observersNoun(n: number): string {
   if (last >= 2 && last <= 4) return 'наблюдателя'
   return 'наблюдателей'
 }
+
+// «существо» / «существа» / «существ» по числу
+export function creaturesNoun(n: number): string {
+  const lastTwo = n % 100
+  const last = n % 10
+  if (lastTwo >= 11 && lastTwo <= 14) return 'существ'
+  if (last === 1) return 'существо'
+  if (last >= 2 && last <= 4) return 'существа'
+  return 'существ'
+}

@@ -1,0 +1,404 @@
+/* Зал лаборатории (канвас 00-hall … 03-hall-paused). Анимация покадровая: steps(), как у спрайтов. */
+
+/* Скошенные пиксельные углы табличек и записок (.nc канваса) */
+.hall-notch {
+  clip-path: polygon(
+    0 4px,
+    4px 4px,
+    4px 0,
+    calc(100% - 4px) 0,
+    calc(100% - 4px) 4px,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    4px calc(100% - 4px),
+    0 calc(100% - 4px)
+  );
+}
+
+/* Записка «Тревожных знаков»: clip-path срезал бы внешний контур фокуса — рисуем его внутри */
+.hall-note:focus-visible {
+  outline: 3px solid var(--c-ink-title);
+  outline-offset: -7px;
+}
+
+.hall-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Факел на стене (torchF канваса) */
+@keyframes hall-torch {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  33% {
+    opacity: 0.75;
+    transform: translateY(0.5px);
+  }
+  66% {
+    opacity: 0.9;
+    transform: translateY(-0.5px);
+  }
+}
+.hall-flame {
+  animation: hall-torch 0.8s steps(1) infinite;
+}
+.is-paused .hall-flame {
+  animation-play-state: paused;
+}
+
+/* Переключатель «Под вопросом»: сам флажок скрыт, фокус рисуется на дорожке */
+.hall-toggle:has(input:focus-visible) .hall-toggle__track {
+  outline: 3px solid var(--c-torch-light);
+  outline-offset: 2px;
+}
+
+/* Арка, из которой уходит портал. Обе сцены длятся 1.4 с: портал гаснет или его запечатывают,
+   табличка держится и тает в конце — после неё арка снова пуста. На паузе не замирает:
+   закрытие — действие смотрителя, а схлопывание случается только на ходу. */
+.hall-leaving {
+  position: relative;
+  width: 100px;
+  height: 117px;
+  line-height: 0;
+}
+.hall-leaving > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Проём арки (OPENING спрайта 24×28) в процентах: внутри него живёт портал */
+.hall-opening {
+  clip-path: polygon(
+    33.333% 17.857%,
+    66.667% 17.857%,
+    66.667% 21.429%,
+    75% 21.429%,
+    75% 25%,
+    79.167% 25%,
+    79.167% 28.571%,
+    83.333% 28.571%,
+    83.333% 96.429%,
+    16.667% 96.429%,
+    16.667% 28.571%,
+    20.833% 28.571%,
+    20.833% 25%,
+    25% 25%,
+    25% 21.429%,
+    33.333% 21.429%
+  );
+}
+
+/* Схлопывание: вспышка, портал сжимается в точку к центру проёма и гаснет */
+@keyframes hall-collapse {
+  0% {
+    transform: scale(1);
+    filter: brightness(1);
+    animation-timing-function: steps(2, end);
+  }
+  14% {
+    transform: scale(1.1, 0.9);
+    filter: brightness(1.9);
+    animation-timing-function: steps(5, end);
+  }
+  64% {
+    transform: scale(0);
+    filter: brightness(2.6);
+  }
+  100% {
+    transform: scale(0);
+    filter: brightness(2.6);
+  }
+}
+.hall-collapse {
+  transform-origin: 50% 57%;
+  animation: hall-collapse 1.4s forwards;
+}
+
+/* Закрытие: кладка опускается в проём, на ней загорается печать, потом арка остывает */
+@keyframes hall-seal-drop {
+  0% {
+    transform: translateY(-22px);
+    animation-timing-function: steps(6, end);
+  }
+  45%,
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes hall-seal-cover {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  45.01%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes hall-seal-stamp {
+  0%,
+  45% {
+    opacity: 0;
+  }
+  45.01%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes hall-fade-out {
+  0%,
+  75% {
+    opacity: 1;
+    animation-timing-function: steps(3, end);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.hall-seal-portal {
+  animation: hall-seal-cover 1.4s forwards;
+}
+.hall-seal {
+  overflow: visible;
+  animation: hall-fade-out 1.4s forwards;
+}
+.hall-seal__slab {
+  animation: hall-seal-drop 1.4s forwards;
+}
+.hall-seal__stamp {
+  opacity: 0;
+  filter: drop-shadow(0 0 1.5px var(--c-torch));
+  animation: hall-seal-stamp 1.4s forwards;
+}
+.hall-leave-plate {
+  animation: hall-fade-out 1.4s forwards;
+}
+
+/* Раскладка зала. Всё, что на узкой ширине меняется, лежит здесь, а не в инлайн-стилях: инлайн
+   перебил бы media query. Значения вне media query — как в канвасе (1440 px) */
+.hall {
+  /* Как кадр 00-hall (1000 px − HUD 112 − док 84): зал делит высоту экрана, а не растёт по
+     содержимому; ниже 804 px не сжимается — экран прокручивается */
+  flex: 1 1 0;
+  min-height: 804px;
+  padding: 10px 28px 12px;
+}
+.hall-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 22px;
+  margin-bottom: 6px;
+}
+.hall-status {
+  display: flex;
+  gap: 12px;
+}
+/* Слот записок (и приглашения пустого зала): высота зала не прыгает, что бы в нём ни стояло */
+.hall-slot {
+  height: 90px;
+  margin-bottom: 8px;
+}
+.hall-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.hall-invite-text {
+  font-size: 26px;
+}
+/* Сетка 6×2; число колонок приходит из ARCH_COUNT через --hall-cols */
+.hall-arches {
+  flex: 1 1 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--hall-cols), minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 4px 0;
+}
+.hall-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+}
+.hall-glow {
+  top: -10px;
+  left: 50%;
+}
+.hall-observers {
+  right: calc(100% + 6px);
+  top: 8px;
+}
+.hall-flags {
+  left: calc(100% + 12px);
+  top: 8px;
+}
+.hall-plate {
+  width: 208px;
+  margin-top: 10px;
+}
+.hall-empty-arch {
+  position: relative;
+}
+.hall-empty-plate {
+  margin-top: 10px;
+  width: 208px;
+  padding: 10px 12px;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+/* Узкий экран: зал — вертикальный список карточек в порядке арок (номера и порядок те же, spec §9).
+   Занятая арка — карточка в две колонки: слева арка с порталом (колонка 112 px), под ней
+   наблюдатели и пометки; справа табличка на всю оставшуюся ширину. Пустая арка — строка 56 px:
+   арка вдвое меньше (2 px на пиксель спрайта) и «АРКА N · пуста»; нажимается вся строка.
+   Высота зала — по содержимому; факелы убраны */
+@media (max-width: 900px) {
+  .hall {
+    flex: 1 0 auto;
+    min-height: 0;
+    padding: 10px 12px 12px;
+  }
+  .hall-head {
+    flex-wrap: wrap;
+    gap: 0 16px;
+    height: auto;
+    margin-bottom: 8px;
+  }
+  .hall-head-title {
+    white-space: nowrap;
+  }
+  .hall-toggle {
+    order: 1;
+    min-height: 44px;
+    white-space: nowrap;
+  }
+  /* Плашки «Пауза», «Все арки заняты» — своей строкой на всю ширину, текст переносится */
+  .hall-status {
+    order: 2;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+  }
+  .hall-status:not(:empty) {
+    margin-bottom: 4px;
+  }
+  .hall-slot {
+    height: auto;
+  }
+  .hall-notes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .hall-invite {
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .hall-invite-text {
+    font-size: 18px;
+    text-wrap: balance;
+  }
+  .hall-quiet {
+    padding: 14px 12px;
+    text-align: center;
+  }
+  .hall-arches {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 8px;
+  }
+  .hall-flame {
+    display: none;
+  }
+  .hall-cell {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    column-gap: 10px;
+    align-items: start;
+    justify-items: center;
+    padding: 6px;
+  }
+  .hall-cell > :last-child {
+    justify-self: stretch;
+  }
+  .hall-glow {
+    left: 62px;
+  }
+  /* Наблюдатели и пометки — под аркой: слева от неё нет места, справа табличка */
+  .hall-observers {
+    right: auto;
+    left: 0;
+    top: calc(100% + 6px);
+  }
+  .hall-flags {
+    left: auto;
+    right: 0;
+    top: calc(100% + 6px);
+  }
+  .hall-plate {
+    width: auto;
+    margin-top: 0;
+  }
+  .hall-cell--empty {
+    align-items: center;
+    padding: 0 6px;
+  }
+  /* Кнопка не держит позицию: её ::after растягивается на всю строку */
+  .hall-empty-arch {
+    position: static;
+  }
+  /* Арка 24×28 ровно вдвое: 48×56 (масштабируем сам спрайт, не кнопку — иначе ужмётся и фокус) */
+  .hall-empty-arch > * {
+    zoom: 0.48;
+  }
+  /* Вся строка — цель нажатия; фокус рисуется по строке */
+  .hall-empty-arch::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  .hall-empty-arch:focus-visible {
+    outline: none;
+  }
+  .hall-empty-arch:focus-visible::after {
+    outline: 3px solid var(--c-torch-light);
+    outline-offset: -3px;
+  }
+  .hall-empty-plate {
+    margin-top: 0;
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
+    text-align: left;
+  }
+  .hall-empty-hint::before {
+    content: '· ';
+  }
+  /* Подсказка первой арки длинная: своей строкой под номером, без точки */
+  .hall-empty-plate--invite {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hall-empty-plate--invite .hall-empty-hint::before {
+    content: none;
+  }
+}

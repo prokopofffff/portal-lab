@@ -6,7 +6,8 @@ import './sprites.css'
 // оттенков портала от края к ядру; искры поднимаются над порталом, у пустой арки тлеют руны.
 
 const ARCH_OUTLINE = 'M6,0H18V1H20V2H21V3H22V4H23V5H24V28H0V5H1V4H2V3H3V2H4V1H6Z'
-const OPENING = 'M8,5H16V6H18V7H19V8H20V27H4V8H5V7H6V6H8Z'
+/** Проём арки: в нём живёт портал (зал кладёт сюда печать закрытия). */
+export const ARCH_OPENING = 'M8,5H16V6H18V7H19V8H20V27H4V8H5V7H6V6H8Z'
 const LAYER_2 = 'M9,7H15V8H17V9H18V25H6V9H7V8H9Z'
 const LAYER_3 = 'M10,10H14V11H15V12H16V22H8V12H9V11H10Z'
 const CORE = 'M11,14H13V15H14V20H10V15H11Z'
@@ -147,7 +148,7 @@ export function Portal({
           {stoneDetails.map(([x, y, w, h, fill], i) => (
             <rect key={i} x={x} y={y} width={w} height={h} fill={fill} />
           ))}
-          <path d={OPENING} fill={c0} />
+          <path d={ARCH_OPENING} fill={c0} />
           {look === 'empty' ? (
             <g>
               {emberRunes.map(([d, delay]) => (

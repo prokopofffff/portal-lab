@@ -64,9 +64,9 @@ const pageNumber: CSSProperties = {
   color: 'var(--c-ink-faint)',
 }
 
+// Поля кнопки листания — в классе journal-flip-button (на узком экране уже)
 const flipButton: CSSProperties = {
   height: 44,
-  padding: '0 18px',
   fontFamily: 'var(--f-ui)',
   fontSize: 16,
   fontWeight: 600,
@@ -177,13 +177,9 @@ function Page({
   const left = side === 'left'
   return (
     <section
-      style={{
-        ...ruledPage,
-        padding: left ? '22px 26px 18px 22px' : '22px 22px 18px 26px',
-        boxShadow: left
-          ? 'inset -22px 0 26px -16px rgba(60,40,10,.55)'
-          : 'inset 22px 0 26px -16px rgba(60,40,10,.55)',
-      }}
+      // Отступы и тень у корешка — в классах journal-page: на узком экране страницы друг под другом
+      className={`journal-page journal-page--${side}`}
+      style={ruledPage}
     >
       <div style={{ display: 'flex', flexDirection: 'column', flex: '1 1 0' }}>
         <ol
@@ -268,7 +264,7 @@ function Legend() {
     { kind: 'system', ink: 'var(--c-legend-system)', font: 'var(--f-faded)', size: 21 },
   ]
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
+    <div className="journal-legend" style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
       {items.map(({ kind, ink, font, size }) => (
         <span key={kind} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg
@@ -339,7 +335,7 @@ function Ribbon({
   const all: Choice = { value: undefined, label: allLabel }
   const current = choices.find((c) => c.value === selected) ?? all
   return (
-    <div ref={root} style={{ position: 'relative' }}>
+    <div ref={root} className="journal-ribbon">
       <button
         type="button"
         className="journal-tab"
@@ -347,7 +343,6 @@ function Ribbon({
         onClick={() => setOpen(!open)}
         style={{
           width: '100%',
-          height: 78,
           boxSizing: 'border-box',
           padding: '6px 14px 18px',
           textAlign: 'left',
@@ -506,10 +501,12 @@ export function JournalScreen() {
 
   return (
     <main
+      // Отступы и направление (книга, справа закладки) — в классе journal: на узком экране
+      // закладки уходят под книгу
+      className="journal"
       style={{
         flex: '1 1 auto',
         boxSizing: 'border-box',
-        padding: '24px 56px 20px',
         display: 'flex',
         backgroundColor: 'var(--c-desk)',
         backgroundImage:
@@ -528,6 +525,7 @@ export function JournalScreen() {
         }}
       >
         <div
+          className="journal-head"
           style={{
             display: 'flex',
             width: '100%',
@@ -554,13 +552,14 @@ export function JournalScreen() {
         </div>
 
         <div
+          // Высота разворота (7 строк по 80 px и поля) и направление — в классе journal-book
+          className="journal-book"
           style={{
             position: 'relative',
             display: 'flex',
             width: '100%',
             maxWidth: 1180,
             flex: '1 1 0',
-            minHeight: 7 * 80 + 80,
             boxShadow: '0 0 0 5px var(--c-book-cover), 0 10px 0 5px var(--c-book-cover-shadow)',
           }}
         >
@@ -571,15 +570,7 @@ export function JournalScreen() {
             writing={writing}
             onWritten={() => setWriting(null)}
           />
-          <div
-            aria-hidden="true"
-            style={{
-              flex: 'none',
-              width: 10,
-              background:
-                'linear-gradient(90deg,var(--c-book-spine-light),var(--c-book-spine-dark) 50%,var(--c-book-spine-light))',
-            }}
-          />
+          <div aria-hidden="true" className="journal-spine" style={{ flex: 'none' }} />
           <Page
             number={spread * 2 + 2}
             side="right"
@@ -592,6 +583,7 @@ export function JournalScreen() {
         </div>
 
         <div
+          className="journal-flip"
           style={{
             display: 'flex',
             width: '100%',
@@ -601,9 +593,12 @@ export function JournalScreen() {
             gap: 20,
           }}
         >
+          {/* Отступление от кадров 13–14: там у кнопок нет неактивного вида. Листать дальше
+              первого и последнего разворота некуда, поэтому кнопка выключена и приглушена */}
           <button
             type="button"
             aria-label="Предыдущий разворот"
+            className="journal-flip-button"
             disabled={spread === 0}
             onClick={() => flip(spread - 1)}
             style={{
@@ -618,6 +613,7 @@ export function JournalScreen() {
           <button
             type="button"
             aria-label="Следующий разворот"
+            className="journal-flip-button"
             disabled={spread === spreads - 1}
             onClick={() => flip(spread + 1)}
             style={{
@@ -632,13 +628,11 @@ export function JournalScreen() {
       </div>
 
       <div
+        // Столбец закладок справа от книги; на узком экране — строка под книгой (класс journal-ribbons)
+        className="journal-ribbons"
         style={{
           flex: 'none',
-          width: 176,
-          marginLeft: 4,
-          paddingTop: 70,
           display: 'flex',
-          flexDirection: 'column',
           gap: 12,
         }}
       >
