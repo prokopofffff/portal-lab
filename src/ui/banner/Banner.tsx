@@ -66,6 +66,12 @@ export interface BannerProps {
   text: string
   /** Скрыть баннер: кнопкой или само через BANNER_TIMEOUT. Ссылка должна быть стабильной. */
   onDismiss: () => void
+  /**
+   * Озвучивает ли сам баннер свою роль (alert / status). Стопка отключает её у системных видов:
+   * их читает постоянная область NotificationStack, а status, вставленный уже с текстом, читалки
+   * часто пропускают.
+   */
+  live?: boolean
 }
 
 /**
@@ -73,7 +79,7 @@ export interface BannerProps {
  * (вежливо): на ×20 они частые и не должны перебивать. Таймер автоскрытия идёт с монтирования:
  * чтобы новое уведомление получило свои 6 с и заново въехало, его рендерят с новым key.
  */
-export function Banner({ kind, text, onDismiss }: BannerProps) {
+export function Banner({ kind, text, onDismiss, live = true }: BannerProps) {
   const k = KINDS[kind]
 
   useEffect(() => {
@@ -83,7 +89,7 @@ export function Banner({ kind, text, onDismiss }: BannerProps) {
 
   return (
     <div
-      role={kind === 'refuse' ? 'alert' : 'status'}
+      role={!live ? undefined : kind === 'refuse' ? 'alert' : 'status'}
       className="banner"
       style={{ fontFamily: 'var(--f-ui)' }}
     >
@@ -186,23 +192,48 @@ function StackItem({ notification }: { notification: Notification }) {
   const store = useLabStore()
   const { id, kind, text } = notification
   const onDismiss = useCallback(() => store.dismissNotification(id), [store, id])
-  return <Banner kind={kind} text={text} onDismiss={onDismiss} />
+  // Озвучивает сам баннер только отказ; остальные — область стопки
+  return <Banner kind={kind} text={text} onDismiss={onDismiss} live={kind === 'refuse'} />
 }
+
+// Текст только для скринридера: не виден и не занимает места
+const SR_ONLY = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  margin: -1,
+  padding: 0,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+} as const
 
 /**
  * Очередь уведомлений баннерами в правом верхнем углу, поверх всего — и экрана, и карточки портала.
  * Порядок прихода сверху вниз (канвас 16-banners); при открытой карточке стопка выше (05-card-rejection).
  * Каждый баннер скрывается сам и кнопкой, свои 6 с
  * он отсчитывает с монтирования. Положение и ширина — в классе banner-stack.
+ * Стопка и вежливая область озвучивания (role="status", тексты системных уведомлений) смонтированы
+ * всегда, пустые без уведомлений: живая область должна появиться раньше текста, иначе читалка его
+ * не объявит. Отказ озвучивает сам баннер (role="alert").
  */
 export function NotificationStack({ cardOpen = false }: { cardOpen?: boolean }) {
   const notifications = useNotifications()
-  if (notifications.length === 0) return null
   return (
-    <div className={cardOpen ? 'banner-stack banner-stack--card' : 'banner-stack'}>
-      {notifications.map((n) => (
-        <StackItem key={n.id} notification={n} />
-      ))}
-    </div>
+    <>
+      <div role="status" style={SR_ONLY}>
+        {notifications
+          .filter((n) => n.kind !== 'refuse')
+          .map((n) => (
+            <p key={n.id}>{n.text}</p>
+          ))}
+      </div>
+      <div className={cardOpen ? 'banner-stack banner-stack--card' : 'banner-stack'}>
+        {notifications.map((n) => (
+          <StackItem key={n.id} notification={n} />
+        ))}
+      </div>
+    </>
   )
 }

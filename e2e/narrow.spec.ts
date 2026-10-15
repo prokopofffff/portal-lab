@@ -270,6 +270,14 @@ async function expectInsideViewport(target: Locator): Promise<void> {
   expect(outside, 'вылезает за окно').toEqual([])
 }
 
+// Пересекаются ли рамки двух элементов
+function intersects(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+}
+
 // Критический портал в арке 1 и его карточка через записку «Тревожных знаков»
 async function openCriticalCard(page: Page): Promise<Locator> {
   await page.goto('/?seed=3&test=1')
@@ -335,6 +343,11 @@ test.describe('узкий экран, 390×844: карточка, свитки, 
       .getByRole('button', { name: 'Под вопросом' })
       .click()
     await expect(page.getByRole('dialog', { name: 'ПОМЕТИТЬ «ПОД ВОПРОСОМ»' })).toBeVisible()
+    // Поле заметки в фокусе и с видимым контуром (общее :focus-visible свитка, не инлайн none)
+    const field = page.getByRole('textbox', { name: /Заметка/ })
+    await expect(field).toBeFocused()
+    await expect(field).toHaveCSS('outline-style', 'solid')
+    await expect(field).toHaveCSS('outline-width', '3px')
     await expectNoHorizontalOverflow(page)
     await expectInsideViewport(page.getByTestId('scroll-backdrop'))
   })
@@ -347,31 +360,73 @@ test.describe('узкий экран, 390×844: карточка, свитки, 
     await expectInsideViewport(page.getByTestId('scroll-backdrop'))
   })
 
-  test('баннеры отказа во всю ширину у верха окна, крестик «скрыть» 44×44', async ({ page }) => {
+  test('баннеры с карточкой: во всю ширину у нижнего края, не закрывают крестик, видны два новейших', async ({
+    page,
+  }) => {
     // Без въезда справа: меряем баннеры на месте
     await page.emulateMedia({ reducedMotion: 'reduce' })
     const card = await openCriticalCard(page)
     const abilities = card.getByRole('group', { name: 'Способности' })
-    await abilities.getByRole('button', { name: 'Отправить наблюдателя' }).focus()
-    await page.keyboard.press('Enter')
-    await abilities.getByRole('button', { name: 'Отозвать наблюдателей' }).focus()
-    await page.keyboard.press('Enter')
+    const send = abilities.getByRole('button', { name: 'Отправить наблюдателя' })
+    await send.focus()
+    for (let i = 0; i < 3; i++) await page.keyboard.press('Enter')
+    // Все три в очереди, но скрытый (display: none) выпадает из дерева доступности: alert-ов два
+    await expect(page.locator('.banner')).toHaveCount(3)
     const banners = page.getByRole('alert')
     await expect(banners).toHaveCount(2)
-    const boxes = await Promise.all(
-      (await banners.all()).map(async (b) => (await b.boundingBox())!),
-    )
-    expect(boxes[0]!.y).toBeCloseTo(8, 0)
+    const visible = await banners.all()
+    const boxes = await Promise.all(visible.map(async (b) => (await b.boundingBox())!))
     for (const box of boxes) {
       expect(box.x).toBeCloseTo(8, 0)
       expect(box.width).toBeCloseTo(NARROW.width - 16, 0)
     }
-    for (const banner of await banners.all()) {
+    // Стопка прижата к низу окна (дока под затемнением нет), 8 px отступа
+    const last = boxes[boxes.length - 1]!
+    expect(last.y + last.height).toBeCloseTo(NARROW.height - 8, 0)
+    for (const banner of visible) {
       await expectNoHorizontalOverflow(banner)
       const hide = (await banner.getByRole('button', { name: 'Скрыть уведомление' }).boundingBox())!
       expect(hide.width).toBeGreaterThanOrEqual(44)
       expect(hide.height).toBeGreaterThanOrEqual(44)
       expect(hide.x + hide.width).toBeLessThanOrEqual(NARROW.width)
+    }
+    // Крестик «закрыть карточку» не под баннерами
+    const closeBox = (await page.getByRole('button', { name: 'Закрыть карточку' }).boundingBox())!
+    for (const box of boxes)
+      expect(intersects(closeBox, box), 'баннер закрывает крестик').toBe(false)
+  })
+
+  test('баннеры без карточки: над доком, не закрывают скорость и паузу, видны два новейших', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/?seed=3&test=1')
+    // Повторные «Нанять» при идущем найме — отказ за отказом
+    const hire = page.getByRole('button', { name: /Нанять/ })
+    await hire.click()
+    await hire.focus()
+    for (let i = 0; i < 4; i++) await page.keyboard.press('Enter')
+    await expect(page.locator('.banner')).toHaveCount(4)
+    const banners = page.getByRole('alert')
+    await expect(banners).toHaveCount(2)
+    const visible = await banners.all()
+    const boxes = await Promise.all(visible.map(async (b) => (await b.boundingBox())!))
+
+    // Стопка над доком: нижний край на 84 px выше низа окна (76 px дока + 8)
+    const last = boxes[boxes.length - 1]!
+    expect(last.y + last.height).toBeCloseTo(NARROW.height - 84, 0)
+    const dockBox = (await dock(page).boundingBox())!
+    expect(last.y + last.height).toBeLessThanOrEqual(dockBox.y)
+
+    // Страница наверху: кнопки скорости и паузы HUD видны, ни один баннер на них не заходит
+    await page.evaluate(() =>
+      (globalThis as unknown as { scrollTo(x: number, y: number): void }).scrollTo(0, 0),
+    )
+    const speed = await page.getByRole('button', { name: /^(Пауза|Скорость ×)/ }).all()
+    expect(speed.length).toBeGreaterThan(1)
+    for (const button of speed) {
+      const box = (await button.boundingBox())!
+      for (const b of boxes) expect(intersects(box, b), 'баннер закрывает скорость').toBe(false)
     }
   })
 })

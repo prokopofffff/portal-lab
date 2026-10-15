@@ -22,6 +22,8 @@ async function openCriticalCard(page: Page) {
 }
 
 test('на 1440×1000 баннер отказа не закрывает способности карточки', async ({ page }) => {
+  // Без въезда справа: баннер сразу на месте (bnIn отключён)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: 1440, height: 1000 })
   const dialog = await openCriticalCard(page)
   const abilities = dialog.getByRole('group', { name: 'Способности' })
@@ -32,8 +34,6 @@ test('на 1440×1000 баннер отказа не закрывает спос
   const banner = page.getByRole('alert')
   await expect(banner).toContainText('ОТКАЗ')
 
-  // Ждём конца въезда баннера (bnIn, 0.5 с): до него он сдвинут на 40 px вправо
-  await page.waitForTimeout(600)
   const a = (await abilities.boundingBox())!
   const b = (await banner.boundingBox())!
   const intersects =
@@ -50,6 +50,7 @@ test('на 1440×1000 баннер отказа не закрывает спос
 test('без карточки стопка баннеров под HUD: top 128, правый край 1412 (кадр 16-banners)', async ({
   page,
 }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.setViewportSize({ width: 1440, height: 1000 })
   await page.goto(`/?seed=${SEED}&test=1`)
   // Второй «Нанять» подряд — отказ (найм уже идёт), баннер встаёт без карточки
@@ -60,8 +61,6 @@ test('без карточки стопка баннеров под HUD: top 128,
   await page.keyboard.press('Enter')
   const banner = page.getByRole('alert')
   await expect(banner).toContainText('ОТКАЗ')
-  // Ждём конца въезда баннера (bnIn, 0.5 с)
-  await page.waitForTimeout(600)
   const b = (await banner.boundingBox())!
   expect(b.y).toBeCloseTo(128, 0)
   expect(b.x + b.width).toBeCloseTo(1412, 0)

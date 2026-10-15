@@ -223,6 +223,23 @@ describe('PortalCardDialog: закрытие портала', () => {
     expect(notifications).toEqual([])
   })
 
+  it('портал перестал быть открытым, пока свиток висел: отмена не шлёт cancelClose (нет ложного отказа)', async () => {
+    const dying = { ...lonely, timeLeft: 1 }
+    const { store, portalOf } = renderDialog('ББ-310-1', [critical, sibling, dying])
+    // Портал последний в мир и неизученный: «Закрыть» спрашивает в свитке
+    await userEvent.click(ability('Закрыть'))
+    expect(scroll()).not.toBeNull()
+    act(() => store.advance(3))
+    expect(portalOf('ББ-310-1').status).toBe('collapsed')
+    const logBefore = store.getState().lab.log.length
+
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Отмена' }))
+    expect(scroll()).toBeNull()
+    const { lab, notifications } = store.getState()
+    expect(notifications.map((n) => n.kind)).not.toContain('refuse')
+    expect(lab.log.slice(logBefore).some((e) => e.kind === 'rejection')).toBe(false)
+  })
+
   it('«Закрыть» недоступно (наблюдатель на месте): без свитка, отказ домена, без отмены', async () => {
     const watched = { ...lonely, observers: 1 }
     const { portalOf, store } = renderDialog('ББ-310-1', [critical, sibling, watched])
@@ -335,6 +352,9 @@ describe('PortalCardDialog: «Под вопросом»', () => {
     expect(field).toHaveAttribute('rows', '3')
     expect(field).toHaveAttribute('placeholder', 'Что нужно проверить?')
     expect(field).toHaveFocus()
+    // Контур фокуса даёт общее правило .scroll-dialog :focus-visible: инлайн outline его перебил бы
+    expect(field).toHaveClass('scroll-note')
+    expect(field.style.outline).toBe('')
     expect(prompt).not.toHaveBeenCalled()
     expect(portalOf('ББ-310-1').questioned).toBeNull()
   })

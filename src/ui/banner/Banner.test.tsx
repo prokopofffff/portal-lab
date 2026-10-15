@@ -140,9 +140,23 @@ describe('NotificationStack', () => {
   const titles = (c: HTMLElement) =>
     [...c.querySelectorAll('.banner')].map((b) => b.textContent ?? '')
 
-  it('без уведомлений ничего не показывает', () => {
+  it('без уведомлений баннеров нет, но стопка и область озвучивания уже на месте', () => {
     const { container } = renderStack([])
     expect(container.querySelector('.banner')).toBeNull()
+    expect(container.querySelector('.banner-stack')).not.toBeNull()
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
+
+  it('системные виды озвучивает постоянная вежливая область, сами баннеры без роли; отказ — alert', () => {
+    const { container, push } = renderStack([note(1, 'refuse')])
+    const region = screen.getByRole('status')
+    expect(region).toBeEmptyDOMElement()
+    // Область смонтирована до текста: читалка успевает её отслеживать
+    push(note(2, 'collapse', 'ПТ-420-1 сжался'))
+    expect(screen.getByRole('status')).toBe(region)
+    expect(region).toHaveTextContent('ПТ-420-1 сжался')
+    const banners = [...container.querySelectorAll('.banner')]
+    expect(banners.map((b) => b.getAttribute('role'))).toEqual(['alert', null])
   })
 
   it('все записи очереди по порядку прихода: новейшая внизу', () => {
@@ -153,7 +167,8 @@ describe('NotificationStack', () => {
     expect(t[1]).toContain('ПОРТАЛ СХЛОПНУЛСЯ')
     expect(t[2]).toContain('НАЁМ ЗАВЕРШЁН')
     expect(screen.getAllByRole('alert')).toHaveLength(1)
-    expect(screen.getAllByRole('status')).toHaveLength(2)
+    expect(screen.getAllByRole('status')).toHaveLength(1)
+    expect(screen.getByRole('status').children).toHaveLength(2)
   })
 
   it('стопка стоит в классе banner-stack, а не в инлайн-стилях', () => {

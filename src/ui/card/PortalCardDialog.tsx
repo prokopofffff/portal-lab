@@ -136,6 +136,7 @@ function Overlay({
         aria-modal="true"
         aria-labelledby={labelledBy}
         tabIndex={-1}
+        className="card-dialog"
         style={{ position: 'relative', outline: 'none' }}
       >
         <CloseButton onClose={onClose} />
@@ -173,7 +174,6 @@ function NoteField({ fieldRef }: { fieldRef: RefObject<HTMLTextAreaElement | nul
           color: 'var(--c-ink-title)',
           background: 'var(--c-parchment-field)',
           border: '3px solid var(--c-scroll-edge)',
-          outline: 'none',
         }}
       />
     </div>
@@ -263,7 +263,9 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
         run({ type: 'closePortal', portal })
       } else {
         setDelta(null)
-        dispatch({ type: 'cancelClose', portal })
+        // Портал мог перестать быть открытым, пока свиток висел: домен отклонил бы отмену ложным отказом
+        const now = portalCard(store.getState().lab, portal)
+        if (now?.status === 'open') dispatch({ type: 'cancelClose', portal })
       }
     } else if (current?.kind === 'note' && ok) {
       run({ type: 'toggleQuestioned', portal, note: (noteRef.current?.value ?? '').trim() })
