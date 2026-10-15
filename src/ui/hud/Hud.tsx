@@ -33,7 +33,7 @@ function Hourglass() {
 
 function Clock({ time }: { time: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 150 }}>
+    <div className="hud-clock">
       <Hourglass />
       <div style={column}>
         <span style={caption}>ВРЕМЯ</span>
@@ -61,8 +61,6 @@ const speedLabel = (s: Speed) => (s === 0 ? 'Пауза' : `Скорость ×$
 // Активная пауза — синяя, активная скорость — факел (renderVals канваса)
 function speedStyle(on: boolean, paused: boolean): CSSProperties {
   return {
-    width: 42,
-    height: 44,
     boxSizing: 'border-box',
     display: 'flex',
     alignItems: 'center',
@@ -91,6 +89,7 @@ function SpeedControl() {
             <button
               key={s}
               type="button"
+              className="hud-speed-btn"
               aria-label={speedLabel(s)}
               aria-pressed={on}
               style={speedStyle(on, paused)}
@@ -312,12 +311,12 @@ function HireButton({ rejection }: { rejection: string | null }) {
   return (
     <button
       type="button"
+      className="hud-hire"
       title={rejection ?? undefined}
       aria-disabled={rejection !== null ? true : undefined}
       onClick={() => dispatch({ type: 'hireObserver' })}
       style={{
         alignSelf: 'flex-start',
-        marginLeft: 4,
         height: 44,
         padding: '0 12px',
         boxSizing: 'border-box',
@@ -359,8 +358,8 @@ function Stat({ label, value, alert }: HudStat) {
   return (
     <div
       data-alert={alert ?? undefined}
+      className="hud-stat"
       style={{
-        height: 46,
         boxSizing: 'border-box',
         padding: '4px 8px',
         background: 'var(--c-well)',
@@ -397,7 +396,7 @@ export function Hud() {
   const progress = hireProgress(lab.staff.hireTicksLeft)
   return (
     <header
-      className={paused ? 'hud-paused' : 'hud-live'}
+      className={`hud ${paused ? 'hud-paused' : 'hud-live'}`}
       style={{
         // Spec §9: HUD всегда виден — прилипает к верху при прокрутке экрана
         position: 'sticky',
@@ -406,11 +405,6 @@ export function Hud() {
         flex: 'none',
         width: '100%',
         boxSizing: 'border-box',
-        height: 112,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '0 20px',
         background: 'var(--c-panel)',
         borderBottom: '4px solid var(--c-edge)',
         boxShadow: 'inset 0 -4px 0 var(--c-well)',
@@ -422,11 +416,12 @@ export function Hud() {
       <Clock time={lab.time} />
       <SpeedControl />
       <div
+        className="hud-divider"
         style={{ width: 4, alignSelf: 'stretch', margin: '18px 0', background: 'var(--c-divider)' }}
       />
-      <div style={column}>
+      <div className="hud-staff" style={column}>
         <span style={caption}>НАБЛЮДАТЕЛИ</span>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <div className="hud-slots">
           {observerSlots(summary.staff).map((kind, i) => (
             <Slot key={i} kind={kind} progress={progress} />
           ))}
@@ -434,14 +429,14 @@ export function Hud() {
           <HireButton rejection={hireRejection(lab)} />
         </div>
       </div>
-      <div style={{ flex: '1 1 0', minWidth: 0 }} />
+      <div className="hud-spacer" />
       <dl
+        className="hud-stats"
         style={{
           margin: 0,
           display: 'grid',
           gridTemplateColumns: 'repeat(3,minmax(0,1fr))',
           gap: 6,
-          width: 420,
         }}
       >
         {hudStats(summary).map((s) => (
