@@ -399,6 +399,7 @@ export function PortalArch({
         <button
           type="button"
           aria-label={`Открыть карточку портала ${cell.name}`}
+          data-tour="arch-portal"
           style={{ ...bareButton, position: 'absolute', left: 0, top: 0 }}
         >
           <Portal look={cell.level} observers={cell.observers} width={ARCH_W} />
@@ -453,6 +454,7 @@ export function EmptyArch({
         type="button"
         className="hall-empty-arch"
         aria-label={`Открыть портал в арке ${arch + 1}`}
+        data-tour="arch-empty"
         style={bareButton}
       >
         <Portal look="empty" width={ARCH_W} />

@@ -114,6 +114,7 @@ function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => vo
         // aria-label, а не скрытым span: пробел перед ним браузеры и jsdom считают по-разному
         aria-label={ability.recommended ? `${ability.label} (рекомендуется)` : undefined}
         data-recommended={ability.recommended}
+        data-tour={`ability-${ability.command}`}
         onClick={onPress}
         onFocus={() => setFocus(true)}
         onBlur={() => {

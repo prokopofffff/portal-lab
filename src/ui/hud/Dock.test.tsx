@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { Route } from '../../app/navigation'
@@ -70,5 +70,16 @@ describe('док', () => {
     renderDock(undefined, onSeal)
     await userEvent.click(screen.getByRole('button', { name: 'Запечатать лабораторию' }))
     expect(onSeal).toHaveBeenCalledTimes(1)
+  })
+
+  it('«Обучение» есть только с onTour и зовёт его', async () => {
+    renderDock()
+    expect(screen.queryByRole('button', { name: 'Обучение' })).not.toBeInTheDocument()
+    cleanup()
+
+    const onTour = vi.fn()
+    renderScreen(<Dock onSeal={() => {}} onTour={onTour} />, storeWithLab(labWith({ worlds: {} })))
+    await userEvent.click(screen.getByRole('button', { name: 'Обучение' }))
+    expect(onTour).toHaveBeenCalledTimes(1)
   })
 })

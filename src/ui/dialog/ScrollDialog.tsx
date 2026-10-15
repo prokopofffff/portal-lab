@@ -36,6 +36,8 @@ export type ScrollDialogProps = {
   children?: ReactNode
   okLabel: string
   okTone: ScrollOkTone
+  /** Подпись второй кнопки; по умолчанию «Отмена». */
+  cancelLabel?: string
   onOk: () => void
   /** Кнопка «Отмена», Esc и клик по затемнению. */
   onCancel: () => void
@@ -85,6 +87,7 @@ export function ScrollDialog({
   children,
   okLabel,
   okTone,
+  cancelLabel = 'Отмена',
   onOk,
   onCancel,
   initialFocus,
@@ -242,6 +245,7 @@ export function ScrollDialog({
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
             <button
               type="button"
+              data-tour="scroll-ok"
               onClick={onOk}
               style={{
                 ...buttonBase,
@@ -267,7 +271,7 @@ export function ScrollDialog({
                 boxShadow: 'inset 0 -4px 0 var(--c-bevel-faint)',
               }}
             >
-              Отмена
+              {cancelLabel}
             </button>
           </div>
         </div>
