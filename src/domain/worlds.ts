@@ -78,3 +78,27 @@ export function worldCode(name: string): string {
 export function portalName(name: string, visit: number): string {
   return `${worldCode(name)}-${visit}`
 }
+
+// Виды существ по силуэтам спрайта (слизень, рогач, призрак, жук) и приметы — все мужского рода
+const CREATURE_SPECIES = ['слизень', 'бес', 'призрак', 'жук'] as const
+const CREATURE_TRAITS = [
+  'Рогатый',
+  'Серый',
+  'Панцирный',
+  'Болотный',
+  'Бледный',
+  'Клыкастый',
+  'Кривой',
+] as const
+
+// Имя существа мира по номеру (с 0): первое носит прилагательное мира, остальные — приметы по
+// кругу. Вид идёт по кругу из 4, приметы — из 7, поэтому имена не повторяются до 29-го существа.
+export function creatureName(worldName: string, index: number): string {
+  const species = CREATURE_SPECIES[index % CREATURE_SPECIES.length]
+  if (index === 0) {
+    const adjective = worldName.split(' ')[0] ?? ''
+    const forms = ADJECTIVES.find((f) => f.includes(adjective))
+    return `${forms ? forms[0] : adjective} ${species}`
+  }
+  return `${CREATURE_TRAITS[(index - 1) % CREATURE_TRAITS.length]} ${species}`
+}

@@ -176,6 +176,7 @@ export const sprite = {
   unknownBg: '#0c0a12',
   unknownEdge: colors.edgeSoft,
   unknownGlyph: '#5e5478',
+  unknownLabel: '#a79bb8', // «???» под неизвестным существом на странице мира
   // HUD: песочные часы, лицо и значок портала в слоте наблюдателя, надгробие потерянных
   hourglassFrame: '#c9a24a',
   hourglassGlass: '#8a7fa6',
@@ -220,6 +221,9 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'статус портала в строке', fg: colors.rowText, bg: sprite.sill, min: 4.5 },
   { name: 'имя портала в строке', fg: colors.rowTitle, bg: sprite.sill, min: 4.5 },
   { name: 'процент изучения на клетке', fg: sprite.studyBadge, bg: colors.well, min: 4.5 },
+  { name: 'имя изученного существа', fg: colors.text, bg: sprite.cellBg, min: 4.5 },
+  { name: 'изучаемое существо', fg: sprite.studyBadge, bg: sprite.studyBg, min: 4.5 },
+  { name: 'неизвестное существо', fg: sprite.unknownLabel, bg: sprite.unknownBg, min: 4.5 },
   { name: 'метка книги на столе', fg: colors.cellarLabel, bg: colors.desk, min: 4.5 },
   { name: 'заголовок книги на столе', fg: colors.cellarTitle, bg: colors.desk, min: 4.5 },
   { name: 'время записи на пергаменте', fg: colors.inkFaint, bg: colors.parchment, min: 4.5 },

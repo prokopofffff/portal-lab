@@ -174,7 +174,10 @@ export function HallScreen() {
   return (
     <main
       style={{
-        flex: '1 1 auto',
+        // Как кадр 00-hall (1000 px − HUD 112 − док 84): зал делит высоту экрана, а не растёт по
+        // содержимому; ниже 804 px не сжимается — экран прокручивается
+        flex: '1 1 0',
+        minHeight: 804,
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
@@ -246,10 +249,11 @@ export function HallScreen() {
       <div
         style={{
           position: 'relative',
-          flex: '1 1 auto',
+          flex: '1 1 0',
+          minHeight: 0,
           display: 'grid',
           gridTemplateColumns: `repeat(${ARCH_COUNT / 2}, minmax(0, 1fr))`,
-          gridTemplateRows: 'repeat(2, minmax(min-content, 1fr))',
+          gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
           gap: '4px 0',
         }}
       >

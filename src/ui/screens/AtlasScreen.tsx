@@ -321,9 +321,12 @@ export function AtlasScreen() {
       {hasWorlds ? (
         <div
           style={{
+            // Как кадр 11: сетка занимает экран до дока, ряды делят высоту поровну;
+            // больше двух рядов — не уже 300 px, экран прокручивается
+            flex: '1 1 auto',
             display: 'grid',
             gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-            gridAutoRows: 'minmax(300px, auto)',
+            gridAutoRows: 'minmax(300px, 1fr)',
             gap: 22,
           }}
         >

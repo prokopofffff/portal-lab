@@ -242,6 +242,8 @@ function Slot({ kind, progress }: { kind: SlotKind; progress: number }) {
         <div
           className="hud-hire-bar"
           style={{
+            // Канвас считает рамку снаружи 44×5 (content-box), глобальный border-box её бы съел
+            boxSizing: 'content-box',
             width: 44,
             height: 5,
             background: 'var(--c-well)',
