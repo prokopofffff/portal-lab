@@ -32,6 +32,12 @@ describe('док', () => {
   it.each<[Route, string]>([
     [{ screen: 'hall' }, 'Зал лаборатории'],
     [{ screen: 'portal', portal: 'ПТ-420-1' }, 'Зал лаборатории'],
+    [{ screen: 'portal', portal: 'ПТ-420-1', back: { screen: 'hall' } }, 'Зал лаборатории'],
+    [
+      { screen: 'portal', portal: 'ПТ-420-1', back: { screen: 'world', world: 'Пепельные Топи' } },
+      'Атлас миров',
+    ],
+    [{ screen: 'portal', portal: 'ПТ-420-1', back: { screen: 'journal' } }, 'Книга журнала'],
     [{ screen: 'atlas' }, 'Атлас миров'],
     [{ screen: 'world', world: 'Пепельные Топи' }, 'Атлас миров'],
     [{ screen: 'journal' }, 'Книга журнала'],
