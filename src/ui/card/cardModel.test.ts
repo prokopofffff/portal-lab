@@ -381,11 +381,21 @@ describe('portalCard: история', () => {
       logEntry(143, 'Отказ: нельзя', { portal: 'ПТ-420-1', kind: 'rejection' }),
     ]
     const m = card([portal('ПТ-420-1', TOPI)], 'ПТ-420-1', log)
-    expect(m.history).toEqual([
+    expect(m.history.map(({ time, text, kind }) => ({ time, text, kind }))).toEqual([
       { time: 120, text: 'Открыт портал ПТ-420-1', kind: 'action' },
       { time: 137, text: 'Риск высокий → критический', kind: 'system' },
       { time: 143, text: 'Отказ: нельзя', kind: 'rejection' },
     ])
+  })
+
+  it('ключи записей уникальны и устойчивы, даже у одинаковых записей в одну минуту', () => {
+    const twin = logEntry(143, 'Отказ: нельзя', { portal: 'ПТ-420-1', kind: 'rejection' })
+    const log = [logEntry(120, 'Открыт', { portal: 'ПТ-420-1', kind: 'action' }), twin, twin]
+    const keys = card([portal('ПТ-420-1', TOPI)], 'ПТ-420-1', log).history.map((e) => e.key)
+    expect(new Set(keys).size).toBe(3)
+    // Старая запись ушла из журнала — ключи оставшихся не меняются
+    const later = card([portal('ПТ-420-1', TOPI)], 'ПТ-420-1', log.slice(1)).history
+    expect(later.map((e) => e.key)).toEqual(keys.slice(1))
   })
 })
 

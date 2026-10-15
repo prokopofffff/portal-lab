@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { Portal } from '../../domain'
 import { labWith, logEntry, portal, world } from '../../test/labFixtures'
-import { portalCard, type PortalCardModel } from './cardModel'
+import { cardValues, portalCard, type PortalCardModel } from './cardModel'
 import { PortalCard, type CardDelta } from './PortalCard'
 
 const TOPI = 'Пепельные Топи'
@@ -170,7 +170,9 @@ describe('PortalCard: недоступные способности', () => {
     expect(tip).not.toBeVisible()
 
     const user = userEvent.setup()
-    while (document.activeElement !== button) await user.tab()
+    // Не больше 20 Tab: регрессия должна падать, а не зависать
+    for (let i = 0; i < 20 && document.activeElement !== button; i++) await user.tab()
+    expect(button).toHaveFocus()
     expect(tip).toBeVisible()
     expect(tip).toHaveTextContent(reason)
 
@@ -277,7 +279,7 @@ describe('PortalCard: «было — стало» после команды', ()
     const m = model([after], 'ББ-310-1')
     const drop = before.risk.score - m.risk.score
     expect(drop).toBeGreaterThan(0)
-    renderCard(m, { delta: { score: before.risk.score, energy: 91, stability: 35, timeLeft: 46 } })
+    renderCard(m, { delta: { before: cardValues(before), after: cardValues(m) } })
     expect(screen.getByText('было 91, стало 81')).toBeInTheDocument()
     expect(screen.getByText('было 35 %, стало 60 %')).toBeInTheDocument()
     expect(screen.getByText('было 46 мин, стало 66 мин')).toBeInTheDocument()
@@ -293,14 +295,30 @@ describe('PortalCard: «было — стало» после команды', ()
       stability: 35,
       timeLeft: 46,
     }
-    const { unmount } = renderCard(m, { delta: same })
+    const { unmount } = renderCard(m, { delta: { before: same, after: same } })
     expect(screen.queryByText(/^было/)).toBeNull()
     expect(screen.queryByText(/[▼▲]/)).toBeNull()
     unmount()
-    renderCard(m, { delta: { ...same, score: m.risk.score - 5, energy: 80 } })
+    renderCard(m, {
+      delta: { before: { ...same, score: m.risk.score - 5, energy: 80 }, after: same },
+    })
     expect(screen.getByText('▲ +5')).toBeInTheDocument()
     expect(screen.getByText('было 80, стало 91')).toBeInTheDocument()
     expect(screen.getAllByText(/^было/)).toHaveLength(1)
+  })
+
+  it('пара заморожена: «стало» и чип берутся из delta, а не из текущих значений', () => {
+    // Карточка уже показывает другие (живые) значения, а строки — пару на момент команды
+    const m = model([{ ...after, timeLeft: 50 }], 'ББ-310-1')
+    renderCard(m, {
+      delta: {
+        before: { score: 60, energy: 91, stability: 35, timeLeft: 46 },
+        after: { score: 42, energy: 81, stability: 60, timeLeft: 66 },
+      },
+    })
+    expect(screen.getByText('было 46 мин, стало 66 мин')).toBeInTheDocument()
+    expect(screen.getByText('50 мин')).toBeInTheDocument()
+    expect(screen.getByText('▼ −18')).toBeInTheDocument()
   })
 })
 

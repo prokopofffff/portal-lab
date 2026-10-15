@@ -281,8 +281,8 @@ export function History({ history }: { history: CardHistoryEntry[] }) {
           gap: 3,
         }}
       >
-        {history.map((entry, i) => (
-          <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+        {history.map((entry) => (
+          <li key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
             <span
               style={{
                 flex: 'none',

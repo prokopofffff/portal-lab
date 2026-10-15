@@ -1,11 +1,14 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Bar } from '../sprites'
-import type { CardMetric, PortalCardModel } from './cardModel'
+import type { CardMetric, CardValues, PortalCardModel } from './cardModel'
 
 // Метрики и разбор риска карточки портала (канвас 23-c-portal-card).
 
-/** Значения до команды (как показаны на карточке): под изменившимися метриками — «было X, стало Y». */
-export type CardDelta = { score: number; energy: number; stability: number; timeLeft: number }
+/**
+ * Замороженная пара значений до и сразу после команды (как их показала карточка): под изменившимися
+ * метриками — «было X, стало Y», у балла — чип изменения. Обе цифры не идут за симуляцией.
+ */
+export type CardDelta = { before: CardValues; after: CardValues }
 
 /** Цвета карточки: рамка и балл, плашка риска и текст на ней; у архивной — серые. */
 export interface CardPalette {
@@ -53,14 +56,14 @@ function MetricRow({
   color,
   metric,
   shown,
-  was,
+  change,
 }: {
   label: string
   icon: string
   color: string
   metric: CardMetric
   shown: (value: number) => string
-  was: number | undefined
+  change: { was: number; now: number } | undefined
 }) {
   return (
     <>
@@ -91,7 +94,7 @@ function MetricRow({
           {shown(metric.value)}
         </span>
       </div>
-      {was !== undefined && was !== metric.value && (
+      {change && change.was !== change.now && (
         <span
           style={{
             margin: '-6px 0 0 172px',
@@ -99,19 +102,24 @@ function MetricRow({
             color: 'var(--c-observer-on-site-text)',
           }}
         >
-          было {shown(was)}, стало {shown(metric.value)}
+          было {shown(change.was)}, стало {shown(change.now)}
         </span>
       )}
     </>
   )
 }
 
-/** Три строки метрик; с delta — «было X, стало Y» под изменившимися. */
+/** Три строки метрик; с delta — замороженное «было X, стало Y» под изменившимися. */
 export function Metrics({ model, delta }: { model: PortalCardModel; delta?: CardDelta }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 9, padding: '14px 20px 4px' }}>
       {METRICS.map(({ key, ...metric }) => (
-        <MetricRow key={key} {...metric} metric={model.metrics[key]} was={delta?.[key]} />
+        <MetricRow
+          key={key}
+          {...metric}
+          metric={model.metrics[key]}
+          change={delta && { was: delta.before[key], now: delta.after[key] }}
+        />
       ))}
     </div>
   )
@@ -144,11 +152,11 @@ function ScoreChange({ from, to }: { from: number; to: number }) {
 export function RiskBox({
   model,
   palette,
-  before,
+  delta,
 }: {
   model: PortalCardModel
   palette: CardPalette
-  before: number | undefined
+  delta: CardDelta | undefined
 }) {
   const op: CSSProperties = { ...pixel, fontSize: 14, color: 'var(--c-text-dim)' }
   const parts = [...model.parts, { label: 'итого', value: model.risk.score }]
@@ -169,8 +177,8 @@ export function RiskBox({
         <span style={{ ...pixel, fontSize: 30, lineHeight: '34px', color: palette.rc }}>
           {model.risk.score}
         </span>
-        {before !== undefined && before !== model.risk.score && (
-          <ScoreChange from={before} to={model.risk.score} />
+        {delta && delta.before.score !== delta.after.score && (
+          <ScoreChange from={delta.before.score} to={delta.after.score} />
         )}
         <span style={{ flex: '1 1 0' }} />
         {parts.map((part, i) => (

@@ -299,7 +299,7 @@ export function PortalCard({
           <Header model={model} palette={palette} headingId={headingId} onOpenWorld={onOpenWorld} />
           <Scene model={model} />
           <Metrics model={model} delta={delta} />
-          <RiskBox model={model} palette={palette} before={delta?.score} />
+          <RiskBox model={model} palette={palette} delta={delta} />
           <Study model={model} onOpenPortal={onOpenPortal} />
           {model.advice && <Advice advice={model.advice} />}
           {model.abilities.length > 0 && (

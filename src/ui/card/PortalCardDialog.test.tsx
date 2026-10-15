@@ -137,6 +137,21 @@ describe('PortalCardDialog: способности', () => {
     expect(screen.queryByText(/^было /)).toBeNull()
   })
 
+  it('«было, стало» и чип заморожены: тики симуляции их не двигают', async () => {
+    const { store } = renderDialog('ПТ-420-1')
+    await userEvent.click(ability('Стабилизировать'))
+    const lines = () => screen.getAllByText(/^было /).map((e) => e.textContent)
+    const chip = () => screen.getByText(/^риск снизился на \d+$/).textContent
+    const frozen = { lines: lines(), chip: chip() }
+    expect(frozen.lines).toContain('было 8 мин, стало 28 мин')
+
+    act(() => store.advance(25))
+    // Живые значения ушли вперёд (время 28 → 3), а пара осталась той, что была после команды
+    expect(screen.getByText('3 мин')).toBeInTheDocument()
+    expect(lines()).toEqual(frozen.lines)
+    expect(chip()).toBe(frozen.chip)
+  })
+
   it('отказ стабилизации (кулдаун) убирает «было, стало»', async () => {
     const { store } = renderDialog('ПТ-420-1')
     await userEvent.click(ability('Стабилизировать'))
@@ -201,6 +216,26 @@ describe('PortalCardDialog: закрытие портала', () => {
     await userEvent.click(ability('Закрыть'))
     expect(confirm).not.toHaveBeenCalled()
     expect(portalOf('ПТ-420-2').status).toBe('closed')
+  })
+})
+
+describe('PortalCardDialog: фокус, когда способности исчезают', () => {
+  it('после подтверждённого закрытия фокус на диалоге, а не на body', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const { portalOf } = renderDialog('ББ-310-1')
+    await userEvent.click(ability('Закрыть'))
+    expect(portalOf('ББ-310-1').status).toBe('closed')
+    expect(screen.queryByRole('group', { name: 'Способности' })).toBeNull()
+    expect(screen.getByRole('dialog')).toHaveFocus()
+  })
+
+  it('портал схлопнулся с фокусом на способности — фокус на диалоге', () => {
+    const dying = { ...lonely, timeLeft: 1 }
+    const { store, portalOf } = renderDialog('ББ-310-1', [critical, sibling, dying])
+    act(() => ability('Под вопросом').focus())
+    act(() => store.advance(3))
+    expect(portalOf('ББ-310-1').status).toBe('collapsed')
+    expect(screen.getByRole('dialog')).toHaveFocus()
   })
 })
 

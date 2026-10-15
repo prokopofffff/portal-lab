@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { useDispatch, useLabSelector, useLabStore } from '../../app/hooks'
 import { useNavigate, type BaseRoute } from '../../app/navigation'
 import { closeConfirmation, type Command } from '../../domain'
-import { portalCard } from './cardModel'
+import { cardValues, portalCard } from './cardModel'
 import { PortalCard, type CardDelta } from './PortalCard'
 import './card.css'
 
@@ -59,12 +59,15 @@ function CloseButton({ onClose }: { onClose: () => void }) {
 function Overlay({
   labelledBy,
   focusKey,
+  archived = false,
   onClose,
   children,
 }: {
   labelledBy: string
   // Смена ключа (другой портал) снова ставит фокус на диалог и прокручивает к началу
   focusKey: string
+  // Портал больше не открыт (закрыт, схлопнулся): способности исчезли вместе с фокусом на них
+  archived?: boolean
   onClose: () => void
   children: ReactNode
 }) {
@@ -80,6 +83,17 @@ function Overlay({
     overlayRef.current?.scrollTo?.(0, 0)
     dialogRef.current?.focus()
   }, [focusKey])
+
+  // Карточка ушла в архив, пока открыта: фокус был на исчезнувшей кнопке (теперь он на body)
+  // или где-то в карточке — возвращаем его на сам диалог, чтобы не потерять внутри aria-modal
+  useEffect(() => {
+    if (!archived) return
+    const dialog = dialogRef.current
+    const active = document.activeElement
+    if (dialog && (active === null || active === document.body || dialog.contains(active))) {
+      dialog.focus()
+    }
+  }, [archived])
 
   useEffect(() => {
     // Esc, уже потраченный внутри (скрыть подсказку отказа), карточку не закрывает
@@ -138,7 +152,7 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
   const lab = useLabSelector((state) => state.lab)
   const model = useMemo(() => portalCard(lab, portal), [lab, portal])
   // «Было» после успешной стабилизации — только для того портала, с карточки которого она пришла
-  const [delta, setDelta] = useState<{ portal: string; before: CardDelta } | null>(null)
+  const [delta, setDelta] = useState<{ portal: string; delta: CardDelta } | null>(null)
 
   const close = () => navigate(back)
 
@@ -185,28 +199,26 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
       command = { ...command, note }
     }
     const result = dispatch(command)
-    if (command.type === 'stabilize' && result.rejection === undefined && was) {
-      // Значения до команды — как их показывала карточка (округлённые)
-      setDelta({
-        portal,
-        before: {
-          score: was.risk.score,
-          energy: was.metrics.energy.value,
-          stability: was.metrics.stability.value,
-          timeLeft: was.metrics.timeLeft.value,
-        },
-      })
+    const now = portalCard(store.getState().lab, portal)
+    if (command.type === 'stabilize' && result.rejection === undefined && was && now) {
+      // Пара «до — сразу после» как её показала карточка; дальше симуляция её не двигает
+      setDelta({ portal, delta: { before: cardValues(was), after: cardValues(now) } })
     } else {
       setDelta(null)
     }
   }
 
   return (
-    <Overlay labelledBy={headingId} focusKey={portal} onClose={close}>
+    <Overlay
+      labelledBy={headingId}
+      focusKey={portal}
+      archived={model.status !== 'open'}
+      onClose={close}
+    >
       <PortalCard
         model={model}
         headingId={headingId}
-        delta={delta?.portal === portal ? delta.before : undefined}
+        delta={delta?.portal === portal ? delta.delta : undefined}
         onAction={act}
         onOpenWorld={(world) => navigate({ screen: 'world', world })}
         onOpenPortal={(name) => {

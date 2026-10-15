@@ -8,6 +8,7 @@ import {
   recommend,
   RISK_LEVEL_LABELS,
   type Command,
+  type LogEntry,
   type LogKind,
   type Portal,
   type PortalStatus,
@@ -74,6 +75,8 @@ export interface CardAbility {
 }
 
 export interface CardHistoryEntry {
+  // Устойчивый ключ записи для списка: время, реальное время, текст и номер среди одинаковых
+  key: string
   time: number
   text: string
   kind: LogKind
@@ -144,8 +147,8 @@ function unexpectedRng(): never {
   throw new Error('Команда карточки обратилась к ГСЧ')
 }
 
-const upperFirst = (text: string): string => `${text[0]!.toUpperCase()}${text.slice(1)}`
-const lowerFirst = (text: string): string => `${text[0]!.toLowerCase()}${text.slice(1)}`
+const upperFirst = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1)
+const lowerFirst = (text: string): string => text.charAt(0).toLowerCase() + text.slice(1)
 
 // Целые доли, дающие в сумме ровно total: округляем вниз, недостающие единицы — тем,
 // у кого дробная часть больше (при равенстве — раньше по порядку)
@@ -259,6 +262,34 @@ function archiveText(lab: Lab, portal: Portal, history: CardHistoryEntry[]): str
   return `${ending} ${tail}`
 }
 
+// История портала; у записи нет id, поэтому ключ собирается из её полей и номера среди одинаковых
+function historyOf(entries: LogEntry[]): CardHistoryEntry[] {
+  const seen = new Map<string, number>()
+  return entries.map(({ time, realTime, text, kind }) => {
+    const base = `${time}|${realTime}|${text}`
+    const n = seen.get(base) ?? 0
+    seen.set(base, n + 1)
+    return { key: `${base}|${n}`, time, text, kind }
+  })
+}
+
+/** Значения, которые карточка показывает для «было — стало»: балл и округлённые метрики. */
+export interface CardValues {
+  score: number
+  energy: number
+  stability: number
+  timeLeft: number
+}
+
+export function cardValues(model: PortalCardModel): CardValues {
+  return {
+    score: model.risk.score,
+    energy: model.metrics.energy.value,
+    stability: model.metrics.stability.value,
+    timeLeft: model.metrics.timeLeft.value,
+  }
+}
+
 /** Карточка портала по имени; null, если такого портала нет. */
 export function portalCard(lab: Lab, name: string): PortalCardModel | null {
   const portal = lab.portals.find((p) => p.name === name)
@@ -269,11 +300,7 @@ export function portalCard(lab: Lab, name: string): PortalCardModel | null {
   const label = upperFirst(RISK_LEVEL_LABELS[level])
   const archived = portal.status !== 'open'
   const advice = adviceOf(lab, name)
-  const history = filterLog(lab.log, { portal: name }).map(({ time, text, kind }) => ({
-    time,
-    text,
-    kind,
-  }))
+  const history = historyOf(filterLog(lab.log, { portal: name }))
 
   return {
     name: portal.name,
