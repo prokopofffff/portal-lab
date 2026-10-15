@@ -360,7 +360,7 @@ test.describe('узкий экран, 390×844: карточка, свитки, 
     await expectInsideViewport(page.getByTestId('scroll-backdrop'))
   })
 
-  test('баннеры с карточкой: во всю ширину у нижнего края, не закрывают крестик, видны два новейших', async ({
+  test('баннеры с карточкой: колода во всю ширину у нижнего края, не закрывает крестик', async ({
     page,
   }) => {
     // Без въезда справа: меряем баннеры на месте
@@ -370,33 +370,40 @@ test.describe('узкий экран, 390×844: карточка, свитки, 
     const send = abilities.getByRole('button', { name: 'Отправить наблюдателя' })
     await send.focus()
     for (let i = 0; i < 3; i++) await page.keyboard.press('Enter')
-    // Все три в очереди, но скрытый (display: none) выпадает из дерева доступности: alert-ов два
-    await expect(page.locator('.banner')).toHaveCount(3)
+    // Курсор не над колодой: она сложена
+    await page.mouse.move(0, 0)
     const banners = page.getByRole('alert')
-    await expect(banners).toHaveCount(2)
-    const visible = await banners.all()
-    const boxes = await Promise.all(visible.map(async (b) => (await b.boundingBox())!))
-    for (const box of boxes) {
-      expect(box.x).toBeCloseTo(8, 0)
-      expect(box.width).toBeCloseTo(NARROW.width - 16, 0)
+    await expect(banners).toHaveCount(3)
+    const stack = page.locator('.banner-stack')
+    await expect(stack).not.toHaveAttribute('data-open')
+    const boxes = await Promise.all(
+      (await banners.all()).map(async (b) => (await b.boundingBox())!),
+    )
+    // Новейший сверху колоды во всю ширину, предыдущие под ним уже и выступают снизу корешками
+    const [newest, ...older] = boxes
+    expect(newest!.x).toBeCloseTo(8, 0)
+    expect(newest!.width).toBeCloseTo(NARROW.width - 16, 0)
+    for (const box of older) {
+      expect(box.width).toBeLessThan(newest!.width)
+      expect(box.y + box.height).toBeGreaterThan(newest!.y + newest!.height)
     }
-    // Стопка прижата к низу окна (дока под затемнением нет), 8 px отступа
-    const last = boxes[boxes.length - 1]!
-    expect(last.y + last.height).toBeCloseTo(NARROW.height - 8, 0)
-    for (const banner of visible) {
-      await expectNoHorizontalOverflow(banner)
-      const hide = (await banner.getByRole('button', { name: 'Скрыть уведомление' }).boundingBox())!
-      expect(hide.width).toBeGreaterThanOrEqual(44)
-      expect(hide.height).toBeGreaterThanOrEqual(44)
-      expect(hide.x + hide.width).toBeLessThanOrEqual(NARROW.width)
-    }
-    // Крестик «закрыть карточку» не под баннерами
+    // Колода прижата к низу окна (дока под затемнением нет), 8 px отступа
+    const deck = (await stack.boundingBox())!
+    expect(deck.y + deck.height).toBeCloseTo(NARROW.height - 8, 0)
+    await expectNoHorizontalOverflow(stack)
+    const hide = (await banners
+      .first()
+      .getByRole('button', { name: 'Скрыть уведомление' })
+      .boundingBox())!
+    expect(hide.width).toBeGreaterThanOrEqual(44)
+    expect(hide.height).toBeGreaterThanOrEqual(44)
+    expect(hide.x + hide.width).toBeLessThanOrEqual(NARROW.width)
+    // Крестик «закрыть карточку» не под колодой
     const closeBox = (await page.getByRole('button', { name: 'Закрыть карточку' }).boundingBox())!
-    for (const box of boxes)
-      expect(intersects(closeBox, box), 'баннер закрывает крестик').toBe(false)
+    expect(intersects(closeBox, deck), 'колода закрывает крестик').toBe(false)
   })
 
-  test('баннеры без карточки: над доком, не закрывают скорость и паузу, видны два новейших', async ({
+  test('баннеры без карточки: колода над доком, не закрывает скорость и паузу', async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -406,19 +413,18 @@ test.describe('узкий экран, 390×844: карточка, свитки, 
     await hire.click()
     await hire.focus()
     for (let i = 0; i < 4; i++) await page.keyboard.press('Enter')
-    await expect(page.locator('.banner')).toHaveCount(4)
-    const banners = page.getByRole('alert')
-    await expect(banners).toHaveCount(2)
-    const visible = await banners.all()
-    const boxes = await Promise.all(visible.map(async (b) => (await b.boundingBox())!))
+    await page.mouse.move(0, 0)
+    await expect(page.getByRole('alert')).toHaveCount(4)
+    const stack = page.locator('.banner-stack')
+    await expect(stack).not.toHaveAttribute('data-open')
+    const deck = (await stack.boundingBox())!
 
-    // Стопка над доком: нижний край на 84 px выше низа окна (76 px дока + 8)
-    const last = boxes[boxes.length - 1]!
-    expect(last.y + last.height).toBeCloseTo(NARROW.height - 84, 0)
+    // Колода над доком: нижний край на 84 px выше низа окна (76 px дока + 8)
+    expect(deck.y + deck.height).toBeCloseTo(NARROW.height - 84, 0)
     const dockBox = (await dock(page).boundingBox())!
-    expect(last.y + last.height).toBeLessThanOrEqual(dockBox.y)
+    expect(deck.y + deck.height).toBeLessThanOrEqual(dockBox.y)
 
-    // Страница наверху: кнопки скорости и паузы HUD видны, ни один баннер на них не заходит
+    // Страница наверху: кнопки скорости и паузы HUD видны, колода на них не заходит
     await page.evaluate(() =>
       (globalThis as unknown as { scrollTo(x: number, y: number): void }).scrollTo(0, 0),
     )
@@ -426,7 +432,7 @@ test.describe('узкий экран, 390×844: карточка, свитки, 
     expect(speed.length).toBeGreaterThan(1)
     for (const button of speed) {
       const box = (await button.boundingBox())!
-      for (const b of boxes) expect(intersects(box, b), 'баннер закрывает скорость').toBe(false)
+      expect(intersects(box, deck), 'колода закрывает скорость').toBe(false)
     }
   })
 })
