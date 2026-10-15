@@ -15,3 +15,84 @@
 .hud-paused .hg-grain {
   animation: none;
 }
+
+/* Раскладка HUD. Всё, что на узкой ширине меняется, лежит здесь, а не в инлайн-стилях: инлайн
+   перебил бы media query. Значения вне media query — как в канвасе 17-c-hud (1440 px) */
+.hud {
+  position: sticky;
+  top: 0;
+  height: 112px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+}
+.hud-clock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 150px;
+}
+.hud-speed-btn {
+  width: 42px;
+  height: 44px;
+}
+.hud-slots {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.hud-spacer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.hud-stats {
+  width: 420px;
+}
+.hud-stat {
+  height: 46px;
+}
+.hud-hire {
+  margin-left: 4px;
+}
+
+/* Узкий экран (брейкпоинт всех узких раскладок): HUD переносится строками. 1) время и скорость,
+   2) слоты наблюдателей, потерянные и «Нанять», 3) счётчики сеткой 3 колонки на всю ширину. Размеры
+   самих спрайтов и кнопок те же; кнопки скорости расширены до 44 px под палец */
+@media (max-width: 900px) {
+  .hud {
+    /* HUD в ~345 px съедал бы больше половины экрана телефона: на узкой ширине он прокручивается
+       вместе со страницей, а залипает только компактный док */
+    position: static;
+    height: auto;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: 12px;
+    padding: 12px;
+  }
+  .hud-speed-btn {
+    width: 44px;
+  }
+  .hud-divider,
+  .hud-spacer {
+    display: none;
+  }
+  .hud-staff,
+  .hud-stats {
+    flex: 1 1 100%;
+    width: auto;
+    min-width: 0;
+  }
+  .hud-slots {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  /* «Нанять» уходит к правому краю строки; двухстрочная подпись счётчика не обрезается */
+  .hud-hire {
+    margin-left: auto;
+  }
+  .hud-stat {
+    height: auto;
+    min-height: 46px;
+  }
+}

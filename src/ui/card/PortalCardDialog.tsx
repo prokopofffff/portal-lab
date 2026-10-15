@@ -1,24 +1,17 @@
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { useDispatch, useLabSelector, useLabStore } from '../../app/hooks'
 import { useNavigate, type BaseRoute } from '../../app/navigation'
 import { closeConfirmation, type Command } from '../../domain'
+import { ScrollDialog } from '../dialog/ScrollDialog'
+import { Creatures } from '../sprites/Creatures'
 import { cardValues, portalCard } from './cardModel'
 import { PortalCard, type CardDelta } from './PortalCard'
 import './card.css'
 
 // Диалог карточки портала поверх экрана (канвас 04-card-critical): затемнение на всё приложение,
-// карточка по центру в 20 px от верха; затемнение прокручивается, если карточка выше окна.
+// карточка в 20 px от верха (по горизонтали и на узком экране её ставит .card-overlay); затемнение
+// прокручивается, если карточка выше окна.
 // Симуляция идёт дальше: карточка перечитывает store на каждом изменении.
-
-/** Вопрос перед закрытием последнего портала в мир с неизученными (spec §5). */
-function closeQuestion(ask: { world: string; unstudied: number; creatures: number }) {
-  return `Это последний открытый портал в ${ask.world}. Не изучено ${ask.unstudied} из ${ask.creatures} существ — продолжить изучение можно будет, только если портал в этот мир откроется снова`
-}
-
-/** Вопрос о заметке при пометке «Под вопросом» (канвас 15-dialogs). */
-function noteQuestion(portal: string) {
-  return `Пометить ${portal} «Под вопросом»? Заметка (необязательно): что нужно проверить?`
-}
 
 // Крестик «закрыть карточку» 8×8, как значок отказа в канвасе 24-c-banner
 const CLOSE_ICON =
@@ -31,11 +24,10 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       aria-label="Закрыть карточку"
       title="Закрыть карточку (Esc)"
       onClick={onClose}
+      // Место крестика (слева от карточки, на узком экране — над ней) — в классе card-close
+      className="card-close"
       style={{
-        // Слева от карточки: справа сверху встаёт баннер уведомлений
         position: 'absolute',
-        top: 0,
-        right: 'calc(100% + 12px)',
         width: 44,
         height: 44,
         display: 'flex',
@@ -60,6 +52,7 @@ function Overlay({
   labelledBy,
   focusKey,
   archived = false,
+  inert = false,
   onClose,
   children,
 }: {
@@ -68,6 +61,8 @@ function Overlay({
   focusKey: string
   // Портал больше не открыт (закрыт, схлопнулся): способности исчезли вместе с фокусом на них
   archived?: boolean
+  // Поверх карточки открыт свиток: она недоступна, а Esc принадлежит свитку
+  inert?: boolean
   onClose: () => void
   children: ReactNode
 }) {
@@ -75,8 +70,10 @@ function Overlay({
   const dialogRef = useRef<HTMLDivElement>(null)
   // Последний onClose без переподписки на клавиатуру при каждой перерисовке (тики симуляции)
   const closeRef = useRef(onClose)
+  const inertRef = useRef(inert)
   useEffect(() => {
     closeRef.current = onClose
+    inertRef.current = inert
   })
 
   useEffect(() => {
@@ -95,10 +92,19 @@ function Overlay({
     }
   }, [archived])
 
+  // Свиток закрылся, а кнопки, с которой его открыли, уже нет (портал схлопнулся): фокус
+  // остался на body — возвращаем его на диалог
   useEffect(() => {
-    // Esc, уже потраченный внутри (скрыть подсказку отказа), карточку не закрывает
+    if (inert) return
+    const active = document.activeElement
+    if (active === null || active === document.body) dialogRef.current?.focus()
+  }, [inert])
+
+  useEffect(() => {
+    // Esc, уже потраченный внутри (скрыть подсказку отказа), карточку не закрывает;
+    // пока открыт свиток, Esc его, а не карточки
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) closeRef.current()
+      if (e.key === 'Escape' && !e.defaultPrevented && !inertRef.current) closeRef.current()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -108,6 +114,8 @@ function Overlay({
     <div
       ref={overlayRef}
       data-testid="card-overlay"
+      inert={inert}
+      className="card-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -118,9 +126,7 @@ function Overlay({
         overflowY: 'auto',
         overscrollBehavior: 'contain',
         display: 'flex',
-        justifyContent: 'center',
         alignItems: 'flex-start',
-        padding: '20px 0',
         background: 'var(--c-overlay)',
       }}
     >
@@ -130,6 +136,7 @@ function Overlay({
         aria-modal="true"
         aria-labelledby={labelledBy}
         tabIndex={-1}
+        className="card-dialog"
         style={{ position: 'relative', outline: 'none' }}
       >
         <CloseButton onClose={onClose} />
@@ -139,10 +146,44 @@ function Overlay({
   )
 }
 
+/** Свиток поверх карточки: что спрашиваем (spec §5, канвас 15-dialogs). */
+type Ask = { kind: 'close'; world: string; unstudied: number; creatures: number } | { kind: 'note' }
+
+/** Поле заметки свитка «Под вопросом»: стили из канваса 15-dialogs. */
+function NoteField({ fieldRef }: { fieldRef: RefObject<HTMLTextAreaElement | null> }) {
+  const id = useId()
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <label htmlFor={id} style={{ fontSize: 15, fontWeight: 600, color: 'var(--c-ink-body)' }}>
+        Заметка <span style={{ fontWeight: 400, color: 'var(--c-ink-time)' }}>(необязательно)</span>
+      </label>
+      <textarea
+        ref={fieldRef}
+        id={id}
+        className="scroll-note"
+        rows={3}
+        placeholder="Что нужно проверить?"
+        style={{
+          boxSizing: 'border-box',
+          width: '100%',
+          resize: 'none',
+          padding: '10px 12px',
+          fontFamily: 'var(--f-prose)',
+          fontSize: 18,
+          lineHeight: '23px',
+          color: 'var(--c-ink-title)',
+          background: 'var(--c-parchment-field)',
+          border: '3px solid var(--c-scroll-edge)',
+        }}
+      />
+    </div>
+  )
+}
+
 /**
  * Карточка портала в диалоге. Действия — команды через dispatch; отказы показывает баннер приложения.
- * Закрытие последнего портала в мир и пометка «Под вопросом» спрашивают через window.confirm /
- * window.prompt — до диалогов-свитков lab-9dr.7.
+ * Закрытие последнего портала в мир и пометка «Под вопросом» спрашивают в свитке поверх карточки
+ * (карточка пока инертна, симуляция идёт).
  */
 export function PortalCardDialog({ portal, back }: { portal: string; back: BaseRoute }) {
   const store = useLabStore()
@@ -153,6 +194,9 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
   const model = useMemo(() => portalCard(lab, portal), [lab, portal])
   // «Было» после успешной стабилизации — только для того портала, с карточки которого она пришла
   const [delta, setDelta] = useState<{ portal: string; delta: CardDelta } | null>(null)
+  // Открытый свиток: вопрос, заданный на момент клика (портал за это время мог измениться)
+  const [ask, setAsk] = useState<Ask | null>(null)
+  const noteRef = useRef<HTMLTextAreaElement>(null)
 
   const close = () => navigate(back)
 
@@ -160,9 +204,8 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
     return (
       <Overlay labelledBy={headingId} focusKey={portal} onClose={close}>
         <div
-          className="card-notch"
+          className="card-notch card-frame"
           style={{
-            width: 600,
             padding: '18px 20px',
             background: 'var(--s-sill)',
             boxShadow: 'inset 0 0 0 3px var(--c-edge-soft)',
@@ -179,25 +222,9 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
     )
   }
 
-  function act(command: Command) {
-    const current = store.getState().lab
-    // Карточка по store на момент клика: «было» для стабилизации и включена ли пометка
-    const was = portalCard(current, portal)
-    if (command.type === 'closePortal') {
-      // Спрашиваем, только если закрыть можно: недоступное «Закрыть» сразу уходит в домен за отказом
-      const closable = was?.abilities.find((a) => a.command === 'closePortal')?.available ?? false
-      const ask = closable ? closeConfirmation(current, command.portal) : null
-      if (ask && !window.confirm(closeQuestion(ask))) {
-        setDelta(null)
-        dispatch({ type: 'cancelClose', portal: command.portal })
-        return
-      }
-    }
-    if (command.type === 'toggleQuestioned' && !was?.questioned) {
-      const note = window.prompt(noteQuestion(command.portal), '')
-      if (note === null) return
-      command = { ...command, note }
-    }
+  // Команда в домен; после успешной стабилизации запоминает пару «до — сразу после»
+  function run(command: Command) {
+    const was = portalCard(store.getState().lab, portal)
     const result = dispatch(command)
     const now = portalCard(store.getState().lab, portal)
     if (command.type === 'stabilize' && result.rejection === undefined && was && now) {
@@ -208,24 +235,94 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
     }
   }
 
+  function act(command: Command) {
+    const current = store.getState().lab
+    // Карточка по store на момент клика: включена ли пометка и можно ли закрыть
+    const was = portalCard(current, portal)
+    if (command.type === 'closePortal') {
+      // Спрашиваем, только если закрыть можно: недоступное «Закрыть» сразу уходит в домен за отказом
+      const closable = was?.abilities.find((a) => a.command === 'closePortal')?.available ?? false
+      const question = closable ? closeConfirmation(current, command.portal) : null
+      if (question) {
+        setAsk({ kind: 'close', ...question })
+        return
+      }
+    }
+    if (command.type === 'toggleQuestioned' && !was?.questioned) {
+      setAsk({ kind: 'note' })
+      return
+    }
+    run(command)
+  }
+
+  function answer(ok: boolean) {
+    const current = ask
+    setAsk(null)
+    if (current?.kind === 'close') {
+      if (ok) {
+        run({ type: 'closePortal', portal })
+      } else {
+        setDelta(null)
+        // Портал мог перестать быть открытым, пока свиток висел: домен отклонил бы отмену ложным отказом
+        const now = portalCard(store.getState().lab, portal)
+        if (now?.status === 'open') dispatch({ type: 'cancelClose', portal })
+      }
+    } else if (current?.kind === 'note' && ok) {
+      run({ type: 'toggleQuestioned', portal, note: (noteRef.current?.value ?? '').trim() })
+    }
+  }
+
   return (
-    <Overlay
-      labelledBy={headingId}
-      focusKey={portal}
-      archived={model.status !== 'open'}
-      onClose={close}
-    >
-      <PortalCard
-        model={model}
-        headingId={headingId}
-        delta={delta?.portal === portal ? delta.delta : undefined}
-        onAction={act}
-        onOpenWorld={(world) => navigate({ screen: 'world', world })}
-        onOpenPortal={(name) => {
-          setDelta(null)
-          navigate({ screen: 'portal', portal: name, back })
-        }}
-      />
-    </Overlay>
+    <>
+      <Overlay
+        labelledBy={headingId}
+        focusKey={portal}
+        archived={model.status !== 'open'}
+        inert={ask !== null}
+        onClose={close}
+      >
+        <PortalCard
+          model={model}
+          headingId={headingId}
+          delta={delta?.portal === portal ? delta.delta : undefined}
+          onAction={act}
+          onOpenWorld={(world) => navigate({ screen: 'world', world })}
+          onOpenPortal={(name) => {
+            setDelta(null)
+            navigate({ screen: 'portal', portal: name, back })
+          }}
+        />
+      </Overlay>
+      {ask?.kind === 'close' && (
+        <ScrollDialog
+          rune="high"
+          tone="high"
+          title="ЗАКРЫТЬ ПОСЛЕДНИЙ ПОРТАЛ?"
+          text={`Это последний открытый портал в ${ask.world}. Не изучено ${ask.unstudied} из ${ask.creatures} существ — продолжить изучение можно будет, только если портал в этот мир откроется снова.`}
+          okLabel="Закрыть всё равно"
+          okTone="danger"
+          onOk={() => answer(true)}
+          onCancel={() => answer(false)}
+        >
+          <Creatures total={ask.creatures} studied={ask.creatures - ask.unstudied} size={28} />
+        </ScrollDialog>
+      )}
+      {ask?.kind === 'note' && (
+        <ScrollDialog
+          rune="medium"
+          tone="medium"
+          title="ПОМЕТИТЬ «ПОД ВОПРОСОМ»"
+          sub={`${portal} · ${model.world}`}
+          text="Портал получит значок и попадёт под фильтр «Под вопросом». Заметка приколется к его карте."
+          okLabel="Пометить"
+          okTone="mark"
+          initialFocus={noteRef}
+          onOk={() => answer(true)}
+          onCancel={() => answer(false)}
+        >
+          <NoteField fieldRef={noteRef} />
+        </ScrollDialog>
+      )}
+    </>
   )
 }

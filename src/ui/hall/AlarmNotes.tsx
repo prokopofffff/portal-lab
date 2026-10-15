@@ -1,12 +1,8 @@
-import type { CSSProperties } from 'react'
 import { useLabSelector } from '../../app/hooks'
 import { useNavigate } from '../../app/navigation'
 import { attentionList, type AttentionItem } from '../../domain'
 import { risk } from '../theme/tokens'
 import { Rune } from '../sprites'
-
-// Слот под записки: высота зала не прыгает, что бы в нём ни стояло
-const slot: CSSProperties = { height: 90, marginBottom: 8 }
 
 function Note({ item, onOpen }: { item: AttentionItem; onOpen: () => void }) {
   const level = item.level
@@ -96,9 +92,8 @@ export function AlarmNotes() {
       <div
         role="region"
         aria-label="Тревожные знаки"
-        className="hall-notch"
+        className="hall-notch hall-slot hall-quiet"
         style={{
-          ...slot,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -113,17 +108,9 @@ export function AlarmNotes() {
     )
   }
 
+  // Слот и сетка записок — в hall.css: на узкой ширине записки идут столбцом
   return (
-    <div
-      role="region"
-      aria-label="Тревожные знаки"
-      style={{
-        ...slot,
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-        gap: 14,
-      }}
-    >
+    <div role="region" aria-label="Тревожные знаки" className="hall-slot hall-notes">
       {items.map((item) => (
         <Note
           key={item.portal}

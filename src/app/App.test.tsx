@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { labWith, logEntry, portal, storeWithLab, world } from '../test/labFixtures'
@@ -213,25 +213,51 @@ describe('App: HUD, док и пауза', () => {
     expect(root).not.toHaveClass('is-paused')
   })
 
-  it('печать подтверждена: лаборатория начинается заново', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { store } = renderApp()
+  const sealButton = () => screen.getByRole('button', { name: 'Запечатать лабораторию' })
 
-    await userEvent.click(screen.getByRole('button', { name: 'Запечатать лабораторию' }))
-
-    expect(confirm).toHaveBeenCalledWith(
-      'Запечатать лабораторию? Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.',
-    )
-    expect(store.getState().lab.time).toBe(0)
-    expect(store.getState().lab.portals).toEqual([])
-  })
-
-  it('печать отменена: лаборатория не меняется', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('«Запечатать лабораторию» открывает свиток, а не window.confirm; лаборатория пока цела', async () => {
+    const confirm = vi.spyOn(window, 'confirm')
     const { store } = renderApp()
     const before = store.getState().lab
 
-    await userEvent.click(screen.getByRole('button', { name: 'Запечатать лабораторию' }))
+    await userEvent.click(sealButton())
+
+    const dialog = screen.getByRole('dialog', { name: 'ЗАПЕЧАТАТЬ ЛАБОРАТОРИЮ?' })
+    expect(dialog).toHaveAccessibleDescription(
+      'Все порталы, миры и записи книги будут стёрты. Вернуть их не получится.',
+    )
+    expect(confirm).not.toHaveBeenCalled()
+    expect(store.getState().lab).toBe(before)
+    // безопасный выбор в фокусе, а всё за свитком недоступно
+    expect(within(dialog).getByRole('button', { name: 'Отмена' })).toHaveFocus()
+    expect(screen.getByRole('banner').closest('[inert]')).not.toBeNull()
+  })
+
+  it('печать подтверждена: лаборатория начинается заново, свиток закрыт', async () => {
+    const { store } = renderApp()
+
+    await userEvent.click(sealButton())
+    await userEvent.click(screen.getByRole('button', { name: 'Запечатать' }))
+
+    expect(store.getState().lab.time).toBe(0)
+    expect(store.getState().lab.portals).toEqual([])
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('banner').closest('[inert]')).toBeNull()
+  })
+
+  it('печать отменена кнопкой или Esc: лаборатория не меняется, фокус на кнопке дока', async () => {
+    const { store } = renderApp()
+    const before = store.getState().lab
+
+    await userEvent.click(sealButton())
+    await userEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(sealButton()).toHaveFocus()
+
+    await userEvent.click(sealButton())
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(sealButton()).toHaveFocus()
 
     expect(store.getState().lab).toBe(before)
   })

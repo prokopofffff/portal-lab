@@ -64,6 +64,7 @@ function Header({
   const archived = model.status !== 'open'
   return (
     <div
+      className="card-header"
       style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -95,7 +96,7 @@ function Header({
           {model.world} <span aria-hidden="true">↗</span>
         </button>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+      <div className="card-header-tags" style={{ display: 'flex', gap: 8 }}>
         <span
           style={{
             fontSize: 13,
@@ -284,8 +285,8 @@ export function PortalCard({
     <div
       data-status={model.status}
       data-level={archived ? 'archived' : model.risk.level}
+      className="card-frame"
       style={{
-        width: 600,
         fontFamily: 'var(--f-ui)',
         color: 'var(--c-text)',
         filter: archived ? 'grayscale(.85) sepia(.3) brightness(.82)' : 'none',

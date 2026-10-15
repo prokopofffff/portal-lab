@@ -171,7 +171,7 @@ function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => vo
   )
 }
 
-/** Шесть способностей сеткой 2×3. */
+/** Шесть способностей сеткой 2×3 (на узком экране, если не помещаются, — столбцом). */
 export function Abilities({
   portal,
   abilities,
@@ -185,11 +185,12 @@ export function Abilities({
     <div
       role="group"
       aria-label="Способности"
+      // Столбцы сетки — в классе card-abilities: на узком экране их бывает один
+      className="card-abilities"
       style={{
         position: 'relative',
         margin: '14px 20px 0',
         display: 'grid',
-        gridTemplateColumns: 'repeat(2,minmax(0,1fr))',
         gap: 8,
       }}
     >

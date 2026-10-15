@@ -1,0 +1,83 @@
+/* Раскладка дока (канвас 18-c-dock). Всё, что на узкой ширине меняется, лежит здесь, а не в
+   инлайн-стилях: инлайн перебил бы media query. Значения вне media query — как в канвасе (1440 px) */
+.dock {
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+.dock-tabs {
+  display: flex;
+  gap: 12px;
+}
+.dock-tab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 250px;
+  height: 56px;
+  padding: 0 16px;
+}
+.dock-tab-label {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.dock-seal {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.dock-seal-btn {
+  height: 36px;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+/* Узкий экран: один компактный ряд (≤ 76 px, док залипает у нижнего края): три вкладки делят
+   ширину поровну (значок над подписью, подпись переносится), в конце ряда «Запечатать лабораторию»
+   одним значком 44×44. Цели нажатия не ниже 44 px */
+@media (max-width: 900px) {
+  .dock {
+    height: auto;
+    gap: 8px;
+    padding: 4px 12px;
+  }
+  .dock-tabs {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 8px;
+  }
+  .dock-tab {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    height: auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    padding: 0 2px;
+    text-align: center;
+  }
+  .dock-tab-label {
+    font-size: 12px;
+    line-height: 15px;
+    letter-spacing: 0;
+  }
+  .dock-seal {
+    position: static;
+    transform: none;
+    flex: none;
+  }
+  .dock-seal-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .dock-seal-text {
+    display: none;
+  }
+}

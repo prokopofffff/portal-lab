@@ -136,10 +136,34 @@ export const colors = {
   archivedText: '#c9c3d8',
   // диалог карточки поверх экрана (канвас 04-card-critical): затемнение всего, что под ней
   overlay: 'rgba(10, 8, 16, 0.8)',
-  // баннер отказа (канвас 24-c-banner, kind refuse): рамка, плашка значка, значок и заголовок
+  // баннеры уведомлений (канвас 24-c-banner): рамка, плашка значка, значок и заголовок каждого вида
   bannerRefuse: '#ff4466',
   bannerRefuseDark: '#4a0f20',
   bannerRefuseIcon: '#ff8099',
+  bannerCollapse: '#ff8a2b',
+  bannerCollapseDark: '#4a2208',
+  bannerCollapseIcon: '#ffb36b',
+  bannerLost: '#a79bb8',
+  bannerLostDark: '#26222f',
+  bannerLostIcon: '#d8cfea',
+  bannerStudied: '#e8b948',
+  bannerStudiedDark: '#3d2f0a',
+  bannerStudiedIcon: '#ffd98a',
+  bannerHired: '#5fcf9a',
+  bannerHiredDark: '#0f3a2c',
+  bannerHiredIcon: '#a8f5c8',
+  // диалоги-свитки (канвас 15-dialogs): валики, края, заголовки по тону, опасная кнопка
+  scrollRollLight: '#f3e6c4',
+  scrollRollMid: '#cdb98a',
+  scrollEdge: '#8d7a52', // низ валика и рамка кнопки «Отмена»
+  scrollRollShadow: '#4a3a22',
+  scrollTitleHigh: '#8a2a0a',
+  scrollTitleMedium: '#5a4208',
+  scrollTitleCritical: '#8a1020',
+  dangerBg: '#a8243c',
+  dangerEdge: '#ff6a85',
+  onDanger: '#fff1f3',
+  parchmentField: '#f6ecd0', // поле заметки в свитке «Под вопросом»
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -265,6 +289,8 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'закладка «портал»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonPortal, min: 4.5 },
   { name: 'закладка «мир»: название', fg: colors.onRibbon, bg: colors.ribbonWorld, min: 4.5 },
   { name: 'закладка «мир»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonWorld, min: 4.5 },
+  { name: 'заметка в свитке: текст', fg: colors.inkTitle, bg: colors.parchmentField, min: 4.5 },
+  { name: 'заметка в свитке: подсказка', fg: colors.inkTime, bg: colors.parchmentField, min: 4.5 },
   { name: 'время в HUD', fg: colors.torchLight, bg: colors.panel, min: 4.5 },
   { name: 'подпись слота на панели', fg: colors.textSoft, bg: colors.panel, min: 4.5 },
   { name: 'подпись пустого слота на панели', fg: colors.textDim, bg: colors.panel, min: 4.5 },
@@ -322,7 +348,37 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
     min: 4.5,
   },
   { name: 'баннер: заголовок отказа', fg: colors.bannerRefuseIcon, bg: colors.panel, min: 4.5 },
+  {
+    name: 'баннер: заголовок схлопывания',
+    fg: colors.bannerCollapseIcon,
+    bg: colors.panel,
+    min: 4.5,
+  },
+  { name: 'баннер: заголовок потери', fg: colors.bannerLostIcon, bg: colors.panel, min: 4.5 },
+  { name: 'баннер: заголовок изучения', fg: colors.bannerStudiedIcon, bg: colors.panel, min: 4.5 },
+  { name: 'баннер: заголовок найма', fg: colors.bannerHiredIcon, bg: colors.panel, min: 4.5 },
   { name: 'баннер: текст', fg: colors.text, bg: colors.panel, min: 4.5 },
+  {
+    name: 'свиток: заголовок «высокий»',
+    fg: colors.scrollTitleHigh,
+    bg: colors.parchment,
+    min: 4.5,
+  },
+  {
+    name: 'свиток: заголовок «средний»',
+    fg: colors.scrollTitleMedium,
+    bg: colors.parchment,
+    min: 4.5,
+  },
+  {
+    name: 'свиток: заголовок «критический»',
+    fg: colors.scrollTitleCritical,
+    bg: colors.parchment,
+    min: 4.5,
+  },
+  { name: 'свиток: опасная кнопка', fg: colors.onDanger, bg: colors.dangerBg, min: 4.5 },
+  { name: 'свиток: кнопка-метка', fg: colors.onTorch, bg: colors.torch, min: 4.5 },
+  { name: 'свиток: кнопка «Отмена»', fg: colors.inkBody, bg: colors.parchmentPlate, min: 4.5 },
   ...(Object.entries(risk) as [string, (typeof risk)[RiskLevel]][]).map(([k, r]) => ({
     name: `плашка риска «${k}»`,
     fg: r.onPlate,

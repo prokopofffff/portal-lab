@@ -12,10 +12,10 @@ const caption: CSSProperties = {
   color: 'var(--c-text-muted)',
 }
 
-const rowLabel: CSSProperties = { width: 170, fontSize: 15, color: 'var(--c-text-soft)' }
+// Ширина подписи и значения строки — в классах card-study-label / card-study-value (узкий экран)
+const rowLabel: CSSProperties = { fontSize: 15, color: 'var(--c-text-soft)' }
 
 const rowValue: CSSProperties = {
-  width: 60,
   textAlign: 'right',
   fontWeight: 600,
   fontSize: 18,
@@ -64,7 +64,10 @@ export function Study({
   }
   return (
     <section style={{ margin: '10px 20px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <div
+        className="card-study-head"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+      >
         <h3 style={caption}>ИЗУЧЕНИЕ МИРА</h3>
         <span style={{ fontSize: 17, color: 'var(--c-text)' }}>
           в мире изучено{' '}
@@ -73,9 +76,11 @@ export function Study({
           </b>
         </span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={rowLabel}>Прогресс мира</span>
-        <div style={{ flex: '1 1 0', minWidth: 0 }}>
+      <div className="card-bar-row">
+        <span className="card-study-label" style={rowLabel}>
+          Прогресс мира
+        </span>
+        <div className="card-bar-row__bar">
           <Bar
             label="Прогресс мира"
             value={study.worldPct}
@@ -84,7 +89,9 @@ export function Study({
             height={12}
           />
         </div>
-        <span style={rowValue}>{study.worldPct} %</span>
+        <span className="card-study-value" style={rowValue}>
+          {study.worldPct} %
+        </span>
       </div>
       <Creatures
         total={study.creatures}
@@ -93,9 +100,11 @@ export function Study({
         size={40}
       />
       {study.current && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={rowLabel}>Изучается существо №{study.current.number}</span>
-          <div style={{ flex: '1 1 0', minWidth: 0 }}>
+        <div className="card-bar-row">
+          <span className="card-study-label" style={rowLabel}>
+            Изучается существо №{study.current.number}
+          </span>
+          <div className="card-bar-row__bar">
             <Bar
               label={`Изучается существо №${study.current.number}`}
               value={study.current.pct}
@@ -104,12 +113,16 @@ export function Study({
               height={12}
             />
           </div>
-          <span style={rowValue}>{study.current.pct} %</span>
+          <span className="card-study-value" style={rowValue}>
+            {study.current.pct} %
+          </span>
         </div>
       )}
       {open && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={rowLabel}>На месте</span>
+        <div className="card-slots" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span className="card-study-label card-slots-label" style={rowLabel}>
+            На месте
+          </span>
           {Array.from({ length: study.maxObservers }, (_, i) => {
             const on = i < study.observers
             return (
