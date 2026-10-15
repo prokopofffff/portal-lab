@@ -170,7 +170,9 @@ export function PortalCardDialog({ portal, back }: { portal: string; back: BaseR
     // Карточка по store на момент клика: «было» для стабилизации и включена ли пометка
     const was = portalCard(current, portal)
     if (command.type === 'closePortal') {
-      const ask = closeConfirmation(current, command.portal)
+      // Спрашиваем, только если закрыть можно: недоступное «Закрыть» сразу уходит в домен за отказом
+      const closable = was?.abilities.find((a) => a.command === 'closePortal')?.available ?? false
+      const ask = closable ? closeConfirmation(current, command.portal) : null
       if (ask && !window.confirm(closeQuestion(ask))) {
         setDelta(null)
         dispatch({ type: 'cancelClose', portal: command.portal })

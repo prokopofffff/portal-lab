@@ -165,8 +165,34 @@ describe('PortalCardDialog: закрытие портала', () => {
     const { portalOf, store } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Закрыть'))
     expect(portalOf('ББ-310-1').status).toBe('open')
-    expect(store.getState().lab.log.at(-1)?.portal).toBe('ББ-310-1')
-    expect(store.getState().lab.log.length).toBe(1)
+    const { lab, rejection } = store.getState()
+    const log = lab.log
+    expect(log).toHaveLength(1)
+    expect(log[0]).toMatchObject({
+      kind: 'action',
+      portal: 'ББ-310-1',
+      text: 'Закрытие ББ-310-1 (Багровая Бездна) отменено',
+    })
+    expect(rejection).toBeNull()
+  })
+
+  it('«Закрыть» недоступно (наблюдатель на месте): без вопроса, отказ домена, без отмены', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const watched = { ...lonely, observers: 1 }
+    const { portalOf, store } = renderDialog('ББ-310-1', [critical, sibling, watched])
+    const close = ability('Закрыть')
+    expect(close).toHaveAttribute('aria-disabled', 'true')
+
+    await userEvent.click(close)
+    expect(confirm).not.toHaveBeenCalled()
+    expect(portalOf('ББ-310-1').status).toBe('open')
+    const rejection = store.getState().rejection
+    expect(rejection?.command).toEqual({ type: 'closePortal', portal: 'ББ-310-1' })
+    const log = store.getState().lab.log
+    expect(log).toHaveLength(1)
+    expect(log[0]!.kind).toBe('rejection')
+    expect(log.some((e) => e.text.includes('отменено'))).toBe(false)
+    expect(screen.getByText(log[0]!.text)).toBeInTheDocument()
   })
 
   it('есть другой открытый портал в мир: закрывает без вопроса', async () => {
