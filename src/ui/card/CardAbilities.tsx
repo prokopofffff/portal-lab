@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Command } from '../../domain'
 import type { AbilityCommand, CardAbility } from './cardModel'
 
@@ -34,31 +34,54 @@ function abilityLook(ability: CardAbility) {
 
 /**
  * Способность: недоступная приглушена, но кликабельна (aria-disabled, не disabled) — клик
- * отдаёт команду, и домен отвечает отказом. Причина — подсказка над кнопкой при наведении и фокусе.
+ * отдаёт команду, и домен отвечает отказом. Причина — подсказка над кнопкой при наведении и фокусе
+ * (WCAG 1.4.13): Esc её прячет, на неё можно навести курсор, и она держится, пока на ней курсор.
  */
 function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => void }) {
   const tipId = useId()
+  const slotRef = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState(false)
   const [focus, setFocus] = useState(false)
+  // Спрятана по Esc — до тех пор, пока не уйдут и курсор, и фокус
   const [dismissed, setDismissed] = useState(false)
   const reason = ability.available ? null : ability.reason
+  const shown = reason !== null && (hover || focus) && !dismissed
   const look = abilityLook(ability)
   const cd = ability.cooldown
+
+  // Esc прячет подсказку, где бы ни был фокус (она могла появиться от наведения). Перехват на
+  // document срабатывает раньше слушателя карточки, и этот Esc её не закрывает; следующий — уже да.
+  // Под свитком карточка инертна, и Esc принадлежит свитку
+  useEffect(() => {
+    if (!shown) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return
+      if (slotRef.current?.closest('[inert]')) return
+      e.preventDefault()
+      setDismissed(true)
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [shown])
+
   return (
     <div
+      ref={slotRef}
       className="card-ability-slot"
       style={{ position: 'relative' }}
+      // Подсказка внутри слота: курсор, перешедший с кнопки на неё, слот не покидает
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => {
         setHover(false)
-        setDismissed(false)
+        if (!focus) setDismissed(false)
       }}
     >
       {reason && (
         <div
           id={tipId}
           role="tooltip"
-          hidden={!(hover || focus) || dismissed}
+          className="card-ability-tip"
+          hidden={!shown}
           style={{
             position: 'absolute',
             left: '50%',
@@ -74,8 +97,9 @@ function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => vo
             lineHeight: '18px',
             textAlign: 'center',
             zIndex: 3,
-            // Подсказка висит над соседней способностью: клик проходит сквозь неё к кнопке
-            pointerEvents: 'none',
+            // Подсказка висит над соседней способностью. Показанная от наведения — наводимая;
+            // показанная только от фокуса пропускает клик сквозь себя к соседней кнопке
+            pointerEvents: hover ? 'auto' : 'none',
           }}
         >
           {reason}
@@ -86,19 +110,15 @@ function Ability({ ability, onPress }: { ability: CardAbility; onPress: () => vo
         className="card-ability"
         aria-disabled={ability.available ? undefined : true}
         aria-describedby={reason ? tipId : undefined}
+        // Рекомендацию видно только по подсветке — читалке экрана говорим словами. Имя через
+        // aria-label, а не скрытым span: пробел перед ним браузеры и jsdom считают по-разному
+        aria-label={ability.recommended ? `${ability.label} (рекомендуется)` : undefined}
         data-recommended={ability.recommended}
         onClick={onPress}
         onFocus={() => setFocus(true)}
         onBlur={() => {
           setFocus(false)
-          setDismissed(false)
-        }}
-        onKeyDown={(e) => {
-          // Esc сначала прячет подсказку отказа; следующий Esc уже закрывает карточку
-          if (e.key === 'Escape' && reason && (hover || focus) && !dismissed) {
-            e.preventDefault()
-            setDismissed(true)
-          }
+          if (!hover) setDismissed(false)
         }}
         style={{
           width: '100%',

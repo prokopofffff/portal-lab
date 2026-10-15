@@ -45,8 +45,11 @@ async function closeCard(page: Page): Promise<void> {
   await expect(page.getByRole('dialog')).toHaveCount(0)
 }
 
+// Рекомендованной способности читалка добавляет к имени «(рекомендуется)»
 const ability = (card: Locator, name: string) =>
-  card.getByRole('group', { name: 'Способности' }).getByRole('button', { name, exact: true })
+  card
+    .getByRole('group', { name: 'Способности' })
+    .getByRole('button', { name: new RegExp(`^${name}( \\(рекомендуется\\))?$`) })
 
 // Значение счётчика сводки в HUD по его подписи
 const stat = (page: Page, label: string) =>

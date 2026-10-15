@@ -83,14 +83,14 @@ function Overlay({
     dialogRef.current?.focus()
   }, [focusKey])
 
-  // Карточка ушла в архив, пока открыта: фокус был на исчезнувшей кнопке (теперь он на body)
-  // или где-то в карточке — возвращаем его на сам диалог, чтобы не потерять внутри aria-modal
+  // Карточка ушла в архив, пока открыта: если фокус был на исчезнувшей кнопке (теперь он на body),
+  // возвращаем его на сам диалог, чтобы не потерять внутри aria-modal. Фокус на уцелевшем элементе
+  // (ссылка на мир в шапке, свиток истории) не трогаем
   useEffect(() => {
     if (!archived) return
-    const dialog = dialogRef.current
     const active = document.activeElement
-    if (dialog && (active === null || active === document.body || dialog.contains(active))) {
-      dialog.focus()
+    if (active === null || active === document.body || !active.isConnected) {
+      dialogRef.current?.focus()
     }
   }, [archived])
 

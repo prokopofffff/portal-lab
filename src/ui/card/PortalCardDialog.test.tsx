@@ -32,8 +32,11 @@ function renderDialog(name: string, portals: Portal[] = [critical, sibling, lone
   return { ...result, store, portalOf }
 }
 
+// Рекомендованной способности читалка добавляет к имени «(рекомендуется)»
 const ability = (name: string) =>
-  within(screen.getByRole('group', { name: 'Способности' })).getByRole('button', { name })
+  within(screen.getByRole('group', { name: 'Способности' })).getByRole('button', {
+    name: (n) => n === name || n === `${name} (рекомендуется)`,
+  })
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -88,6 +91,20 @@ describe('PortalCardDialog: диалог', () => {
     const { route } = renderDialog('ПТ-420-1')
     const send = ability('Отправить наблюдателя')
     act(() => send.focus())
+    expect(screen.getByRole('tooltip')).toBeVisible()
+
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    expect(route().screen).toBe('portal')
+
+    await userEvent.keyboard('{Escape}')
+    expect(route()).toEqual(back)
+  })
+
+  it('Esc прячет подсказку, показанную наведением, когда фокус не на кнопке; карточка открыта', async () => {
+    const { route } = renderDialog('ПТ-420-1')
+    expect(screen.getByRole('dialog', { name: 'ПТ-420-1' })).toHaveFocus()
+    await userEvent.hover(ability('Отправить наблюдателя'))
     expect(screen.getByRole('tooltip')).toBeVisible()
 
     await userEvent.keyboard('{Escape}')
@@ -351,6 +368,15 @@ describe('PortalCardDialog: фокус, когда способности исч
     act(() => store.advance(3))
     expect(portalOf('ББ-310-1').status).toBe('collapsed')
     expect(screen.getByRole('dialog')).toHaveFocus()
+  })
+  it('портал схлопнулся с фокусом на ссылке мира в шапке — фокус остаётся на ней', () => {
+    const dying = { ...lonely, timeLeft: 1 }
+    const { store, portalOf } = renderDialog('ББ-310-1', [critical, sibling, dying])
+    const worldLink = screen.getByRole('button', { name: BEZ })
+    act(() => worldLink.focus())
+    act(() => store.advance(3))
+    expect(portalOf('ББ-310-1').status).toBe('collapsed')
+    expect(worldLink).toHaveFocus()
   })
 })
 

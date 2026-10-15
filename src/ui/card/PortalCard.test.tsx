@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { Portal } from '../../domain'
@@ -63,7 +63,9 @@ function renderCard(m: PortalCardModel, extra: { delta?: CardDelta; headingId?: 
   return { ...result, onAction, onOpenWorld, onOpenPortal }
 }
 
-const ability = (name: string) => screen.getByRole('button', { name })
+// Рекомендованной способности читалка добавляет к имени «(рекомендуется)»
+const ability = (name: string) =>
+  screen.getByRole('button', { name: (n) => n === name || n === `${name} (рекомендуется)` })
 
 describe('PortalCard: критический портал', () => {
   it('имя — заголовок h2 с переданным id, мир — кнопка-ссылка', async () => {
@@ -119,7 +121,11 @@ describe('PortalCard: критический портал', () => {
     expect(screen.getByText(m.advice!.label, { selector: 'b' })).toBeInTheDocument()
     const group = screen.getByRole('group', { name: 'Способности' })
     expect(within(group).getAllByRole('button')).toHaveLength(6)
-    expect(ability('Отозвать наблюдателей')).toHaveAttribute('data-recommended', 'true')
+    const recommended = ability('Отозвать наблюдателей')
+    expect(recommended).toHaveAttribute('data-recommended', 'true')
+    expect(recommended).toHaveAccessibleName('Отозвать наблюдателей (рекомендуется)')
+    // Остальные — без приписки
+    expect(ability('Стабилизировать')).toHaveAccessibleName('Стабилизировать')
   })
 
   it('несколько других порталов в мир — по ссылке на каждый', async () => {
@@ -191,6 +197,42 @@ describe('PortalCard: недоступные способности', () => {
     expect(tip).toBeVisible()
     await userEvent.unhover(button)
     expect(tip).not.toBeVisible()
+  })
+
+  it('на подсказку от наведения можно навести курсор — она не пропадает', async () => {
+    renderCard(model([critical, sibling], 'ПТ-420-1'))
+    const button = ability('Отправить наблюдателя')
+    const tip = document.getElementById(button.getAttribute('aria-describedby')!)!
+    await userEvent.hover(button)
+    expect(tip).toHaveStyle({ pointerEvents: 'auto' })
+    await userEvent.hover(tip)
+    expect(tip).toBeVisible()
+    await userEvent.unhover(tip)
+    expect(tip).not.toBeVisible()
+  })
+
+  it('подсказка от одного фокуса пропускает клик к соседней кнопке', async () => {
+    renderCard(model([critical, sibling], 'ПТ-420-1'))
+    const button = ability('Отправить наблюдателя')
+    const tip = document.getElementById(button.getAttribute('aria-describedby')!)!
+    act(() => button.focus())
+    expect(tip).toBeVisible()
+    expect(tip).toHaveStyle({ pointerEvents: 'none' })
+  })
+
+  it('спрятанная по Esc подсказка не возвращается, пока остаётся фокус', async () => {
+    renderCard(model([critical, sibling], 'ПТ-420-1'))
+    const button = ability('Отправить наблюдателя')
+    const tip = document.getElementById(button.getAttribute('aria-describedby')!)!
+    act(() => button.focus())
+    await userEvent.hover(button)
+    await userEvent.keyboard('{Escape}')
+    expect(tip).not.toBeVisible()
+    await userEvent.unhover(button)
+    expect(tip).not.toBeVisible()
+    act(() => button.blur())
+    act(() => button.focus())
+    expect(tip).toBeVisible()
   })
 
   it('у доступной способности подсказки нет', () => {
@@ -353,10 +395,13 @@ describe('PortalCard: история портала', () => {
 
   it('свиток сворачивается и разворачивается', async () => {
     renderCard(model([critical, sibling], 'ПТ-420-1', log))
-    const toggle = screen.getByRole('button', { name: 'свиток развёрнут ▾' })
+    // Имя постоянное: состояние объявляет только aria-expanded
+    const toggle = screen.getByRole('button', { name: 'свиток истории' })
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle).toHaveTextContent('свиток развёрнут ▾')
     await userEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAccessibleName('свиток истории')
     expect(toggle).toHaveTextContent('свиток свёрнут ▸')
     expect(screen.queryByText('мин 120')).not.toBeVisible()
     await userEvent.click(toggle)
