@@ -75,21 +75,21 @@ describe('RejectionBanner', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it('показывает текст отказа из store; «скрыть» сбрасывает отказ', () => {
+  it('показывает текст отказа из store; «скрыть» убирает его из очереди', () => {
     const { store, refuse } = renderBanner()
     refuse()
-    expect(screen.getByRole('alert')).toHaveTextContent(store.getState().rejection!.text)
+    expect(screen.getByRole('alert')).toHaveTextContent(store.getState().notifications[0]!.text)
 
     fireEvent.click(screen.getByRole('button', { name: 'Скрыть уведомление' }))
-    expect(store.getState().rejection).toBeNull()
+    expect(store.getState().notifications).toEqual([])
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it('через 6 с отказ сбрасывается сам', () => {
+  it('через 6 с отказ убирается из очереди сам', () => {
     const { store, refuse } = renderBanner()
     refuse()
     act(() => vi.advanceTimersByTime(BANNER_TIMEOUT))
-    expect(store.getState().rejection).toBeNull()
+    expect(store.getState().notifications).toEqual([])
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
@@ -98,14 +98,14 @@ describe('RejectionBanner', () => {
     refuse()
     act(() => vi.advanceTimersByTime(4000))
     refuse()
-    const second = store.getState().rejection!.id
+    const second = store.getState().notifications.at(-1)!.id
 
     act(() => vi.advanceTimersByTime(4000))
-    expect(store.getState().rejection?.id).toBe(second)
+    expect(store.getState().notifications.at(-1)?.id).toBe(second)
     expect(screen.getByRole('alert')).toBeInTheDocument()
 
     act(() => vi.advanceTimersByTime(BANNER_TIMEOUT - 4000))
-    expect(store.getState().rejection).toBeNull()
+    expect(store.getState().notifications).toEqual([])
     // Таймеров не остаётся
     expect(vi.getTimerCount()).toBe(0)
   })

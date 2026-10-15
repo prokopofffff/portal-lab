@@ -114,7 +114,9 @@ describe('HUD: наблюдатели', () => {
 
     await userEvent.click(hire)
 
-    expect(store.getState().rejection?.text).toBe('Штат полон: 5 из 5')
+    expect(store.getState().notifications).toEqual([
+      { id: 1, kind: 'refuse', text: 'Штат полон: 5 из 5' },
+    ])
   })
 })
 

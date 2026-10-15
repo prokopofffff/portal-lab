@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { useLabStore, useRejection } from '../../app/hooks'
+import { useCallback, useEffect } from 'react'
+import { useLabStore, useNotifications } from '../../app/hooks'
 import './banner.css'
 
 // Баннер уведомления (канвас 24-c-banner): рамка цвета вида, плашка со значком 8×8, заголовок и текст.
@@ -153,16 +153,22 @@ export function Banner({ kind, text, onDismiss }: BannerProps) {
 }
 
 /**
- * Отказ последней команды (store.rejection) баннером в правом верхнем углу, поверх всего — и экрана,
+ * Последний отказ из очереди уведомлений баннером в правом верхнем углу, поверх всего — и экрана,
  * и карточки портала: отказы из HUD («Нанять») и из карточки показываются одинаково.
  */
 export function RejectionBanner() {
-  const rejection = useRejection()
-  const { dismissRejection } = useLabStore()
-  if (!rejection) return null
+  const refusal = useNotifications().findLast((n) => n.kind === 'refuse')
+  const store = useLabStore()
+  // Скрытие снимает все отказы очереди, как прежний одиночный слот; ссылка стабильна — таймер Banner не сбрасывается
+  const onDismiss = useCallback(() => {
+    for (const n of store.getState().notifications) {
+      if (n.kind === 'refuse') store.dismissNotification(n.id)
+    }
+  }, [store])
+  if (!refusal) return null
   return (
     <div style={{ position: 'fixed', top: 24, right: 20, zIndex: 30 }}>
-      <Banner key={rejection.id} kind="refuse" text={rejection.text} onDismiss={dismissRejection} />
+      <Banner key={refusal.id} kind="refuse" text={refusal.text} onDismiss={onDismiss} />
     </div>
   )
 }

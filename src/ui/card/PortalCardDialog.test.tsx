@@ -119,11 +119,13 @@ describe('PortalCardDialog: способности', () => {
     const { store } = renderDialog('ПТ-420-1')
     await userEvent.click(ability('Отправить наблюдателя'))
 
-    const rejection = store.getState().rejection
-    expect(rejection?.command).toEqual({ type: 'sendObserver', portal: 'ПТ-420-1' })
     // Запись об отказе домен уже положил в журнал — история карточки показывает её
     const entry = store.getState().lab.log.at(-1)!
     expect(entry.kind).toBe('rejection')
+    expect(entry.portal).toBe('ПТ-420-1')
+    const { notifications } = store.getState()
+    expect(notifications).toHaveLength(1)
+    expect(notifications[0]).toMatchObject({ kind: 'refuse' })
     expect(screen.getByText(entry.text)).toBeInTheDocument()
   })
 
@@ -158,7 +160,8 @@ describe('PortalCardDialog: способности', () => {
     expect(screen.getAllByText(/^было /).length).toBeGreaterThan(0)
 
     await userEvent.click(ability('Стабилизировать'))
-    expect(store.getState().rejection?.command.type).toBe('stabilize')
+    expect(store.getState().notifications.map((n) => n.kind)).toEqual(['refuse'])
+    expect(store.getState().lab.log.at(-1)).toMatchObject({ kind: 'rejection', portal: 'ПТ-420-1' })
     expect(screen.queryByText(/^было /)).toBeNull()
   })
 })
@@ -180,7 +183,7 @@ describe('PortalCardDialog: закрытие портала', () => {
     const { portalOf, store } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Закрыть'))
     expect(portalOf('ББ-310-1').status).toBe('open')
-    const { lab, rejection } = store.getState()
+    const { lab, notifications } = store.getState()
     const log = lab.log
     expect(log).toHaveLength(1)
     expect(log[0]).toMatchObject({
@@ -188,7 +191,7 @@ describe('PortalCardDialog: закрытие портала', () => {
       portal: 'ББ-310-1',
       text: 'Закрытие ББ-310-1 (Багровая Бездна) отменено',
     })
-    expect(rejection).toBeNull()
+    expect(notifications).toEqual([])
   })
 
   it('«Закрыть» недоступно (наблюдатель на месте): без вопроса, отказ домена, без отмены', async () => {
@@ -201,11 +204,11 @@ describe('PortalCardDialog: закрытие портала', () => {
     await userEvent.click(close)
     expect(confirm).not.toHaveBeenCalled()
     expect(portalOf('ББ-310-1').status).toBe('open')
-    const rejection = store.getState().rejection
-    expect(rejection?.command).toEqual({ type: 'closePortal', portal: 'ББ-310-1' })
+    expect(store.getState().notifications.map((n) => n.kind)).toEqual(['refuse'])
     const log = store.getState().lab.log
     expect(log).toHaveLength(1)
     expect(log[0]!.kind).toBe('rejection')
+    expect(log[0]!.portal).toBe('ББ-310-1')
     expect(log.some((e) => e.text.includes('отменено'))).toBe(false)
     expect(screen.getByText(log[0]!.text)).toBeInTheDocument()
   })
