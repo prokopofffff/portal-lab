@@ -163,6 +163,7 @@ export const colors = {
   dangerBg: '#a8243c',
   dangerEdge: '#ff6a85',
   onDanger: '#fff1f3',
+  parchmentField: '#f6ecd0', // поле заметки в свитке «Под вопросом»
 } as const
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
@@ -288,6 +289,8 @@ export const textPairs: { name: string; fg: string; bg: string; min: number }[] 
   { name: 'закладка «портал»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonPortal, min: 4.5 },
   { name: 'закладка «мир»: название', fg: colors.onRibbon, bg: colors.ribbonWorld, min: 4.5 },
   { name: 'закладка «мир»: подпись', fg: colors.ribbonLabel, bg: colors.ribbonWorld, min: 4.5 },
+  { name: 'заметка в свитке: текст', fg: colors.inkTitle, bg: colors.parchmentField, min: 4.5 },
+  { name: 'заметка в свитке: подсказка', fg: colors.inkTime, bg: colors.parchmentField, min: 4.5 },
   { name: 'время в HUD', fg: colors.torchLight, bg: colors.panel, min: 4.5 },
   { name: 'подпись слота на панели', fg: colors.textSoft, bg: colors.panel, min: 4.5 },
   { name: 'подпись пустого слота на панели', fg: colors.textDim, bg: colors.panel, min: 4.5 },

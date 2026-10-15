@@ -113,3 +113,39 @@ test('крестик и клик по затемнению закрывают к
   await page.getByTestId('card-overlay').click({ position: { x: 20, y: 400 } })
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
+
+test('закрытие последнего портала: свиток, «Отмена» пишет в журнал, «Закрыть всё равно» закрывает', async ({
+  page,
+}) => {
+  const name = await criticalPortal(page)
+  await page.getByRole('button', { name: `Открыть карточку портала ${name}` }).click()
+  const card = page.getByRole('dialog', { name })
+  const close = card.getByRole('group', { name: 'Способности' }).getByRole('button', {
+    name: 'Закрыть',
+  })
+
+  await close.click()
+  const scroll = page.getByRole('dialog', { name: 'ЗАКРЫТЬ ПОСЛЕДНИЙ ПОРТАЛ?' })
+  await expect(scroll).toBeVisible()
+  await expect(scroll).toContainText('Это последний открытый портал в')
+  await expect(scroll.getByRole('button', { name: 'Отмена' })).toBeFocused()
+
+  // «Отмена»: портал открыт, карточка на месте, фокус вернулся на «Закрыть»
+  await scroll.getByRole('button', { name: 'Отмена' }).click()
+  await expect(scroll).toHaveCount(0)
+  await expect(card).toBeVisible()
+  await expect(close).toBeFocused()
+  await expect(card.getByText(/^Закрытие .* отменено$/)).toBeVisible()
+
+  // «Закрыть всё равно»: портал закрыт, способности исчезли
+  await close.click()
+  await page.getByRole('button', { name: 'Закрыть всё равно' }).click()
+  await expect(scroll).toHaveCount(0)
+  await expect(card.getByRole('group', { name: 'Способности' })).toHaveCount(0)
+  await expect(card).toBeFocused()
+
+  // Отмена осталась в книге журнала
+  await page.keyboard.press('Escape')
+  await page.getByRole('link', { name: 'Книга журнала' }).click()
+  await expect(page.getByText(/^Закрытие .* отменено$/)).toBeAttached()
+})

@@ -6,3 +6,9 @@
   outline: 3px solid var(--c-ink-title);
   outline-offset: 2px;
 }
+
+/* Подсказка в поле заметки: тёмнее стандартной серой, чтобы читалась на светлом пергаменте */
+.scroll-note::placeholder {
+  color: var(--c-ink-time);
+  opacity: 1;
+}

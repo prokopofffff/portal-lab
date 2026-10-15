@@ -95,6 +95,8 @@ export function ScrollDialog({
   const dialogRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef<HTMLButtonElement>(null)
   const initialRef = useRef(initialFocus)
+  // Нажатие мыши пришлось прямо на затемнение (а не на свиток)
+  const pressedBackdrop = useRef(false)
   // Последний onCancel без переподписки на клавиатуру при каждой перерисовке
   const cancelHandler = useRef(onCancel)
   useEffect(() => {
@@ -151,8 +153,15 @@ export function ScrollDialog({
   return createPortal(
     <div
       data-testid="scroll-backdrop"
+      onMouseDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel()
+        // Отмена, только если и нажатие, и отпускание пришлись на затемнение: выделение текста
+        // заметки, отпущенное за краем свитка, её не теряет
+        const pressed = pressedBackdrop.current
+        pressedBackdrop.current = false
+        if (pressed && e.target === e.currentTarget) onCancel()
       }}
       style={{
         position: 'fixed',

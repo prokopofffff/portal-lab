@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createRef, useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -68,6 +68,22 @@ describe('ScrollDialog: кнопки и фон', () => {
     await userEvent.click(screen.getByRole('dialog'))
     expect(onCancel).not.toHaveBeenCalled()
     await userEvent.click(screen.getByTestId('scroll-backdrop'))
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it('выделение, начатое внутри свитка и отпущенное на затемнении, не отменяет', () => {
+    const { onCancel } = renderScroll({ children: <textarea aria-label="Заметка" /> })
+    const backdrop = screen.getByTestId('scroll-backdrop')
+    // Браузер отдаёт click общему предку нажатия и отпускания — здесь это затемнение
+    fireEvent.mouseDown(screen.getByRole('textbox', { name: 'Заметка' }))
+    fireEvent.mouseUp(backdrop)
+    fireEvent.click(backdrop)
+    expect(onCancel).not.toHaveBeenCalled()
+
+    // Следующее нажатие прямо на затемнении снова отменяет
+    fireEvent.mouseDown(backdrop)
+    fireEvent.mouseUp(backdrop)
+    fireEvent.click(backdrop)
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 })

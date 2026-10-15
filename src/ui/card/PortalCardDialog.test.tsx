@@ -166,27 +166,56 @@ describe('PortalCardDialog: способности', () => {
   })
 })
 
-describe('PortalCardDialog: закрытие портала', () => {
-  const QUESTION =
-    'Это последний открытый портал в Багровая Бездна. Не изучено 12 из 12 существ — продолжить изучение можно будет, только если портал в этот мир откроется снова'
+const scroll = () => screen.queryByRole('dialog', { name: /ЗАКРЫТЬ ПОСЛЕДНИЙ ПОРТАЛ\?|ПОМЕТИТЬ/ })
+const scrollIn = () => within(scroll()!)
 
-  it('последний в мир с неизученными: спрашивает; OK — закрывает', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+describe('PortalCardDialog: закрытие портала', () => {
+  const TEXT =
+    'Это последний открытый портал в Багровая Бездна. Не изучено 12 из 12 существ — продолжить изучение можно будет, только если портал в этот мир откроется снова.'
+
+  it('последний в мир с неизученными: открывает свиток, без window.confirm; портал пока открыт', async () => {
+    const confirm = vi.spyOn(window, 'confirm')
     const { portalOf } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Закрыть'))
-    expect(confirm).toHaveBeenCalledWith(QUESTION)
-    expect(portalOf('ББ-310-1').status).toBe('closed')
+    const dialog = screen.getByRole('dialog', { name: 'ЗАКРЫТЬ ПОСЛЕДНИЙ ПОРТАЛ?' })
+    expect(dialog).toHaveAccessibleDescription(TEXT)
+    expect(within(dialog).getByRole('img', { name: 'Изучено 0 из 12' })).toBeInTheDocument()
+    expect(confirm).not.toHaveBeenCalled()
+    expect(portalOf('ББ-310-1').status).toBe('open')
+    expect(scrollIn().getByRole('button', { name: 'Отмена' })).toHaveFocus()
   })
 
-  it('отмена — cancelClose: портал открыт, отмена в истории', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
-    const { portalOf, store } = renderDialog('ББ-310-1')
+  it('«Закрыть всё равно» закрывает портал и убирает свиток', async () => {
+    const { portalOf } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Закрыть'))
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Закрыть всё равно' }))
+    expect(portalOf('ББ-310-1').status).toBe('closed')
+    expect(scroll()).toBeNull()
+  })
+
+  it('число изученных в существах свитка: изучено 3 из 9', async () => {
+    const mixed = portal('ПТ-420-9', TOPI, { arch: 5 })
+    const { portalOf } = renderDialog('ПТ-420-9', [mixed])
+    await userEvent.click(ability('Закрыть'))
+    expect(scrollIn().getByRole('img', { name: 'Изучено 3 из 9' })).toBeInTheDocument()
+    expect(scroll()).toHaveAccessibleDescription(/Не изучено 6 из 9 существ/)
+    expect(portalOf('ПТ-420-9').status).toBe('open')
+  })
+
+  it.each([
+    ['«Отмена»', async () => userEvent.click(scrollIn().getByRole('button', { name: 'Отмена' }))],
+    ['Esc', async () => userEvent.keyboard('{Escape}')],
+    ['затемнение', async () => userEvent.click(screen.getByTestId('scroll-backdrop'))],
+  ])('%s — cancelClose: портал открыт, отмена в истории, карточка осталась', async (_, cancel) => {
+    const { portalOf, store, route } = renderDialog('ББ-310-1')
+    await userEvent.click(ability('Закрыть'))
+    await cancel()
+    expect(scroll()).toBeNull()
     expect(portalOf('ББ-310-1').status).toBe('open')
+    expect(route().screen).toBe('portal')
     const { lab, notifications } = store.getState()
-    const log = lab.log
-    expect(log).toHaveLength(1)
-    expect(log[0]).toMatchObject({
+    expect(lab.log).toHaveLength(1)
+    expect(lab.log[0]).toMatchObject({
       kind: 'action',
       portal: 'ББ-310-1',
       text: 'Закрытие ББ-310-1 (Багровая Бездна) отменено',
@@ -194,15 +223,14 @@ describe('PortalCardDialog: закрытие портала', () => {
     expect(notifications).toEqual([])
   })
 
-  it('«Закрыть» недоступно (наблюдатель на месте): без вопроса, отказ домена, без отмены', async () => {
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('«Закрыть» недоступно (наблюдатель на месте): без свитка, отказ домена, без отмены', async () => {
     const watched = { ...lonely, observers: 1 }
     const { portalOf, store } = renderDialog('ББ-310-1', [critical, sibling, watched])
     const close = ability('Закрыть')
     expect(close).toHaveAttribute('aria-disabled', 'true')
 
     await userEvent.click(close)
-    expect(confirm).not.toHaveBeenCalled()
+    expect(scroll()).toBeNull()
     expect(portalOf('ББ-310-1').status).toBe('open')
     expect(store.getState().notifications.map((n) => n.kind)).toEqual(['refuse'])
     const log = store.getState().lab.log
@@ -213,23 +241,74 @@ describe('PortalCardDialog: закрытие портала', () => {
     expect(screen.getByText(log[0]!.text)).toBeInTheDocument()
   })
 
-  it('есть другой открытый портал в мир: закрывает без вопроса', async () => {
-    const confirm = vi.spyOn(window, 'confirm')
+  it('есть другой открытый портал в мир: закрывает без свитка', async () => {
     const { portalOf } = renderDialog('ПТ-420-2')
     await userEvent.click(ability('Закрыть'))
-    expect(confirm).not.toHaveBeenCalled()
+    expect(scroll()).toBeNull()
     expect(portalOf('ПТ-420-2').status).toBe('closed')
+  })
+})
+
+describe('PortalCardDialog: свиток поверх карточки', () => {
+  it('карточка инертна, Esc закрывает только свиток; фокус возвращается на «Закрыть»', async () => {
+    const { route } = renderDialog('ББ-310-1')
+    const close = ability('Закрыть')
+    await userEvent.click(close)
+    expect(screen.getByTestId('card-overlay')).toHaveAttribute('inert')
+
+    await userEvent.keyboard('{Escape}')
+    expect(scroll()).toBeNull()
+    expect(route().screen).toBe('portal')
+    expect(screen.getByTestId('card-overlay')).not.toHaveAttribute('inert')
+    expect(close).toHaveFocus()
+
+    // Следующий Esc закрывает уже карточку
+    await userEvent.keyboard('{Escape}')
+    expect(route()).toEqual(back)
+  })
+
+  it('клик по затемнению свитка не закрывает карточку', async () => {
+    const { route } = renderDialog('ББ-310-1')
+    await userEvent.click(ability('Закрыть'))
+    await userEvent.click(screen.getByTestId('scroll-backdrop'))
+    expect(route().screen).toBe('portal')
+  })
+
+  it('симуляция идёт, пока свиток открыт; портал схлопнулся — фокус на карточке, а не на body', async () => {
+    const dying = { ...lonely, timeLeft: 1 }
+    const { store, portalOf } = renderDialog('ББ-310-1', [critical, sibling, dying])
+    await userEvent.click(ability('Под вопросом'))
+    expect(scroll()).not.toBeNull()
+
+    act(() => store.advance(3))
+    expect(portalOf('ББ-310-1').status).toBe('collapsed')
+    expect(scroll()).not.toBeNull()
+
+    await userEvent.keyboard('{Escape}')
+    expect(scroll()).toBeNull()
+    expect(screen.getByRole('dialog', { name: 'ББ-310-1' })).toHaveFocus()
+  })
+
+  it('портал перестал быть открытым до ОК: ОК шлёт команду, отказ домена — баннер', async () => {
+    const dying = { ...lonely, timeLeft: 1 }
+    const { store } = renderDialog('ББ-310-1', [critical, sibling, dying])
+    await userEvent.click(ability('Под вопросом'))
+    act(() => store.advance(3))
+
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Пометить' }))
+    expect(scroll()).toBeNull()
+    expect(store.getState().notifications.map((n) => n.kind)).toContain('refuse')
   })
 })
 
 describe('PortalCardDialog: фокус, когда способности исчезают', () => {
   it('после подтверждённого закрытия фокус на диалоге, а не на body', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
     const { portalOf } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Закрыть'))
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Закрыть всё равно' }))
     expect(portalOf('ББ-310-1').status).toBe('closed')
     expect(screen.queryByRole('group', { name: 'Способности' })).toBeNull()
-    expect(screen.getByRole('dialog')).toHaveFocus()
+    expect(screen.getByRole('dialog', { name: 'ББ-310-1' })).toHaveFocus()
   })
 
   it('портал схлопнулся с фокусом на способности — фокус на диалоге', () => {
@@ -243,29 +322,65 @@ describe('PortalCardDialog: фокус, когда способности исч
 })
 
 describe('PortalCardDialog: «Под вопросом»', () => {
-  it('включение спрашивает заметку и ставит пометку с ней', async () => {
-    const prompt = vi.spyOn(window, 'prompt').mockReturnValue('проверить энергию')
+  it('включение открывает свиток с заметкой, без window.prompt; фокус в поле', async () => {
+    const prompt = vi.spyOn(window, 'prompt')
     const { portalOf } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Под вопросом'))
-    expect(prompt).toHaveBeenCalledOnce()
-    expect(prompt.mock.calls[0]![0]).toContain('ББ-310-1')
-    expect(portalOf('ББ-310-1').questioned).toEqual({ note: 'проверить энергию' })
+    const dialog = screen.getByRole('dialog', { name: 'ПОМЕТИТЬ «ПОД ВОПРОСОМ»' })
+    expect(dialog).toHaveAccessibleDescription(
+      'Портал получит значок и попадёт под фильтр «Под вопросом». Заметка приколется к его карте.',
+    )
+    expect(within(dialog).getByText(`ББ-310-1 · ${BEZ}`)).toBeInTheDocument()
+    const field = within(dialog).getByRole('textbox', { name: 'Заметка (необязательно)' })
+    expect(field).toHaveAttribute('rows', '3')
+    expect(field).toHaveAttribute('placeholder', 'Что нужно проверить?')
+    expect(field).toHaveFocus()
+    expect(prompt).not.toHaveBeenCalled()
+    expect(portalOf('ББ-310-1').questioned).toBeNull()
   })
 
-  it('отмена заметки — команды нет', async () => {
-    vi.spyOn(window, 'prompt').mockReturnValue(null)
+  it('«Пометить» ставит пометку с заметкой без пробелов по краям', async () => {
+    const { portalOf } = renderDialog('ББ-310-1')
+    await userEvent.click(ability('Под вопросом'))
+    await userEvent.type(screen.getByRole('textbox'), '  проверить энергию  ')
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Пометить' }))
+    expect(portalOf('ББ-310-1').questioned).toEqual({ note: 'проверить энергию' })
+    expect(scroll()).toBeNull()
+    expect(ability('Под вопросом')).toHaveFocus()
+  })
+
+  it('Enter в поле — перенос строки, а не отправка', async () => {
+    const { portalOf } = renderDialog('ББ-310-1')
+    await userEvent.click(ability('Под вопросом'))
+    await userEvent.type(screen.getByRole('textbox'), 'раз{Enter}два')
+    expect(screen.getByRole('textbox')).toHaveValue('раз\nдва')
+    expect(scroll()).not.toBeNull()
+    expect(portalOf('ББ-310-1').questioned).toBeNull()
+  })
+
+  it('без заметки пометка ставится с пустой', async () => {
+    const { portalOf } = renderDialog('ББ-310-1')
+    await userEvent.click(ability('Под вопросом'))
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Пометить' }))
+    expect(portalOf('ББ-310-1').questioned).toEqual({ note: '' })
+  })
+
+  it('отмена — команды нет, в истории пусто', async () => {
     const { portalOf, store } = renderDialog('ББ-310-1')
     await userEvent.click(ability('Под вопросом'))
+    await userEvent.type(screen.getByRole('textbox'), 'забудем')
+    await userEvent.click(scrollIn().getByRole('button', { name: 'Отмена' }))
+    expect(scroll()).toBeNull()
     expect(portalOf('ББ-310-1').questioned).toBeNull()
     expect(store.getState().lab.log).toEqual([])
+    expect(ability('Под вопросом')).toHaveFocus()
   })
 
-  it('выключение снимает пометку без вопроса', async () => {
-    const prompt = vi.spyOn(window, 'prompt')
+  it('выключение снимает пометку без свитка', async () => {
     const marked = { ...lonely, questioned: { note: '' } }
     const { portalOf } = renderDialog('ББ-310-1', [critical, sibling, marked])
     await userEvent.click(ability('Под вопросом'))
-    expect(prompt).not.toHaveBeenCalled()
+    expect(scroll()).toBeNull()
     expect(portalOf('ББ-310-1').questioned).toBeNull()
   })
 })
