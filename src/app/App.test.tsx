@@ -37,7 +37,7 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: 'Открыть карточку портала ПТ-420-1' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^Арка \d+ пуста/ })).toHaveLength(11)
+    expect(screen.getAllByRole('button', { name: /^Открыть портал в арке \d+$/ })).toHaveLength(11)
   })
 })
 

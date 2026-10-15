@@ -12,7 +12,7 @@ async function advance(page: Page, ticks: number): Promise<void> {
 // Открыть портал и довести его до критического; вернуть имя портала
 async function criticalPortal(page: Page): Promise<string> {
   await page.goto(`/?seed=${SEED}&test=1`)
-  await page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' }).click()
+  await page.getByRole('button', { name: 'Открыть портал в арке 1', exact: true }).click()
   await advance(page, 50)
   await expect(page.locator('.px-portal--critical')).toHaveCount(1)
   const opened = page.getByRole('button', { name: /^Открыть карточку портала/ })

@@ -22,6 +22,8 @@ export function Bar({
   const clamped = Math.min(max, Math.max(0, value))
   // Как в канвасе: округление вверх, чтобы любое ненулевое значение зажигало сегмент.
   const lit = clamped > 0 ? Math.ceil((clamped / max) * segments - 0.001) : 0
+  // Отступление от канваса 21-c-bar: там role="img" и имя «Заполнено N из 100». Здесь meter: скринридер
+  // сам читает значение, а имя называет, что измеряется («Энергия»)
   return (
     <div
       className="px-bar"

@@ -23,6 +23,15 @@ const fills: Record<RuneLevel, string> = {
   archived: sprite.deadRune,
 }
 
+// Имена как в канвасе «Руна риска»; у архива — как у погасшего портала (см. Portal)
+const names: Record<RuneLevel, string> = {
+  low: `${risk.low.label} риск`,
+  medium: `${risk.medium.label} риск`,
+  high: `${risk.high.label} риск`,
+  critical: `${risk.critical.label} риск`,
+  archived: 'Портал погас',
+}
+
 /** Руна уровня риска: своя пиксельная форма на каждый уровень, у архива — крест. */
 export function Rune({ level, size = 16 }: { level: RuneLevel; size?: number }) {
   return (
@@ -30,7 +39,7 @@ export function Rune({ level, size = 16 }: { level: RuneLevel; size?: number }) 
       className="px-rune"
       data-level={level}
       role="img"
-      aria-label={risk[level].label}
+      aria-label={names[level]}
       viewBox="0 0 7 7"
       width={size}
       height={size}

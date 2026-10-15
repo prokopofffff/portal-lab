@@ -118,6 +118,11 @@
 .journal-tab {
   height: 78px;
 }
+/* Закладка с выбранным фильтром выдвинута из книги на 8 px, у книги — светлая кайма */
+.journal-tab--active {
+  transform: translateX(8px);
+  box-shadow: inset 4px 0 0 var(--c-ribbon-label);
+}
 
 /* Узкий экран: всё в один столбец без горизонтальной прокрутки. Атлас — карточки миров друг под
    другом, вкладки сортировки переносятся и не ниже 44 px. Страница мира — страницы книги друг под
@@ -259,5 +264,10 @@
   .journal-tab {
     height: auto;
     min-height: 78px;
+  }
+  /* Под книгой закладка не выдвигается (наехала бы на список значений), кайма — сверху, у книги */
+  .journal-tab--active {
+    transform: none;
+    box-shadow: inset 0 4px 0 var(--c-ribbon-label);
   }
 }

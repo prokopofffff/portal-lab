@@ -49,7 +49,7 @@ describe('ScrollDialog: разметка', () => {
 
   it('руна уровня риска перед заголовком', () => {
     renderScroll({ rune: 'high', tone: 'high' })
-    expect(screen.getByRole('img', { name: 'Высокий' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Высокий риск' })).toBeInTheDocument()
   })
 })
 

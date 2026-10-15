@@ -6,14 +6,19 @@ import { Rune } from './Rune'
 const levels: (RiskLevel | 'archived')[] = ['low', 'medium', 'high', 'critical', 'archived']
 
 describe('Rune', () => {
-  it.each(levels)('подписана словом уровня «%s»', (level) => {
+  it.each([
+    ['low', 'Низкий риск'],
+    ['medium', 'Средний риск'],
+    ['high', 'Высокий риск'],
+    ['critical', 'Критический риск'],
+  ] as const)('руна уровня «%s» называется «%s»', (level, name) => {
     render(<Rune level={level} />)
-    expect(screen.getByRole('img', { name: risk[level].label })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name })).toBeInTheDocument()
   })
 
-  it('руна архива называется «Архив» и рисуется цветом погасшей руны', () => {
+  it('руна архива называется «Портал погас» и рисуется цветом погасшей руны', () => {
     const { container } = render(<Rune level="archived" />)
-    expect(screen.getByRole('img', { name: 'Архив' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Портал погас' })).toBeInTheDocument()
     expect(container.querySelector('path')).toHaveAttribute('fill', sprite.deadRune)
   })
 

@@ -60,7 +60,7 @@ test('на паузе новая запись книги дописываетс�
 
 test('пауза замораживает спрайты, ×1 их отпускает', async ({ page }) => {
   await page.goto(`/?seed=${SEED}&test=1`)
-  await page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' }).click()
+  await page.getByRole('button', { name: 'Открыть портал в арке 1', exact: true }).click()
   await advance(page, 50)
   const critical = page.locator('.px-portal--critical').first()
   await expect(critical).toHaveCSS('animation-play-state', 'paused')

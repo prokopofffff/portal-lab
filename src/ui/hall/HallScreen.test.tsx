@@ -46,7 +46,7 @@ function renderHall(lab: Lab = labWith({ worlds, portals: work })) {
   return { store, ...renderScreen(<HallScreen />, store) }
 }
 
-const emptyArches = () => screen.queryAllByRole('button', { name: /^Арка \d+ пуста/ })
+const emptyArches = () => screen.queryAllByRole('button', { name: /^Открыть портал в арке \d+$/ })
 // Ячейка арки — ближайший предок кнопки с табличкой
 const cellOf = (el: HTMLElement) => el.closest('main > div > div')! as HTMLElement
 const plateOf = (name: string) => cellOf(screen.getByText(name))
@@ -89,7 +89,7 @@ describe('Зал: пустая лаборатория', () => {
 
   it('клик по пустой арке открывает портал в первой свободной арке', async () => {
     const { store } = renderHall(labWith({ worlds: {} }))
-    await userEvent.click(screen.getByRole('button', { name: 'Арка 5 пуста — открыть портал' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Открыть портал в арке 5' }))
 
     const [opened] = store.getState().lab.portals
     expect(opened).toMatchObject({ status: 'open', arch: 0 })
@@ -124,7 +124,7 @@ describe('Зал: обычная работа', () => {
     )
     expect(plate.getByRole('img', { name: 'Наблюдателей на месте: 2' })).toBeInTheDocument()
     expect(
-      plate.getByRole('img', { name: 'Портал, риск Критический, наблюдателей: 2' }),
+      plate.getByRole('img', { name: 'Портал, риск критический, наблюдателей: 2' }),
     ).toBeInTheDocument()
   })
 
@@ -222,14 +222,12 @@ describe('Зал: портал уходит из арки', () => {
     expect(container.querySelector('.hall-seal')).toBeInTheDocument()
     const plate = screen.getByText('ЗАКРЫТ').closest('.hall-leave-plate')!
     expect(within(plate as HTMLElement).getByText('ШЗ-793-1')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Арка 2 пуста/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Открыть портал в арке 2$/ })).toBeNull()
 
     animationEnd(plate)
 
     expect(container.querySelector('[data-leaving]')).toBeNull()
-    expect(
-      screen.getByRole('button', { name: 'Арка 2 пуста — открыть портал' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Открыть портал в арке 2' })).toBeInTheDocument()
   })
 
   it('схлопывание: портал гаснет, табличка «СХЛОПНУЛСЯ» с последними метриками', () => {

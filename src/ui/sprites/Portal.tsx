@@ -65,10 +65,12 @@ function isRiskLook(look: PortalLook): look is RiskLevel {
   return look !== 'empty' && look !== 'archived'
 }
 
+// Имена как в канвасе 19-c-portal, кроме архива: там «Портал закрыт», но архивный портал мог и
+// схлопнуться, поэтому «погас» — как на плашке «ЗАКРЫТ / СХЛОПНУЛСЯ»
 function portalName(look: PortalLook, observers: number): string {
   if (look === 'empty') return 'Пустая арка'
   if (look === 'archived') return 'Портал погас'
-  const name = `Портал, риск ${risk[look].label}`
+  const name = `Портал, риск ${risk[look].label.toLowerCase()}`
   return observers > 0 ? `${name}, наблюдателей: ${observers}` : name
 }
 

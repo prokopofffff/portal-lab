@@ -190,6 +190,19 @@ describe('Книга журнала (spec §8, §9)', () => {
       expect(texts(left(1))).toEqual(['Запись 1', 'Запись 3'])
     })
 
+    it('закладка с выбранным фильтром выдвинута, «любой» её возвращает', async () => {
+      renderJournal(log(4))
+      const ribbon = () => screen.getByRole('button', { name: /Мир/ })
+      expect(ribbon()).not.toHaveClass('journal-tab--active')
+
+      await pickFilter(/Мир/, BEZDNA)
+      expect(ribbon()).toHaveClass('journal-tab--active')
+      expect(screen.getByRole('button', { name: /Портал/ })).not.toHaveClass('journal-tab--active')
+
+      await pickFilter(/Мир/, 'любой')
+      expect(ribbon()).not.toHaveClass('journal-tab--active')
+    })
+
     it('фильтры складываются: вид и мир вместе', async () => {
       renderJournal(log(12))
 

@@ -455,7 +455,7 @@ export function EmptyArch({
       <button
         type="button"
         className="hall-empty-arch"
-        aria-label={`Арка ${arch + 1} пуста — открыть портал`}
+        aria-label={`Открыть портал в арке ${arch + 1}`}
         onClick={onOpenPortal}
         style={bareButton}
       >

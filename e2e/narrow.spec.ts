@@ -115,7 +115,7 @@ test.describe('узкий экран, 390×844: HUD и док', () => {
 // Ячейки зала по порядку арок и их рамки
 const hallCells = (page: Page) => page.getByRole('main').locator('.hall-cell')
 const emptyArch = (page: Page) =>
-  page.getByRole('button', { name: /^Арка \d+ пуста — открыть портал$/ }).first()
+  page.getByRole('button', { name: /^Открыть портал в арке \d+$/ }).first()
 
 async function openPortals(page: Page, n: number): Promise<void> {
   for (let i = 0; i < n; i++) await emptyArch(page).click()
@@ -252,7 +252,7 @@ function intersects(
 // Критический портал в арке 1 и его карточка через записку «Тревожных знаков»
 async function openCriticalCard(page: Page): Promise<Locator> {
   await page.goto('/?seed=3&test=1')
-  await page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' }).click()
+  await page.getByRole('button', { name: 'Открыть портал в арке 1', exact: true }).click()
   await page.evaluate((n) => (globalThis as LabGlobal).__lab!.advance(n), 50)
   await page.getByRole('region', { name: 'Тревожные знаки' }).getByRole('button').click()
   const dialog = page.getByRole('dialog')
