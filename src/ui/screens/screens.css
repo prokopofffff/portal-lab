@@ -50,6 +50,15 @@
 .atlas-stats {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+/* Карточка мира нажимается целиком: ::after ссылки «Страница мира» растянут на всю карточку */
+.atlas-card {
+  position: relative;
+}
+.atlas-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
 
 /* Страница мира (кадр 12): две страницы книги через корешок 8 px, тень у корешка; существа плитками
    по три */
