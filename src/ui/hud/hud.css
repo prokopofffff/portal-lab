@@ -19,6 +19,8 @@
 /* Раскладка HUD. Всё, что на узкой ширине меняется, лежит здесь, а не в инлайн-стилях: инлайн
    перебил бы media query. Значения вне media query — как в канвасе 17-c-hud (1440 px) */
 .hud {
+  position: sticky;
+  top: 0;
   height: 112px;
   display: flex;
   align-items: center;
@@ -59,6 +61,9 @@
    самих спрайтов и кнопок те же; кнопки скорости расширены до 44 px под палец */
 @media (max-width: 900px) {
   .hud {
+    /* HUD в ~345 px съедал бы больше половины экрана телефона: на узкой ширине он прокручивается
+       вместе со страницей, а залипает только компактный док */
+    position: static;
     height: auto;
     flex-wrap: wrap;
     justify-content: space-between;

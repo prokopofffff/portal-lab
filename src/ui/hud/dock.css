@@ -32,19 +32,23 @@
 }
 .dock-seal-btn {
   height: 36px;
+  gap: 8px;
+  padding: 0 12px;
 }
 
-/* Узкий экран: три вкладки делят ширину поровну (значок над подписью, подпись переносится),
-   «Запечатать лабораторию» уходит отдельной строкой под вкладки, справа. Цели нажатия не ниже 44 px */
+/* Узкий экран: один компактный ряд (≤ 76 px, док залипает у нижнего края): три вкладки делят
+   ширину поровну (значок над подписью, подпись переносится), в конце ряда «Запечатать лабораторию»
+   одним значком 44×44. Цели нажатия не ниже 44 px */
 @media (max-width: 900px) {
   .dock {
     height: auto;
-    flex-direction: column;
-    align-items: stretch;
+    justify-content: stretch;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 4px 12px;
   }
   .dock-tabs {
+    flex: 1 1 0;
+    min-width: 0;
     gap: 8px;
   }
   .dock-tab {
@@ -52,24 +56,29 @@
     width: auto;
     min-width: 0;
     height: auto;
-    min-height: 64px;
     flex-direction: column;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 4px;
+    gap: 1px;
+    padding: 0 2px;
     text-align: center;
   }
   .dock-tab-label {
-    font-size: 14px;
+    font-size: 12px;
+    line-height: 15px;
     letter-spacing: 0;
-    overflow-wrap: anywhere;
   }
   .dock-seal {
     position: static;
     transform: none;
-    align-self: flex-end;
+    flex: none;
   }
   .dock-seal-btn {
+    width: 44px;
     height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .dock-seal-text {
+    display: none;
   }
 }

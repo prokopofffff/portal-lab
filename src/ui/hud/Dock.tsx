@@ -90,12 +90,13 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
         <button
           type="button"
           className="dock-seal-btn"
+          // Имя задано явно: на узкой ширине подпись скрыта, остаётся один значок
+          aria-label="Запечатать лабораторию"
+          title="Запечатать лабораторию"
           onClick={onSeal}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '0 12px',
             boxSizing: 'border-box',
             fontFamily: 'var(--f-ui)',
             fontSize: 13,
@@ -118,7 +119,7 @@ export function Dock({ onSeal }: { onSeal: () => void }) {
             />
             <path d="M3,4h1v2h-1z" fill="var(--c-panel)" />
           </svg>
-          Запечатать лабораторию
+          <span className="dock-seal-text">Запечатать лабораторию</span>
         </button>
       </div>
     </div>

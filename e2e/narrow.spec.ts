@@ -34,17 +34,19 @@ export async function expectNoHorizontalOverflow(target: Page | Locator): Promis
   expect(overflowing, 'содержимое шире своего блока').toEqual([])
 }
 
+// Док — родитель навигации по разделам
+const dock = (page: Page) => page.getByRole('navigation', { name: 'Разделы' }).locator('..')
+
 test.describe('узкий экран, 390×844: HUD и док', () => {
   test.use({ viewport: NARROW })
 
   test('HUD и док видны и помещаются по ширине', async ({ page }) => {
     await page.goto('/?seed=3&test=1')
     const hud = page.getByRole('banner')
-    const dock = page.getByRole('navigation', { name: 'Разделы' }).locator('..')
     await expect(hud).toBeVisible()
-    await expect(dock).toBeVisible()
+    await expect(dock(page)).toBeVisible()
     await expectNoHorizontalOverflow(hud)
-    await expectNoHorizontalOverflow(dock)
+    await expectNoHorizontalOverflow(dock(page))
   })
 
   test('HUD идёт строками: время и скорость, наблюдатели, счётчики на всю ширину', async ({
@@ -63,10 +65,27 @@ test.describe('узкий экран, 390×844: HUD и док', () => {
     const hudBox = (await hud.boundingBox())!
     const statsBox = (await stats.boundingBox())!
     expect(statsBox.width).toBeGreaterThan(hudBox.width - 40)
-    // «Нанять» остаётся доступной и не ниже 44 px
+    // «Нанять» остаётся доступной: целиком внутри окна по горизонтали
     const hire = hud.getByRole('button', { name: 'Нанять' })
     await expect(hire).toBeVisible()
-    expect((await hire.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    const hireBox = (await hire.boundingBox())!
+    expect(hireBox.x).toBeGreaterThanOrEqual(0)
+    expect(hireBox.x + hireBox.width).toBeLessThanOrEqual(NARROW.width)
+  })
+
+  test('HUD на узкой ширине прокручивается вместе со страницей, а не залипает', async ({
+    page,
+  }) => {
+    await page.goto('/?seed=3&test=1')
+    const hud = page.getByRole('banner')
+    expect((await hud.boundingBox())!.y).toBe(0)
+    await page.mouse.move(NARROW.width / 2, NARROW.height / 2)
+    await page.mouse.wheel(0, 400)
+    // Страница должна действительно прокрутиться, иначе проверка пуста
+    await expect.poll(async () => (await hud.boundingBox())!.y).toBeLessThan(0)
+    // Док при этом остаётся у нижнего края
+    const dockBox = (await dock(page).boundingBox())!
+    expect(dockBox.y + dockBox.height).toBeCloseTo(NARROW.height, 0)
   })
 
   test('кнопки скорости не ниже 44 px и работают', async ({ page }) => {
@@ -79,7 +98,7 @@ test.describe('узкий экран, 390×844: HUD и док', () => {
     await expect(fast).toHaveAttribute('aria-pressed', 'true')
   })
 
-  test('в доке три вкладки поровну, не ниже 44 px, «Запечатать» отдельной строкой справа', async ({
+  test('в доке один ряд ≤ 76 px: три вкладки поровну и значок печати 44×44 в конце', async ({
     page,
   }) => {
     await page.goto('/?seed=3&test=1')
@@ -91,19 +110,32 @@ test.describe('узкий экран, 390×844: HUD и док', () => {
       expect(Math.abs(b.width - boxes[0]!.width)).toBeLessThan(1)
     }
     const seal = page.getByRole('button', { name: 'Запечатать лабораторию' })
+    await expect(seal).toHaveAttribute('title', 'Запечатать лабораторию')
     const sealBox = (await seal.boundingBox())!
+    expect(sealBox.width).toBeGreaterThanOrEqual(44)
     expect(sealBox.height).toBeGreaterThanOrEqual(44)
-    expect(sealBox.y).toBeGreaterThanOrEqual(boxes[0]!.y + boxes[0]!.height)
-    expect(sealBox.x + sealBox.width).toBeGreaterThan(390 - 24)
+    // В том же ряду, правее последней вкладки, и целиком в окне
+    expect(sealBox.x).toBeGreaterThanOrEqual(boxes[2]!.x + boxes[2]!.width)
+    expect(sealBox.y).toBeLessThan(boxes[0]!.y + boxes[0]!.height)
+    expect(sealBox.x + sealBox.width).toBeLessThanOrEqual(NARROW.width)
+    expect((await dock(page).boundingBox())!.height).toBeLessThanOrEqual(76)
     for (const t of await tabs.all()) await expectNoHorizontalOverflow(t)
+  })
+
+  test('в альбомной ориентации 844×390 док виден и не выше 76 px', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 })
+    await page.goto('/?seed=3&test=1')
+    await expect(dock(page)).toBeVisible()
+    const box = (await dock(page).boundingBox())!
+    expect(box.height).toBeLessThanOrEqual(76)
+    expect(box.y + box.height).toBeCloseTo(390, 0)
+    await expectNoHorizontalOverflow(dock(page))
   })
 
   test('HUD и док не вылезают после прогона симуляции', async ({ page }) => {
     await page.goto('/?seed=3&test=1')
     await page.evaluate((n) => (globalThis as LabGlobal).__lab!.advance(n), 300)
     await expectNoHorizontalOverflow(page.getByRole('banner'))
-    await expectNoHorizontalOverflow(
-      page.getByRole('navigation', { name: 'Разделы' }).locator('..'),
-    )
+    await expectNoHorizontalOverflow(dock(page))
   })
 })
