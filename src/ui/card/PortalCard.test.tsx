@@ -84,8 +84,9 @@ describe('PortalCard: критический портал', () => {
     expect(screen.getByText(`Критический · ${m.risk.score}`)).toBeInTheDocument()
     for (const part of m.parts) expect(screen.getByText(part.label)).toBeInTheDocument()
     expect(screen.getByText('итого')).toBeInTheDocument()
-    expect(screen.getByText('ПЕЧАТЬ')).toBeInTheDocument()
+    // Строка жёсткого правила — только текст правила, без подписи «ПЕЧАТЬ» из канваса (lab-ci6)
     expect(screen.getByText('время ≤ 10 → критический')).toBeInTheDocument()
+    expect(screen.queryByText('ПЕЧАТЬ')).toBeNull()
   })
 
   it('метрики: подписи, полоски и значения', () => {
@@ -253,7 +254,7 @@ describe('PortalCard: архив', () => {
     expect(screen.queryByRole('group', { name: 'Способности' })).toBeNull()
     expect(screen.queryByText('СОВЕТ СМОТРИТЕЛЮ')).toBeNull()
     expect(screen.queryByText('На месте')).toBeNull()
-    expect(screen.queryByText('ПЕЧАТЬ')).toBeNull()
+    expect(screen.queryByText(/→ критический$/)).toBeNull()
     expect(screen.getByRole('img', { name: 'Портал погас' })).toBeInTheDocument()
   })
 
