@@ -12,17 +12,19 @@ async function advance(page: Page, ticks: number): Promise<void> {
 test('пустая лаборатория показывает пустое состояние', async ({ page }) => {
   await page.goto(`/?seed=${SEED}&test=1`)
   await expect(page.getByText('Порталов нет — активируйте первую арку')).toBeVisible()
-  await expect(page.getByRole('button', { name: /^Арка \d+ пуста/ })).toHaveCount(12)
+  await expect(page.getByRole('button', { name: /^Открыть портал в арке \d+$/ })).toHaveCount(12)
   await expect(page.getByText('нажмите — откроется портал')).toBeVisible()
 })
 
 test('пустая арка открывает портал; критический портал горит в зале', async ({ page }) => {
   await page.goto(`/?seed=${SEED}&test=1`)
-  await page.getByRole('button', { name: 'Арка 7 пуста — открыть портал' }).click()
+  await page.getByRole('button', { name: 'Открыть портал в арке 7', exact: true }).click()
 
   // Портал встаёт в первую свободную арку, под ней — табличка
-  await expect(page.getByRole('button', { name: /^Арка \d+ пуста/ })).toHaveCount(11)
-  await expect(page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^Открыть портал в арке \d+$/ })).toHaveCount(11)
+  await expect(
+    page.getByRole('button', { name: 'Открыть портал в арке 1', exact: true }),
+  ).toHaveCount(0)
   await expect(page.getByText('Порталов нет — активируйте первую арку')).toHaveCount(0)
 
   await advance(page, 50)
@@ -41,12 +43,12 @@ test('пустая арка открывает портал; критическ�
 
 test('схлопнувшийся портал гаснет, и арка снова пуста', async ({ page }) => {
   await page.goto(`/?seed=${SEED}&test=1`)
-  await page.getByRole('button', { name: 'Арка 1 пуста — открыть портал' }).click()
+  await page.getByRole('button', { name: 'Открыть портал в арке 1', exact: true }).click()
   await advance(page, 400)
 
   // Плашка на арке; баннер «ПОРТАЛ СХЛОПНУЛСЯ» с ней не путаем (exact)
   await expect(page.getByText('СХЛОПНУЛСЯ', { exact: true })).toBeVisible()
   // Анимация идёт и на паузе (тестовый режим стартует на паузе) и кончается сама
-  await expect(page.getByRole('button', { name: /^Арка \d+ пуста/ })).toHaveCount(12)
+  await expect(page.getByRole('button', { name: /^Открыть портал в арке \d+$/ })).toHaveCount(12)
   await expect(page.getByText('СХЛОПНУЛСЯ', { exact: true })).toHaveCount(0)
 })

@@ -6,10 +6,10 @@ import { Portal } from './Portal'
 const names: Record<PortalLook, string> = {
   empty: 'Пустая арка',
   archived: 'Портал погас',
-  low: 'Портал, риск Низкий',
-  medium: 'Портал, риск Средний',
-  high: 'Портал, риск Высокий',
-  critical: 'Портал, риск Критический',
+  low: 'Портал, риск низкий',
+  medium: 'Портал, риск средний',
+  high: 'Портал, риск высокий',
+  critical: 'Портал, риск критический',
 }
 
 const sparks: [PortalLook, number][] = [

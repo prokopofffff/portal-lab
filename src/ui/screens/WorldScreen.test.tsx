@@ -136,7 +136,7 @@ describe('Страница мира (spec §9)', () => {
     expect(critical).toHaveTextContent('Открыт, идёт изучение · схлопнется через 8 мин')
     expect(critical).toHaveTextContent('КРИТИЧЕСКИЙ · 91')
     expect(
-      within(critical).getByRole('img', { name: 'Портал, риск Критический, наблюдателей: 2' }),
+      within(critical).getByRole('img', { name: 'Портал, риск критический, наблюдателей: 2' }),
     ).toBeInTheDocument()
 
     const calm = row('ПТ-420-2')

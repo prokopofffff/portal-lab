@@ -35,7 +35,8 @@ export const colors = {
   parchmentEdge: '#6a5238',
   inkAction: '#3b2a18',
   inkRejection: '#9b1c2c',
-  inkSystem: '#6b5c43', // в канвасе #9a8a70 (2.4:1), затемнено до 4.6:1
+  // в канвасе #9a8a70 (2.4:1), а в истории мира (12-world-page) #7d6c52 (3.6:1); затемнено до 4.6:1
+  inkSystem: '#6b5c43',
   inkTitle: '#2a1d12',
   // атлас и страница мира: погреб, пергамент, чернила, золото, полоски изучения
   cellar: '#1d1510',
@@ -54,6 +55,8 @@ export const colors = {
   inkBody: '#3a2a1a',
   inkSoft: '#5a4a34',
   inkLabel: '#6e4a1a',
+  // время в истории мира (12) и подсказка в свитке (15) — как в канвасе; время записи в книге (14)
+  // в канвасе #7d6c52 (3.6:1), здесь тоже inkTime (4.7:1)
   inkTime: '#6e5a3a',
   inkLink: '#4a2f8a',
   goldPlate: '#f0cf6a',

@@ -334,11 +334,14 @@ function Ribbon({
 
   const all: Choice = { value: undefined, label: allLabel }
   const current = choices.find((c) => c.value === selected) ?? all
+  // Отступление от кадра 14: там у закладки нет активного вида, и фильтр видно только по третьей
+  // строке. Закладка с выбранным значением выдвинута и со светлой каймой (класс journal-tab--active)
+  const active = selected !== undefined
   return (
     <div ref={root} className="journal-ribbon">
       <button
         type="button"
-        className="journal-tab"
+        className={active ? 'journal-tab journal-tab--active' : 'journal-tab'}
         aria-expanded={open}
         onClick={() => setOpen(!open)}
         style={{

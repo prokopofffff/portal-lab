@@ -24,7 +24,8 @@ async function advance(page: Page, ticks: number): Promise<void> {
   await page.evaluate((n) => (globalThis as LabGlobal).__lab!.advance(n), ticks)
 }
 
-const emptyArches = (page: Page) => page.getByRole('button', { name: /^Арка \d+ пуста/ })
+const emptyArches = (page: Page) =>
+  page.getByRole('button', { name: /^Открыть портал в арке \d+$/ })
 
 // Открыть портал в первой свободной арке и дождаться, пока он в ней встанет
 async function openPortal(page: Page): Promise<void> {
