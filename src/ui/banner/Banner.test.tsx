@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LabStoreProvider } from '../../app/hooks'
 import type { Notification, NotificationKind } from '../../app/notifications'
@@ -128,11 +128,11 @@ const note = (id: number, kind: NotificationKind, text = `Текст ${id}`): No
 })
 
 describe('NotificationStack', () => {
-  function renderStack(initial: Notification[]) {
+  function renderStack(initial: Notification[], cardOpen?: boolean) {
     const view = storeWithQueue(initial)
     const { container } = render(
       <LabStoreProvider store={view.store}>
-        <NotificationStack />
+        <NotificationStack cardOpen={cardOpen} />
       </LabStoreProvider>,
     )
     return { ...view, container }
@@ -161,6 +161,14 @@ describe('NotificationStack', () => {
     const stack = container.querySelector('.banner-stack') as HTMLElement
     expect(stack).not.toBeNull()
     expect(stack.getAttribute('style') ?? '').not.toMatch(/position|top|right|width|z-index/)
+  })
+
+  it('при открытой карточке стопка получает модификатор banner-stack--card', () => {
+    const closed = renderStack([note(1, 'lost')])
+    expect(closed.container.querySelector('.banner-stack')).not.toHaveClass('banner-stack--card')
+    cleanup()
+    const open = renderStack([note(1, 'lost')], true)
+    expect(open.container.querySelector('.banner-stack')).toHaveClass('banner-stack--card')
   })
 
   it('«скрыть» убирает только свою запись', () => {

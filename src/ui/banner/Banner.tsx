@@ -193,14 +193,15 @@ function StackItem({ notification }: { notification: Notification }) {
 
 /**
  * Очередь уведомлений баннерами в правом верхнем углу, поверх всего — и экрана, и карточки портала.
- * Порядок прихода сверху вниз (канвас 16-banners); каждый баннер скрывается сам и кнопкой, свои 6 с
+ * Порядок прихода сверху вниз (канвас 16-banners); при открытой карточке стопка выше (05-card-rejection).
+ * Каждый баннер скрывается сам и кнопкой, свои 6 с
  * он отсчитывает с монтирования. Положение и ширина — в классе banner-stack.
  */
-export function NotificationStack() {
+export function NotificationStack({ cardOpen = false }: { cardOpen?: boolean }) {
   const notifications = useNotifications()
   if (notifications.length === 0) return null
   return (
-    <div className="banner-stack">
+    <div className={cardOpen ? 'banner-stack banner-stack--card' : 'banner-stack'}>
       {notifications.map((n) => (
         <StackItem key={n.id} notification={n} />
       ))}

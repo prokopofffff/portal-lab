@@ -88,7 +88,7 @@ function Shell() {
         <Dock onSeal={seal} />
       </div>
       {card !== null && <PortalCardDialog portal={card} back={under} />}
-      <NotificationStack />
+      <NotificationStack cardOpen={card !== null} />
     </div>
   )
 }

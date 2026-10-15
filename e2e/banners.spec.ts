@@ -46,3 +46,23 @@ test('на 1440×1000 баннер отказа не закрывает спос
   expect(b.x).toBeCloseTo(940, 0)
   expect(b.x + b.width).toBeCloseTo(1420, 0)
 })
+
+test('без карточки стопка баннеров под HUD: top 128, правый край 1412 (кадр 16-banners)', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  await page.goto(`/?seed=${SEED}&test=1`)
+  // Второй «Нанять» подряд — отказ (найм уже идёт), баннер встаёт без карточки
+  const hire = page.getByRole('button', { name: /Нанять/ })
+  await hire.click()
+  // Недоступная кнопка с aria-disabled для Playwright неактивна: второй раз жмём с клавиатуры
+  await hire.focus()
+  await page.keyboard.press('Enter')
+  const banner = page.getByRole('alert')
+  await expect(banner).toContainText('ОТКАЗ')
+  // Ждём конца въезда баннера (bnIn, 0.5 с)
+  await page.waitForTimeout(600)
+  const b = (await banner.boundingBox())!
+  expect(b.y).toBeCloseTo(128, 0)
+  expect(b.x + b.width).toBeCloseTo(1412, 0)
+})
