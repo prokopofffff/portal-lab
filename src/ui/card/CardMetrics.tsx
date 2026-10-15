@@ -150,7 +150,7 @@ function ScoreChange({ from, to }: { from: number; to: number }) {
   )
 }
 
-/** Разбор риска: большой балл, части через «+» и «=» итого, печать жёсткого правила. */
+/** Разбор риска: большой балл, части через «+» и «=» итого, строка жёсткого правила. */
 export function RiskBox({
   model,
   palette,
@@ -219,7 +219,6 @@ export function RiskBox({
             color: 'var(--risk-critical-on)',
           }}
         >
-          <span style={{ ...pixel, fontSize: 10, letterSpacing: 1 }}>ПЕЧАТЬ</span>
           <span style={{ fontSize: 16, fontWeight: 600 }}>{model.hardRule}</span>
         </div>
       )}
