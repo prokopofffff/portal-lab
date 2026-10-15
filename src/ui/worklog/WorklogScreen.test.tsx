@@ -27,7 +27,7 @@ describe('экран AI Worklog', () => {
     ).toEqual(SECTIONS)
   })
 
-  it('по каждому этапу: что делал человек, что делал AI, ключевые промпты', () => {
+  it('по каждому этапу: что делал человек, что делал AI, суть ключевых запросов', () => {
     render(<WorklogScreen />)
     const stages = within(section('Этапы работы')).getAllByRole('article')
     expect(stages).toHaveLength(worklog.stages.length)
@@ -36,7 +36,7 @@ describe('экран AI Worklog', () => {
       expect(card.getByRole('heading', { level: 3 })).toHaveTextContent(stage.title)
       expect(card.getByText('Человек')).toBeInTheDocument()
       expect(card.getByText('AI')).toBeInTheDocument()
-      expect(card.getByText('Промпты')).toBeInTheDocument()
+      expect(card.getByText('Суть запросов')).toBeInTheDocument()
       expect(stage.prompts.length).toBeGreaterThan(0)
       for (const prompt of stage.prompts) expect(card.getByText(prompt)).toBeInTheDocument()
     })

@@ -148,21 +148,20 @@ function StageRow({ stage, index }: { stage: Stage; index: number }) {
       <StageColumn label="AI">
         <Bullets items={stage.ai} />
       </StageColumn>
-      <StageColumn label="Промпты">
-        {/* Суть запросов чернилами книги журнала */}
-        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
+      <StageColumn label="Суть запросов">
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 10 }}>
           {stage.prompts.map((prompt) => (
             <li
               key={prompt}
               style={{
-                fontFamily: 'var(--f-ink)',
-                fontSize: 19,
-                lineHeight: '24px',
-                color: 'var(--c-ink-action)',
-                overflowWrap: 'anywhere',
+                ...prose,
+                fontStyle: 'italic',
+                color: 'var(--c-ink-title)',
+                borderLeft: '3px solid var(--c-ink-label)',
+                paddingLeft: 10,
               }}
             >
-              <q>{prompt}</q>
+              {prompt}
             </li>
           ))}
         </ul>
